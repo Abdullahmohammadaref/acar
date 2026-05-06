@@ -1,0 +1,447 @@
+import { useState, useCallback, useEffect } from "react"
+import { Link, useSearchParams, useParams } from "react-router-dom"
+import { Plus, Filter, Search, X, Upload, CheckCircle2, Download, Loader2, RefreshCw } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Badge } from "@/components/ui/badge"
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog"
+import { useTransactions, useDeleteTransaction, useActivateTransaction } from "@/hooks/useTransactions"
+import { FinancialSummaryTable, TransactionFiltersSheet, TransactionTable, ImportTransactionsModal } from "@/components/transactions"
+import { StickyFooter } from "@/components/StickyFooter"
+import api from "@/lib/api"
+import type { TransactionFilters, TransactionListItem } from "@/types/transaction"
+
+
+
+/**
+ * Transactions list page with financial summary, filters, and data table.
+ * Standardized for professional, high-quality management.
+ */
+export function TransactionsPage() {
+    const { business_slug } = useParams()
+    const [searchParams] = useSearchParams()
+
+    // Filter state - initialize from URL
+    const [filters, setFilters] = useState<TransactionFilters>(() => {
+        const statusFromUrl = searchParams.get("status")
+        return {
+            page: 1,
+            per_page: 20,
+            order: "desc",
+            sort: "internal_id",
+            status: statusFromUrl || undefined,
+        }
+    })
+
+    // General search input
+    const [searchValue, setSearchValue] = useState("")
+
+    // Update filters when URL changes (sidebar navigation)
+    useEffect(() => {
+        const statusFromUrl = searchParams.get("status")
+        setFilters(prev => ({
+            ...prev,
+            status: statusFromUrl || undefined,
+            page: 1, // Reset to first page when filter changes
+        }))
+    }, [searchParams])
+
+    // Sheet open state
+    const [filtersOpen, setFiltersOpen] = useState(false)
+
+    // Import modal state
+    const [importModalOpen, setImportModalOpen] = useState(false)
+
+    // Delete confirmation dialog
+    const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+    const [transactionToDelete, setTransactionToDelete] =
+        useState<TransactionListItem | null>(null)
+
+    // Success message state (e.g., after adding a new transaction)
+    const [successMessage, setSuccessMessage] = useState<string | null>(null)
+
+    // PDF export loading state
+    const [pdfLoading, setPdfLoading] = useState(false)
+
+    // Check for success message in URL on mount
+    useEffect(() => {
+        const success = searchParams.get("success")
+        if (success) {
+            setSuccessMessage(success)
+            // Remove the success param from URL without reload
+            const newParams = new URLSearchParams(searchParams)
+            newParams.delete("success")
+            window.history.replaceState({}, "", `${window.location.pathname}${newParams.toString() ? `?${newParams.toString()}` : ""}`)
+            // Auto-hide after 5 seconds
+            setTimeout(() => setSuccessMessage(null), 5000)
+        }
+    }, [searchParams])
+
+    // Fetch transactions
+    const { data, isLoading, isFetching } = useTransactions(filters)
+
+    // Mutations
+    const deleteMutation = useDeleteTransaction()
+    const activateMutation = useActivateTransaction()
+
+    // Count active filters (excluding pagination and sort)
+    const activeFilterCount = Object.entries(filters).filter(([key, value]) => {
+        if (
+            ["page", "per_page", "sort", "order"].includes(key)
+        )
+            return false
+        return value !== undefined && value !== null && value !== ""
+    }).length
+
+    // Handle page change
+    const handlePageChange = useCallback((page: number) => {
+        setFilters((prev) => ({ ...prev, page }))
+    }, [])
+
+    // Handle filter apply
+    const handleApplyFilters = useCallback((newFilters: TransactionFilters) => {
+        setFilters((prev) => ({
+            ...newFilters,
+            page: 1, // Reset to first page on filter change
+            per_page: prev.per_page,
+        }))
+    }, [])
+
+
+
+    // Handle advanced search
+    const handleQuickSearch = useCallback(
+        (e: React.KeyboardEvent<HTMLInputElement>) => {
+            if (e.key === "Enter") {
+                setFilters((prev) => ({
+                    ...prev,
+                    search: searchValue || undefined,
+                    page: 1,
+                }))
+            }
+        },
+        [searchValue]
+    )
+
+    // Clear search
+    const handleClearSearch = useCallback(() => {
+        setSearchValue("")
+        setFilters((prev) => ({
+            ...prev,
+            search: undefined,
+            page: 1,
+        }))
+    }, [])
+
+    // Handle delete click
+    const handleDeleteClick = useCallback((transaction: TransactionListItem) => {
+        setTransactionToDelete(transaction)
+        setDeleteDialogOpen(true)
+    }, [])
+
+    // Confirm delete
+    const handleConfirmDelete = useCallback(async () => {
+        if (transactionToDelete?.internal_id) {
+            await deleteMutation.mutateAsync(transactionToDelete.internal_id)
+            setDeleteDialogOpen(false)
+            setTransactionToDelete(null)
+        }
+    }, [transactionToDelete, deleteMutation])
+
+    // Handle activate
+    const handleActivate = useCallback(async (transaction: TransactionListItem) => {
+        if (transaction.internal_id) {
+            await activateMutation.mutateAsync(transaction.internal_id)
+        }
+    }, [activateMutation])
+
+    // Handle PDF Download
+    const handleDownloadPDF = async () => {
+        setPdfLoading(true)
+        try {
+            const params = new URLSearchParams()
+            Object.entries(filters).forEach(([key, value]) => {
+                if (value !== undefined && value !== null && value !== "") {
+                    params.append(key, String(value))
+                }
+            })
+
+            const response = await api.get(`/transactions/export-pdf?${params}`, {
+                responseType: 'blob'
+            })
+
+            const blob = new Blob([response.data], { type: 'application/pdf' })
+            const url = window.URL.createObjectURL(blob)
+            window.open(url, '_blank')
+            // Don't revoke URL immediately as it needs to load in new tab
+            setTimeout(() => window.URL.revokeObjectURL(url), 1000)
+        } catch (error) {
+            console.error("Failed to download PDF:", error)
+        } finally {
+            setPdfLoading(false)
+        }
+    }
+
+    // Handle sort column click
+    const handleSort = useCallback((field: string) => {
+        setFilters((prev) => {
+            // If same field, toggle order; otherwise set new field with desc
+            if (prev.sort === field) {
+                return {
+                    ...prev,
+                    order: prev.order === "asc" ? "desc" : "asc",
+                    page: 1,
+                }
+            }
+            return {
+                ...prev,
+                sort: field,
+                order: "desc",
+                page: 1,
+            }
+        })
+    }, [])
+
+    return (
+        <div className="space-y-6">
+            {/* Page Header */}
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                    <h1 className="text-2xl font-bold text-foreground tracking-tight">Transactions</h1>
+                    <p className="text-muted-foreground">
+                        Manage your financial transactions and summaries
+                    </p>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                    <Button
+                        variant="outline"
+                        className="gap-2 shadow-sm"
+                        onClick={() => setImportModalOpen(true)}
+                    >
+                        <Upload className="h-4 w-4 text-muted-foreground" />
+                        Import CSV
+                    </Button>
+                    <Button
+                        variant="outline"
+                        className="gap-2 shadow-sm"
+                        onClick={handleDownloadPDF}
+                        disabled={pdfLoading}
+                    >
+                        {pdfLoading ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                            <Download className="h-4 w-4 text-muted-foreground" />
+                        )}
+                        {pdfLoading ? "Generating..." : "Export PDF"}
+                    </Button>
+                    <Link
+                        to={`/${business_slug}/transactions/new`}
+                        className="inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground shadow-sm hover:bg-primary/95 transition-all"
+                    >
+                        <Plus className="h-4 w-4" />
+                        Add Transaction
+                    </Link>
+                </div>
+            </div>
+
+            {/* Success Message Banner */}
+            {successMessage && (
+                <div className="flex items-center gap-2 rounded-lg bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800/30 px-4 py-3 text-emerald-800 dark:text-emerald-400 animate-in slide-in-from-top-2">
+                    <CheckCircle2 className="h-5 w-5 flex-shrink-0" />
+                    <span className="text-sm font-medium">{successMessage}</span>
+                    <button
+                        onClick={() => setSuccessMessage(null)}
+                        className="ml-auto text-emerald-600 hover:text-emerald-800 dark:hover:text-emerald-300"
+                    >
+                        <X className="h-4 w-4" />
+                    </button>
+                </div>
+            )}
+
+            {/* Financial Summary */}
+            <FinancialSummaryTable
+                summary={data?.financial_summary}
+                isLoading={isLoading}
+            />
+
+            {/* Toolbar */}
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+                {/* Search */}
+                <div className="relative flex-1 group">
+                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground transition-colors group-focus-within:text-primary" />
+                    <Input
+                        type="text"
+                        placeholder="Search across ID, vehicle, category, amount, partner..."
+                        className="pl-10 pr-10 h-11 hover:border-primary/50 focus:border-primary transition-all shadow-sm"
+                        value={searchValue}
+                        onChange={(e) => setSearchValue(e.target.value)}
+                        onKeyDown={handleQuickSearch}
+                    />
+                    {searchValue && (
+                        <button
+                            onClick={handleClearSearch}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                        >
+                            <X className="h-4 w-4" />
+                        </button>
+                    )}
+                </div>
+                <div className="flex items-center gap-2">
+                    <Button
+                        variant="outline"
+                        className="gap-2 h-11 px-4 shadow-sm"
+                        onClick={() => setFiltersOpen(true)}
+                    >
+                        <Filter className="h-4 w-4 text-muted-foreground" />
+                        Filters
+                        {activeFilterCount > 0 && (
+                            <Badge variant="secondary" className="ml-1 h-5 px-1.5 bg-primary/10 text-primary border-primary/20">
+                                {activeFilterCount}
+                            </Badge>
+                        )}
+                    </Button>
+                    {(activeFilterCount > 0 || searchValue) && (
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-11 text-muted-foreground hover:text-foreground"
+                            onClick={() => {
+                                setSearchValue("")
+                                setFilters(prev => ({
+                                    ...prev,
+                                    search: undefined,
+                                    page: 1,
+                                    // Keep pagination/sort preference but reset functional filters
+                                    status: undefined,
+                                    type: undefined,
+                                    category: undefined,
+                                    vehicle: undefined,
+                                    start_date: undefined,
+                                    end_date: undefined,
+                                }))
+                            }}
+                        >
+                            <RefreshCw className="mr-2 h-4 w-4" />
+                            Reset
+                        </Button>
+                    )}
+                </div>
+            </div>
+
+            {/* Results Count */}
+            <div className="flex items-center justify-between px-1">
+                <p className="text-sm text-muted-foreground font-medium">
+                    Showing <span className="text-foreground">{data?.transactions?.items?.length || 0}</span> of <span className="text-foreground">{data?.transactions?.total || 0}</span> transactions
+                </p>
+            </div>
+
+            {/* Transaction Table */}
+            <div className="rounded-xl border border-border bg-card overflow-hidden shadow-sm">
+                <TransactionTable
+                    transactions={data?.transactions?.items || []}
+                    isLoading={isLoading}
+                    onDelete={handleDeleteClick}
+                    onActivate={handleActivate}
+                    sortField={filters.sort}
+                    sortOrder={filters.order}
+                    onSort={handleSort}
+                />
+            </div>
+
+            {/* Padding to prevent sticky footer overlap */}
+            <div className="pb-24" />
+
+            {/* Pagination Sticky Footer */}
+            {data?.transactions && data.transactions.total > (filters.per_page || 20) && (
+                <StickyFooter>
+                    <div className="flex items-center justify-between w-full px-2">
+                        <p className="text-sm text-muted-foreground font-medium">
+                            Page <span className="text-foreground">{data.transactions.page}</span> of <span className="text-foreground">{Math.ceil(data.transactions.total / (filters.per_page || 20))}</span>
+                        </p>
+                        <div className="flex gap-2">
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                disabled={data.transactions.page <= 1}
+                                onClick={() => handlePageChange(data.transactions.page - 1)}
+                                className="h-9"
+                            >
+                                Previous
+                            </Button>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                disabled={data.transactions.page >= Math.ceil(data.transactions.total / (filters.per_page || 20))}
+                                onClick={() => handlePageChange(data.transactions.page + 1)}
+                                className="h-9"
+                            >
+                                Next
+                            </Button>
+                        </div>
+                    </div>
+                </StickyFooter>
+            )}
+
+            {/* Loading overlay for background updates */}
+            {isFetching && !isLoading && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/30 backdrop-blur-[1px]">
+                    <div className="bg-card border border-border shadow-xl rounded-full px-6 py-2.5 flex items-center gap-3 animate-in fade-in zoom-in duration-300">
+                        <RefreshCw className="h-4 w-4 animate-spin text-primary" />
+                        <span className="text-sm font-medium text-muted-foreground">Refreshing...</span>
+                    </div>
+                </div>
+            )}
+
+            {/* Filters Sheet */}
+            <TransactionFiltersSheet
+                open={filtersOpen}
+                onOpenChange={setFiltersOpen}
+                filters={filters}
+                onApplyFilters={handleApplyFilters}
+            />
+
+            {/* Delete Confirmation Dialog */}
+            <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle className="text-red-500">Delete Transaction</DialogTitle>
+                        <DialogDescription className="py-4 text-base">
+                            Are you sure you want to delete transaction <span className="font-bold underline">#{transactionToDelete?.internal_id}</span>?
+                            This will mark it as inactive.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter className="gap-2 sm:gap-0">
+                        <Button
+                            variant="ghost"
+                            onClick={() => setDeleteDialogOpen(false)}
+                        >
+                            Cancel
+                        </Button>
+                        <Button
+                            variant="destructive"
+                            onClick={handleConfirmDelete}
+                            disabled={deleteMutation.isPending}
+                        >
+                            {deleteMutation.isPending ? "Deleting..." : "Delete Transaction"}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* Import Transactions Modal */}
+            <ImportTransactionsModal
+                open={importModalOpen}
+                onOpenChange={setImportModalOpen}
+            />
+        </div>
+    )
+}
+
+export default TransactionsPage

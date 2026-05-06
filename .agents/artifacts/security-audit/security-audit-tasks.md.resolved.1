@@ -1,0 +1,14 @@
+# Phase 1: Security & RBAC Fixes — Task Tracker
+
+## Critical Fixes
+- [x] VULN-1: Fix IDOR in `vehicle_api.py` `get_models_for_make` — add business filter
+- [x] VULN-2: Add `auth=django_auth` to `vehicle_router` + remove manual auth checks
+- [x] VULN-3: Add `is_manager` checks to choice mutation endpoints in `api.py`
+
+## Medium Fixes
+- [x] VULN-4: Handled by VULN-2 fix (remove manual 200-OK-for-unauth)
+- [x] VULN-5: Increase password minimum from 4 to 8 chars in `auth_api.py`
+
+## Verification
+- [x] Confirm Django imports work cleanly (no syntax errors)
+- [x] Confirm dev server can reload (auto-reload should pick up changes)

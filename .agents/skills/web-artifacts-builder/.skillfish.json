@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "name": "web-artifacts-builder",
+  "owner": "oferhalevi",
+  "repo": "codex-skills-integration",
+  "path": "skills/web-artifacts-builder",
+  "branch": "main",
+  "sha": "4ab3b3474ea115ac7ef719f6dc0a551a920dcb03",
+  "source": "manual"
+}

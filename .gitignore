@@ -1,0 +1,72 @@
+# ===========================================================
+# ACAR Root .gitignore
+# ===========================================================
+
+# ----- Secrets & Environment -----
+.env
+.env.*
+*.secret
+*.key
+*.pem
+*.p12
+*.pfx
+
+# ----- Database -----
+db.sqlite3
+*.sqlite3
+*.sqlite
+schema.prisma
+
+# ----- Python -----
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+acar_venv/
+env/
+venv/
+ENV/
+
+# ----- Node -----
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+
+# ----- Build artifacts -----
+dist/
+dist-ssr/
+staticfiles/
+
+# ----- Media (user uploads) -----
+media/
+
+# ----- Reference / scratch files -----
+reference_files_only/
+
+# ----- IDE & Editor -----
+.idea/
+.vscode/
+*.swp
+*.swo
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+
+# ----- OS -----
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# ----- Logs -----
+*.log
+test_output.txt
+
+# ----- Generated PDFs (dev only) -----
+*.pdf
+.gitnexus
+
+/start_gitnexus.bat
+/backend/acar/__init__.py

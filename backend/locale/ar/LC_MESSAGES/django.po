@@ -1,0 +1,2419 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-11-02 07:16+0300\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: ar\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=6; plural=n==0 ? 0 : n==1 ? 1 : n==2 ? 2 : n%100>=3 "
+"&& n%100<=10 ? 3 : n%100>=11 && n%100<=99 ? 4 : 5;\n"
+
+#: .\acar\settings.py:133
+msgid "German"
+msgstr "الألمانية"
+
+#: .\acar\settings.py:134
+msgid "English"
+msgstr "الإنجليزية"
+
+#: .\acar\settings.py:135
+msgid "Turkish"
+msgstr "التركية"
+
+#: .\acar\settings.py:136
+msgid "Arabic"
+msgstr "العربية"
+
+#: .\manager\models.py:17 .\manager\models.py:34 .\manager\models.py:63
+msgid "name"
+msgstr "الاسم"
+
+#: .\manager\models.py:19
+msgid "logo"
+msgstr "الشعار"
+
+#: .\manager\models.py:32 .\manager\models.py:48 .\manager\models.py:78
+#: .\manager\models.py:171 .\manager\models.py:960
+msgid "business"
+msgstr "العمل"
+
+#: .\manager\models.py:35
+msgid "address"
+msgstr "العنوان"
+
+#: .\manager\models.py:36
+msgid "is active"
+msgstr "نشط"
+
+#: .\manager\models.py:42
+msgid "is manager"
+msgstr "مدير"
+
+#: .\manager\models.py:50
+msgid "transactions access"
+msgstr "الوصول إلى المعاملات"
+
+#: .\manager\models.py:52
+msgid "backup email address"
+msgstr "البريد الإلكتروني الاحتياطي"
+
+#: .\manager\models.py:59
+msgid "Individual"
+msgstr "فرد"
+
+#: .\manager\models.py:60
+msgid "Company"
+msgstr "شركة"
+
+#: .\manager\models.py:62 .\manager\models.py:185 .\manager\models.py:965
+msgid "internal id"
+msgstr "المعرف الداخلي"
+
+#: .\manager\models.py:64
+msgid "email"
+msgstr "البريد الإلكتروني"
+
+#: .\manager\models.py:65
+msgid "phone number"
+msgstr "رقم الهاتف"
+
+#: .\manager\models.py:67
+msgid "type"
+msgstr "النوع"
+
+#: .\manager\models.py:80
+msgid "date created"
+msgstr "تاريخ الإنشاء"
+
+#: .\manager\models.py:107 .\theme\templates\partials\sidebar.html:115
+msgid "Purchased"
+msgstr "تم الشراء"
+
+#: .\manager\models.py:108 .\theme\templates\vehicle_details.html:183
+msgid "Ready for Sale"
+msgstr "جاهز للبيع"
+
+#: .\manager\models.py:109 .\theme\templates\partials\sidebar.html:117
+msgid "Reserved"
+msgstr "محجوز"
+
+#: .\manager\models.py:110 .\theme\templates\partials\sidebar.html:118
+#: .\theme\templates\partials\table\vehicles_table.html:314
+#: .\theme\templates\partials\table\vehicles_table.html:317
+msgid "Sold"
+msgstr "تم البيع"
+
+#: .\manager\models.py:111 .\manager\models.py:936
+#: .\theme\templates\partials\sidebar.html:119
+#: .\theme\templates\vehicle_details.html:199
+msgid "Inactive"
+msgstr "غير نشط"
+
+#: .\manager\models.py:154 .\manager\models.py:940
+msgid "status"
+msgstr "الحالة"
+
+#: .\manager\models.py:160
+msgid "description"
+msgstr "الوصف"
+
+#: .\manager\models.py:163 .\manager\models.py:1223
+msgid "internal comments"
+msgstr "تعليقات داخلية"
+
+#: .\manager\models.py:180
+msgid "branch"
+msgstr "الفرع"
+
+#: .\manager\models.py:192
+msgid "chassis number (VIN)"
+msgstr "رقم الهيكل (VIN)"
+
+#: .\manager\models.py:200
+msgid "Enter a valid 17-character VIN (excluding I, O, and Q)."
+msgstr "أدخل رقم هيكل صالح مكون من 17 حرفًا (باستثناء I, O, و Q)."
+
+#: .\manager\models.py:208
+msgid "motor vehicle registration number"
+msgstr "رقم تسجيل المركبة"
+
+#: .\manager\models.py:264
+msgid "official license plate"
+msgstr "لوحة الترخيص الرسمية"
+
+#: .\manager\models.py:285
+msgid "Accident"
+msgstr "حادث"
+
+#: .\manager\models.py:286
+msgid "Damage"
+msgstr "تلف"
+
+#: .\manager\models.py:287
+msgid "Undamaged"
+msgstr "سليم"
+
+#: .\manager\models.py:323
+msgid "damage type"
+msgstr "نوع الضرر"
+
+#: .\manager\models.py:329
+msgid "first registration date"
+msgstr "تاريخ التسجيل الأول"
+
+#: .\manager\models.py:337
+msgid "year of construction"
+msgstr "سنة الصنع"
+
+#: .\manager\models.py:340
+msgid "kilometer"
+msgstr "الكيلومتر"
+
+#: .\manager\models.py:345
+msgid "buy price"
+msgstr "سعر الشراء"
+
+#: .\manager\models.py:347
+msgid "buy price taxes"
+msgstr "ضرائب سعر الشراء"
+
+#: .\manager\models.py:348
+msgid "buy date"
+msgstr "تاريخ الشراء"
+
+#: .\manager\models.py:349
+msgid "buy delivery/collection date"
+msgstr "تاريخ تسليم/استلام الشراء"
+
+#: .\manager\models.py:352 .\manager\models.py:969
+msgid "Cash"
+msgstr "نقدي"
+
+#: .\manager\models.py:353
+msgid "Bank Transfer"
+msgstr "حوالة بنكية"
+
+#: .\manager\models.py:354
+msgid "Credit Card"
+msgstr "بطاقة ائتمان"
+
+#: .\manager\models.py:355
+msgid "Debit Card"
+msgstr "بطاقة خصم"
+
+#: .\manager\models.py:356
+msgid "Check"
+msgstr "شيك"
+
+#: .\manager\models.py:357
+msgid "Financing/Loan"
+msgstr "تمويل/قرض"
+
+#: .\manager\models.py:358
+msgid "Lease"
+msgstr "تأجير"
+
+#: .\manager\models.py:359
+msgid "Trade-in"
+msgstr "مقايضة"
+
+#: .\manager\models.py:360
+msgid "Cryptocurrency"
+msgstr "عملة مشفرة"
+
+#: .\manager\models.py:361
+msgid "PayPal"
+msgstr "PayPal"
+
+#: .\manager\models.py:362
+msgid "Apple Pay"
+msgstr "Apple Pay"
+
+#: .\manager\models.py:363
+msgid "Google Pay"
+msgstr "Google Pay"
+
+#: .\manager\models.py:364
+msgid "Samsung Pay"
+msgstr "Samsung Pay"
+
+#: .\manager\models.py:365
+msgid "Venmo"
+msgstr "Venmo"
+
+#: .\manager\models.py:366
+msgid "Zelle"
+msgstr "Zelle"
+
+#: .\manager\models.py:367
+msgid "Wire Transfer"
+msgstr "تحويل مصرفي"
+
+#: .\manager\models.py:368
+msgid "Money Order"
+msgstr "أمر دفع"
+
+#: .\manager\models.py:369
+msgid "Cashier's Check"
+msgstr "شيك مصرفي"
+
+#: .\manager\models.py:370
+msgid "Certified Check"
+msgstr "شيك معتمد"
+
+#: .\manager\models.py:371
+msgid "Personal Check"
+msgstr "شيك شخصي"
+
+#: .\manager\models.py:372
+msgid "Business Check"
+msgstr "شيك تجاري"
+
+#: .\manager\models.py:373
+msgid "Cash Equivalent"
+msgstr "ما يعادل النقد"
+
+#: .\manager\models.py:374 .\manager\models.py:745 .\manager\models.py:761
+#: .\manager\models.py:779 .\manager\models.py:972
+msgid "Other"
+msgstr "أخرى"
+
+#: .\manager\models.py:378
+msgid "buy payment method"
+msgstr "طريقة دفع الشراء"
+
+#: .\manager\models.py:389
+msgid "seller"
+msgstr "البائع"
+
+#: .\manager\models.py:397
+msgid "buyer"
+msgstr "المشتري"
+
+#: .\manager\models.py:402
+msgid "sale price"
+msgstr "سعر البيع"
+
+#: .\manager\models.py:404
+msgid "sale price taxes"
+msgstr "ضرائب سعر البيع"
+
+#: .\manager\models.py:405
+msgid "sale date"
+msgstr "تاريخ البيع"
+
+#: .\manager\models.py:406
+msgid "sale delivery/collection date"
+msgstr "تاريخ تسليم/استلام البيع"
+
+#: .\manager\models.py:410
+msgid "sale payment method"
+msgstr "طريقة دفع البيع"
+
+#: .\manager\models.py:415 .\manager\models.py:420
+msgid "sale invoice number"
+msgstr "رقم فاتورة البيع"
+
+#: .\manager\models.py:431
+msgid "Sedan"
+msgstr "سيدان"
+
+#: .\manager\models.py:432
+msgid "SUV"
+msgstr "دفع رباعي"
+
+#: .\manager\models.py:433
+msgid "Hatchback"
+msgstr "هاتشباك"
+
+#: .\manager\models.py:434
+msgid "Coupe"
+msgstr "كوبيه"
+
+#: .\manager\models.py:435
+msgid "Convertible"
+msgstr "كابريوليه"
+
+#: .\manager\models.py:436
+msgid "Wagon"
+msgstr "عربة"
+
+#: .\manager\models.py:437
+msgid "Pickup Truck"
+msgstr "بيك أب"
+
+#: .\manager\models.py:438
+msgid "Van"
+msgstr "فان"
+
+#: .\manager\models.py:439
+msgid "Truck"
+msgstr "شاحنة"
+
+#: .\manager\models.py:440
+msgid "Motorcycle"
+msgstr "دراجة نارية"
+
+#: .\manager\models.py:441
+msgid "Bus"
+msgstr "حافلة"
+
+#: .\manager\models.py:442
+msgid "Trailer"
+msgstr "مقطورة"
+
+#: .\manager\models.py:443
+msgid "Heavy Truck"
+msgstr "شاحنة ثقيلة"
+
+#: .\manager\models.py:444
+msgid "Delivery Van"
+msgstr "فان توصيل"
+
+#: .\manager\models.py:445
+msgid "Taxi"
+msgstr "تاكسي"
+
+#: .\manager\models.py:446
+msgid "Limousine"
+msgstr "ليموزين"
+
+#: .\manager\models.py:450
+msgid "vehicle type"
+msgstr "نوع المركبة"
+
+#: .\manager\models.py:458
+msgid "Compact"
+msgstr "مدمج"
+
+#: .\manager\models.py:459
+msgid "Mid-Size"
+msgstr "متوسط الحجم"
+
+#: .\manager\models.py:460
+msgid "Full-Size"
+msgstr "كامل الحجم"
+
+#: .\manager\models.py:461
+msgid "Subcompact"
+msgstr "صغير"
+
+#: .\manager\models.py:462
+msgid "Luxury"
+msgstr "فاخر"
+
+#: .\manager\models.py:463
+msgid "Sports"
+msgstr "رياضي"
+
+#: .\manager\models.py:464
+msgid "Family"
+msgstr "عائلي"
+
+#: .\manager\models.py:465
+msgid "Commercial"
+msgstr "تجاري"
+
+#: .\manager\models.py:466
+msgid "Economy"
+msgstr "اقتصادي"
+
+#: .\manager\models.py:467
+msgid "Premium"
+msgstr "بريميوم"
+
+#: .\manager\models.py:468
+msgid "Performance"
+msgstr "أداء"
+
+#: .\manager\models.py:469
+msgid "Crossover"
+msgstr "كراس أوفر"
+
+#: .\manager\models.py:470
+msgid "Off-Road"
+msgstr "طرق وعرة"
+
+#: .\manager\models.py:471
+msgid "City Car"
+msgstr "سيارة مدينة"
+
+#: .\manager\models.py:472
+msgid "Executive"
+msgstr "تنفيذي"
+
+#: .\manager\models.py:476
+msgid "body type"
+msgstr "نوع الهيكل"
+
+#: .\manager\models.py:712
+msgid "manufacturer"
+msgstr "الشركة المصنعة"
+
+#: .\manager\models.py:720
+msgid "manufacturer model"
+msgstr "طراز الشركة المصنعة"
+
+#: .\manager\models.py:731
+msgid "White"
+msgstr "أبيض"
+
+#: .\manager\models.py:732
+msgid "Black"
+msgstr "أسود"
+
+#: .\manager\models.py:733
+msgid "Silver"
+msgstr "فضي"
+
+#: .\manager\models.py:734
+msgid "Gray"
+msgstr "رمادي"
+
+#: .\manager\models.py:735
+msgid "Red"
+msgstr "أحمر"
+
+#: .\manager\models.py:736
+msgid "Blue"
+msgstr "أزرق"
+
+#: .\manager\models.py:737
+msgid "Green"
+msgstr "أخضر"
+
+#: .\manager\models.py:738
+msgid "Yellow"
+msgstr "أصفر"
+
+#: .\manager\models.py:739
+msgid "Orange"
+msgstr "برتقالي"
+
+#: .\manager\models.py:740
+msgid "Brown"
+msgstr "بني"
+
+#: .\manager\models.py:741
+msgid "Beige"
+msgstr "بيج"
+
+#: .\manager\models.py:742
+msgid "Gold"
+msgstr "ذهبي"
+
+#: .\manager\models.py:743
+msgid "Purple"
+msgstr "بنفسجي"
+
+#: .\manager\models.py:744
+msgid "Pink"
+msgstr "وردي"
+
+#: .\manager\models.py:749
+msgid "color"
+msgstr "اللون"
+
+#: .\manager\models.py:756
+msgid "2 Doors"
+msgstr "2 باب"
+
+#: .\manager\models.py:757
+msgid "3 Doors"
+msgstr "3 أبواب"
+
+#: .\manager\models.py:758
+msgid "4 Doors"
+msgstr "4 أبواب"
+
+#: .\manager\models.py:759
+msgid "5 Doors"
+msgstr "5 أبواب"
+
+#: .\manager\models.py:760
+msgid "6 Doors"
+msgstr "6 أبواب"
+
+#: .\manager\models.py:765
+msgid "doors"
+msgstr "الأبواب"
+
+#: .\manager\models.py:771
+msgid "Gasoline/Petrol"
+msgstr "بنزين"
+
+#: .\manager\models.py:772
+msgid "Diesel"
+msgstr "ديزل"
+
+#: .\manager\models.py:773
+msgid "Hybrid"
+msgstr "هايبرد"
+
+#: .\manager\models.py:774
+msgid "Electric"
+msgstr "كهربائي"
+
+#: .\manager\models.py:775
+msgid "LPG (Liquid Petroleum Gas)"
+msgstr "غاز البترول المسال"
+
+#: .\manager\models.py:776
+msgid "CNG (Compressed Natural Gas)"
+msgstr "الغاز الطبيعي المضغوط"
+
+#: .\manager\models.py:777
+msgid "Ethanol"
+msgstr "إيثانول"
+
+#: .\manager\models.py:778
+msgid "Hydrogen"
+msgstr "هيدروجين"
+
+#: .\manager\models.py:783
+msgid "fuel type"
+msgstr "نوع الوقود"
+
+#: .\manager\models.py:789
+msgid "power (kW)"
+msgstr "القوة (كيلوواط)"
+
+#: .\manager\models.py:792
+msgid "image"
+msgstr "الصورة"
+
+#: .\manager\models.py:927
+msgid "Vehicle #{}"
+msgstr "المركبة #{}"
+
+#: .\manager\models.py:934 .\theme\templates\partials\sidebar.html:162
+#: .\theme\templates\partials\table\transactions_table.html:288
+#: .\theme\templates\transaction_details.html:175
+#: .\theme\templates\transaction_details.html:700
+#: .\theme\templates\vehicle_details.html:927
+msgid "Confirmed"
+msgstr "مؤكد"
+
+#: .\manager\models.py:935 .\theme\templates\partials\sidebar.html:163
+#: .\theme\templates\partials\table\transactions_table.html:294
+#: .\theme\templates\transaction_details.html:179
+#: .\theme\templates\transaction_details.html:706
+#: .\theme\templates\vehicle_details.html:933
+msgid "Review required"
+msgstr "يتطلب مراجعة"
+
+#: .\manager\models.py:951 .\theme\templates\add_new_transaction.html:110
+#: .\theme\templates\transaction_details.html:211
+#: .\theme\templates\transactions.html:269
+msgid "Vehicle"
+msgstr "المركبة"
+
+#: .\manager\models.py:970
+msgid "Volksbank"
+msgstr "فولكس بنك"
+
+#: .\manager\models.py:971
+msgid "Sparkasse"
+msgstr "سباركاسي"
+
+#: .\manager\models.py:975
+msgid "method"
+msgstr "الطريقة"
+
+#: .\manager\models.py:980
+msgid "date"
+msgstr "التاريخ"
+
+#: .\manager\models.py:982
+msgid "information"
+msgstr "المعلومات"
+
+#: .\manager\models.py:984
+msgid "amount"
+msgstr "المبلغ"
+
+#: .\manager\models.py:1169
+msgid "currency"
+msgstr "العملة"
+
+#: .\manager\models.py:1174
+msgid "from/to"
+msgstr "من/إلى"
+
+#: .\manager\models.py:1179
+msgid "date time"
+msgstr "التاريخ والوقت"
+
+#: .\manager\models.py:1183
+msgid "tax"
+msgstr "الضريبة"
+
+#: .\manager\models.py:1186
+msgid "Car Purchase"
+msgstr "شراء سيارة"
+
+#: .\manager\models.py:1187
+msgid "Advance Payment"
+msgstr "دفعة مقدمة"
+
+#: .\manager\models.py:1188
+msgid "Legal Costs"
+msgstr "التكاليف القانونية"
+
+#: .\manager\models.py:1189
+msgid "Car Sale"
+msgstr "بيع سيارة"
+
+#: .\manager\models.py:1190
+msgid "Bank"
+msgstr "بنك"
+
+#: .\manager\models.py:1191
+msgid "Contributions"
+msgstr "المساهمات"
+
+#: .\manager\models.py:1192
+msgid "Entertainment"
+msgstr "ترفيه"
+
+#: .\manager\models.py:1193
+msgid "Office"
+msgstr "مكتب"
+
+#: .\manager\models.py:1194
+msgid "Loan"
+msgstr "قرض"
+
+#: .\manager\models.py:1195
+msgid "Deposit"
+msgstr "إيداع"
+
+#: .\manager\models.py:1196
+msgid "Withdrawal"
+msgstr "سحب"
+
+#: .\manager\models.py:1197 .\theme\templates\partials\sidebar.html:83
+#: .\theme\templates\partials\sidebar.html:92
+#: .\theme\templates\partials\table\vehicles_table.html:4
+#: .\theme\templates\vehicles.html:8
+msgid "Vehicles"
+msgstr "المركبات"
+
+#: .\manager\models.py:1198
+msgid "Financing"
+msgstr "تمويل"
+
+#: .\manager\models.py:1199
+msgid "Court Costs"
+msgstr "تكاليف المحكمة"
+
+#: .\manager\models.py:1200
+msgid "Price Reduction"
+msgstr "تخفيض السعر"
+
+#: .\manager\models.py:1201
+msgid "Deposit Bond"
+msgstr "سند إيداع"
+
+#: .\manager\models.py:1202
+msgid "Wages Salaries"
+msgstr "الأجور والرواتب"
+
+#: .\manager\models.py:1203
+msgid "Rent Utilities"
+msgstr "الإيجار والمرافق"
+
+#: .\manager\models.py:1204
+msgid "Private Transfer"
+msgstr "تحويل خاص"
+
+#: .\manager\models.py:1205
+msgid "Commission"
+msgstr "عمولة"
+
+#: .\manager\models.py:1206
+msgid "Invoice"
+msgstr "فاتورة"
+
+#: .\manager\models.py:1207
+msgid "Donation"
+msgstr "تبرع"
+
+#: .\manager\models.py:1208
+msgid "Tax Consultant"
+msgstr "مستشار ضريبي"
+
+#: .\manager\models.py:1209
+msgid "Taxes"
+msgstr "الضرائب"
+
+#: .\manager\models.py:1210
+msgid "Phone Communication"
+msgstr "الاتصالات الهاتفية"
+
+#: .\manager\models.py:1211
+msgid "Insurance"
+msgstr "تأمين"
+
+#: .\manager\models.py:1212
+msgid "Advertising"
+msgstr "إعلان"
+
+#: .\manager\models.py:1213
+msgid "Other Fees"
+msgstr "رسوم أخرى"
+
+#: .\manager\models.py:1214
+msgid "Unknown"
+msgstr "غير معروف"
+
+#: .\manager\models.py:1217
+msgid "category"
+msgstr "الفئة"
+
+#: .\manager\models.py:1220
+msgid "subcategory"
+msgstr "الفئة الفرعية"
+
+#: .\manager\models.py:1353
+msgid "Transaction #{}"
+msgstr "المعاملة #{}"
+
+#: .\manager\views.py:3608
+msgid "You don't have permission to change this vehicle."
+msgstr "ليس لديك صلاحية لتغيير هذه المركبة."
+
+#: .\manager\views.py:3620
+msgid "Invalid status value."
+msgstr "قيمة حالة غير صالحة."
+
+#: .\manager\views.py:3626
+msgid "Complete all sale details before marking the vehicle as sold."
+msgstr "أكمل جميع تفاصيل البيع قبل وضع علامة على المركبة كمباعة."
+
+#: .\manager\views.py:3633
+#, python-format
+msgid "Vehicle status updated to %(status)s"
+msgstr "تم تحديث حالة المركبة إلى %(status)s"
+
+#: .\theme\templates\404.html:12
+msgid "404 Error Page"
+msgstr "صفحة خطأ 404"
+
+#: .\theme\templates\404.html:40
+msgid "ERROR"
+msgstr "خطأ"
+
+#: .\theme\templates\404.html:53
+msgid "We can't seem to find the page you are looking for!"
+msgstr "لا يمكننا العثور على الصفحة التي تبحث عنها!"
+
+#: .\theme\templates\404.html:60
+msgid "Back to Vehicles Page"
+msgstr "العودة إلى صفحة المركبات"
+
+#: .\theme\templates\404.html:67
+msgid "Back to login Page"
+msgstr "العودة إلى صفحة تسجيل الدخول"
+
+#: .\theme\templates\add_new_transaction.html:8
+msgid "Add new transaction"
+msgstr "إضافة معاملة جديدة"
+
+#: .\theme\templates\add_new_transaction.html:99
+#: .\theme\templates\partials\table\transactions_table.html:62
+#: .\theme\templates\transaction_details.html:199
+msgid "Transaction Details"
+msgstr "تفاصيل المعاملة"
+
+#: .\theme\templates\add_new_transaction.html:105
+#: .\theme\templates\transaction_details.html:206
+#: .\theme\templates\transaction_details.html:566
+#: .\theme\templates\transactions.html:248
+#: .\theme\templates\vehicle_details.html:793
+msgid "Category"
+msgstr "الفئة"
+
+#: .\theme\templates\add_new_transaction.html:108
+#: .\theme\templates\transaction_details.html:209
+#: .\theme\templates\transaction_details.html:576
+#: .\theme\templates\transactions.html:259
+#: .\theme\templates\vehicle_details.html:803
+msgid "Subcategory"
+msgstr "الفئة الفرعية"
+
+#: .\theme\templates\add_new_transaction.html:118
+#: .\theme\templates\add_new_vehicle.html:142
+#: .\theme\templates\transaction_details.html:219
+#: .\theme\templates\vehicle_details.html:247
+msgid "Usage details"
+msgstr "تفاصيل الاستخدام"
+
+#: .\theme\templates\add_new_transaction.html:124
+#: .\theme\templates\partials\table\transactions_table.html:57
+#: .\theme\templates\partials\table\transactions_table.html:142
+#: .\theme\templates\partials\table\vehicles_table.html:51
+#: .\theme\templates\transaction_details.html:225
+#: .\theme\templates\transaction_details.html:556
+#: .\theme\templates\vehicle_details.html:783
+msgid "Date"
+msgstr "التاريخ"
+
+#: .\theme\templates\add_new_transaction.html:126
+#: .\theme\templates\partials\table\transactions_table.html:80
+#: .\theme\templates\partials\table\transactions_table.html:172
+#: .\theme\templates\transaction_details.html:227
+#: .\theme\templates\transaction_details.html:586
+#: .\theme\templates\transactions.html:279
+#: .\theme\templates\vehicle_details.html:813
+msgid "Method"
+msgstr "الطريقة"
+
+#: .\theme\templates\add_new_transaction.html:128
+#: .\theme\templates\transaction_details.html:229
+msgid "From/To"
+msgstr "من/إلى"
+
+#: .\theme\templates\add_new_transaction.html:138
+#: .\theme\templates\transaction_details.html:240
+msgid "Price Breakdown"
+msgstr "تفصيل السعر"
+
+#: .\theme\templates\add_new_transaction.html:144
+#: .\theme\templates\transaction_details.html:246
+msgid "Net Price:"
+msgstr "السعر الصافي:"
+
+#: .\theme\templates\add_new_transaction.html:150
+msgid "Gross Price:"
+msgstr "السعر الإجمالي:"
+
+#: .\theme\templates\add_new_transaction.html:156
+#: .\theme\templates\transaction_details.html:258
+msgid "Total Amount"
+msgstr "المبلغ الإجمالي"
+
+#: .\theme\templates\add_new_transaction.html:162
+#: .\theme\templates\add_new_vehicle.html:207
+#: .\theme\templates\transaction_details.html:264
+#: .\theme\templates\vehicle_details.html:313
+msgid "Effective Tax Rate"
+msgstr "معدل الضريبة الفعلي"
+
+#: .\theme\templates\add_new_transaction.html:170
+#: .\theme\templates\add_new_vehicle.html:216
+#: .\theme\templates\vehicle_details.html:321
+msgid "Purchase details"
+msgstr "تفاصيل الشراء"
+
+#: .\theme\templates\add_new_transaction.html:176
+#: .\theme\templates\partials\table\transactions_table.html:132
+#: .\theme\templates\transaction_details.html:278
+#: .\theme\templates\transaction_details.html:546
+#: .\theme\templates\vehicle_details.html:773
+msgid "Amount"
+msgstr "المبلغ"
+
+#: .\theme\templates\add_new_transaction.html:179
+#: .\theme\templates\transaction_details.html:281
+msgid "Tax"
+msgstr "الضريبة"
+
+#: .\theme\templates\add_new_transaction.html:182
+#: .\theme\templates\transaction_details.html:284
+#: .\theme\templates\transactions.html:237
+msgid "Currency"
+msgstr "العملة"
+
+#: .\theme\templates\add_new_transaction.html:269
+#: .\theme\templates\add_new_vehicle.html:341
+#: .\theme\templates\transaction_details.html:363
+#: .\theme\templates\vehicle_details.html:669
+msgid "Additional Information"
+msgstr "معلومات إضافية"
+
+#: .\theme\templates\add_new_transaction.html:276
+#: .\theme\templates\add_new_vehicle.html:348
+#: .\theme\templates\transaction_details.html:370
+#: .\theme\templates\vehicle_details.html:676
+msgid "Description"
+msgstr "الوصف"
+
+#: .\theme\templates\add_new_transaction.html:281
+#: .\theme\templates\add_new_vehicle.html:353
+#: .\theme\templates\transaction_details.html:375
+#: .\theme\templates\vehicle_details.html:681
+msgid "Internal Comments"
+msgstr "تعليقات داخلية"
+
+#: .\theme\templates\add_new_transaction.html:292
+#: .\theme\templates\add_new_vehicle.html:364
+#: .\theme\templates\business_settings.html:684
+msgid "Add"
+msgstr "إضافة"
+
+#: .\theme\templates\add_new_transaction.html:441
+#: .\theme\templates\transaction_details.html:1076
+#: .\theme\templates\transactions.html:261
+msgid "All Subcategories"
+msgstr "جميع الفئات الفرعية"
+
+#: .\theme\templates\add_new_vehicle.html:8
+msgid "Add new vehicle"
+msgstr "إضافة مركبة جديدة"
+
+#: .\theme\templates\add_new_vehicle.html:99
+#: .\theme\templates\vehicle_details.html:143
+msgid "Current information"
+msgstr "المعلومات الحالية"
+
+#: .\theme\templates\add_new_vehicle.html:105
+#: .\theme\templates\vehicle_details.html:149
+#: .\theme\templates\vehicles.html:279
+msgid "Branch"
+msgstr "الفرع"
+
+#: .\theme\templates\add_new_vehicle.html:114
+#: .\theme\templates\partials\table\vehicles_table.html:58
+#: .\theme\templates\transactions.html:221
+#: .\theme\templates\vehicle_details.html:219
+#: .\theme\templates\vehicles.html:244
+msgid "Vehicle Details"
+msgstr "تفاصيل المركبة"
+
+#: .\theme\templates\add_new_vehicle.html:120
+#: .\theme\templates\vehicle_details.html:225
+#: .\theme\templates\vehicles.html:290
+msgid "Vehicle Type"
+msgstr "نوع المركبة"
+
+#: .\theme\templates\add_new_vehicle.html:122
+#: .\theme\templates\vehicle_details.html:227
+#: .\theme\templates\vehicles.html:301
+msgid "Body Type"
+msgstr "نوع الهيكل"
+
+#: .\theme\templates\add_new_vehicle.html:124
+#: .\theme\templates\vehicles.html:260
+msgid "Manufacturer"
+msgstr "الشركة المصنعة"
+
+#: .\theme\templates\add_new_vehicle.html:127
+#: .\theme\templates\vehicle_details.html:232
+#: .\theme\templates\vehicles.html:271
+msgid "Model"
+msgstr "الموديل"
+
+#: .\theme\templates\add_new_vehicle.html:129
+#: .\theme\templates\vehicle_details.html:234
+#: .\theme\templates\vehicles.html:334
+msgid "Color"
+msgstr "اللون"
+
+#: .\theme\templates\add_new_vehicle.html:131
+#: .\theme\templates\vehicle_details.html:236
+#: .\theme\templates\vehicles.html:312
+msgid "Doors"
+msgstr "الأبواب"
+
+#: .\theme\templates\add_new_vehicle.html:133
+#: .\theme\templates\vehicle_details.html:238
+#: .\theme\templates\vehicles.html:323
+msgid "Fuel Type"
+msgstr "نوع الوقود"
+
+#: .\theme\templates\add_new_vehicle.html:135
+#: .\theme\templates\vehicle_details.html:240
+msgid "Power (KW)"
+msgstr "القوة (كيلوواط)"
+
+#: .\theme\templates\add_new_vehicle.html:150
+#: .\theme\templates\vehicle_details.html:255
+#: .\theme\templates\vehicles.html:344
+msgid "Damage Type"
+msgstr "نوع الضرر"
+
+#: .\theme\templates\add_new_vehicle.html:152
+#: .\theme\templates\vehicle_details.html:257
+msgid "First Registration Date"
+msgstr "تاريخ التسجيل الأول"
+
+#: .\theme\templates\add_new_vehicle.html:154
+#: .\theme\templates\vehicle_details.html:259
+msgid "Year of Construction"
+msgstr "سنة الصنع"
+
+#: .\theme\templates\add_new_vehicle.html:156
+#: .\theme\templates\vehicle_details.html:261
+msgid "Kilometer"
+msgstr "الكيلومتر"
+
+#: .\theme\templates\add_new_vehicle.html:163
+#: .\theme\templates\vehicle_details.html:268
+msgid "Official details"
+msgstr "التفاصيل الرسمية"
+
+#: .\theme\templates\add_new_vehicle.html:169
+#: .\theme\templates\vehicle_details.html:274
+msgid "Chassis Number (VIN)"
+msgstr "رقم الهيكل (VIN)"
+
+#: .\theme\templates\add_new_vehicle.html:171
+#: .\theme\templates\vehicle_details.html:276
+msgid "Motor Vehicle Registration Number"
+msgstr "رقم تسجيل المركبة"
+
+#: .\theme\templates\add_new_vehicle.html:173
+#: .\theme\templates\vehicle_details.html:278
+msgid "Official License Plate"
+msgstr "لوحة الترخيص الرسمية"
+
+#: .\theme\templates\add_new_vehicle.html:183
+#: .\theme\templates\vehicle_details.html:289
+msgid "Price details"
+msgstr "تفاصيل السعر"
+
+#: .\theme\templates\add_new_vehicle.html:189
+#: .\theme\templates\vehicle_details.html:295
+msgid "Net Price"
+msgstr "السعر الصافي"
+
+#: .\theme\templates\add_new_vehicle.html:195
+#: .\theme\templates\vehicle_details.html:301
+msgid "Tax Amount"
+msgstr "مبلغ الضريبة"
+
+#: .\theme\templates\add_new_vehicle.html:201
+#: .\theme\templates\vehicle_details.html:307
+msgid "Gross Price"
+msgstr "السعر الإجمالي"
+
+#: .\theme\templates\add_new_vehicle.html:222
+#: .\theme\templates\vehicle_details.html:327
+msgid "Purchase Price"
+msgstr "سعر الشراء"
+
+#: .\theme\templates\add_new_vehicle.html:225
+msgid "Purchase Price Taxes"
+msgstr "ضرائب سعر الشراء"
+
+#: .\theme\templates\add_new_vehicle.html:228
+#: .\theme\templates\vehicle_details.html:333
+msgid "Purchase Date"
+msgstr "تاريخ الشراء"
+
+#: .\theme\templates\add_new_vehicle.html:231
+#: .\theme\templates\vehicle_details.html:336
+msgid "Purchase Delivery/Collection Date"
+msgstr "تاريخ تسليم/استلام الشراء"
+
+#: .\theme\templates\add_new_vehicle.html:234
+#: .\theme\templates\vehicle_details.html:339
+msgid "Purchase Payment Method"
+msgstr "طريقة دفع الشراء"
+
+#: .\theme\templates\add_new_vehicle.html:239
+#: .\theme\templates\vehicle_details.html:344
+msgid "Seller"
+msgstr "البائع"
+
+#: .\theme\templates\add_new_vehicle.html:251
+#: .\theme\templates\vehicle_details.html:356
+msgid "Select Seller"
+msgstr "اختر البائع"
+
+#: .\theme\templates\add_new_vehicle.html:271
+#: .\theme\templates\vehicle_details.html:376
+msgid "Add New"
+msgstr "إضافة جديد"
+
+#: .\theme\templates\add_new_vehicle.html:316
+#: .\theme\templates\add_new_vehicle.html:328
+#: .\theme\templates\vehicle_details.html:630
+#: .\theme\templates\vehicle_details.html:649
+msgid "Image"
+msgstr "الصورة"
+
+#: .\theme\templates\add_new_vehicle.html:323
+#: .\theme\templates\vehicle_details.html:637
+msgid "Upload Image"
+msgstr "رفع صورة"
+
+#: .\theme\templates\add_new_vehicle.html:328
+#: .\theme\templates\vehicle_details.html:649
+msgid "not uploaded because of error."
+msgstr "لم يتم الرفع بسبب خطأ."
+
+#: .\theme\templates\admin_change_password.html:11
+#: .\theme\templates\admin_change_password.html:40
+msgid "Admin change user password"
+msgstr "المشرف يغير كلمة مرور المستخدم"
+
+#: .\theme\templates\admin_change_password.html:43
+msgid "change the password of this user to:"
+msgstr "تغيير كلمة مرور هذا المستخدم إلى:"
+
+#: .\theme\templates\admin_change_password.html:90
+#: .\theme\templates\employee_login.html:172
+#: .\theme\templates\manager_login.html:189
+#: .\theme\templates\new_password.html:157
+msgid "Password"
+msgstr "كلمة المرور"
+
+#: .\theme\templates\admin_change_password.html:97
+#: .\theme\templates\admin_change_password.html:151
+#: .\theme\templates\new_password.html:164
+msgid "Enter your password"
+msgstr "أدخل كلمة المرور"
+
+#: .\theme\templates\admin_change_password.html:144
+#: .\theme\templates\new_password.html:211
+msgid "Confirm Password"
+msgstr "تأكيد كلمة المرور"
+
+#: .\theme\templates\admin_change_password.html:239
+msgid "Change password for this user"
+msgstr "تغيير كلمة المرور لهذا المستخدم"
+
+#: .\theme\templates\business_settings.html:8
+msgid "Business Settings"
+msgstr "إعدادات العمل"
+
+#: .\theme\templates\business_settings.html:39
+msgid "Edit Business details"
+msgstr "تحرير تفاصيل العمل"
+
+#: .\theme\templates\business_settings.html:158
+#: .\theme\templates\layout.html:12
+msgid "Business Name"
+msgstr "اسم العمل"
+
+#: .\theme\templates\business_settings.html:338
+msgid "Branch name field cannot be empty"
+msgstr "حقل اسم الفرع لا يمكن أن يكون فارغًا"
+
+#: .\theme\templates\business_settings.html:421
+msgid "Active"
+msgstr "نشط"
+
+#: .\theme\templates\business_settings.html:485
+msgid "Update"
+msgstr "تحديث"
+
+#: .\theme\templates\business_settings.html:522
+msgid "Add New Branch"
+msgstr "إضافة فرع جديد"
+
+#: .\theme\templates\business_settings.html:608
+msgid "Branch Name"
+msgstr "اسم الفرع"
+
+#: .\theme\templates\business_settings.html:644
+msgid "Branch Address"
+msgstr "عنوان الفرع"
+
+#: .\theme\templates\employee_login.html:11
+#: .\theme\templates\employee_login.html:64
+msgid "Employee Log In"
+msgstr "تسجيل دخول الموظف"
+
+#: .\theme\templates\employee_login.html:53
+#: .\theme\templates\manager_login.html:53
+msgid "Back to user choice"
+msgstr "العودة إلى اختيار المستخدم"
+
+#: .\theme\templates\employee_login.html:67
+msgid "Enter your username and password to Log In!"
+msgstr "أدخل اسم المستخدم وكلمة المرور لتسجيل الدخول!"
+
+#: .\theme\templates\employee_login.html:157
+#: .\theme\templates\manager_login.html:159
+#: .\theme\templates\reset_email.html:157
+#: .\theme\templates\reset_password.html:157
+#: .\theme\templates\users_management.html:421
+#: .\theme\templates\users_management.html:483
+msgid "Username"
+msgstr "اسم المستخدم"
+
+#: .\theme\templates\employee_login.html:267
+#: .\theme\templates\manager_login.html:294
+msgid "Sign In"
+msgstr "تسجيل الدخول"
+
+#: .\theme\templates\login.html:11
+msgid "Login"
+msgstr "تسجيل الدخول"
+
+#: .\theme\templates\login.html:117
+msgid "Log In"
+msgstr "تسجيل الدخول"
+
+#: .\theme\templates\login.html:120
+msgid "Choose what type of user you are."
+msgstr "اختر نوع المستخدم الذي أنت عليه."
+
+#: .\theme\templates\login.html:132
+msgid "Employee"
+msgstr "موظف"
+
+#: .\theme\templates\login.html:145
+msgid "Manager"
+msgstr "مدير"
+
+#: .\theme\templates\manager_login.html:11
+#: .\theme\templates\manager_login.html:64
+msgid "Manager Log In"
+msgstr "تسجيل دخول المدير"
+
+#: .\theme\templates\manager_login.html:67
+msgid "Enter your email OR username, AND your password to Log In!"
+msgstr "أدخل بريدك الإلكتروني أو اسم المستخدم، وكلمة المرور لتسجيل الدخول!"
+
+#: .\theme\templates\manager_login.html:174
+#: .\theme\templates\reset_password.html:172
+msgid "Email"
+msgstr "البريد الإلكتروني"
+
+#: .\theme\templates\manager_login.html:281
+msgid "Forgot password?"
+msgstr "نسيت كلمة المرور؟"
+
+#: .\theme\templates\manager_login.html:286
+msgid "Lost access to your email?"
+msgstr "فقدت الوصول إلى بريدك الإلكتروني؟"
+
+#: .\theme\templates\new_backup_email_address.html:11
+#: .\theme\templates\new_backup_email_address.html:64
+#: .\theme\templates\new_email_address.html:11
+#: .\theme\templates\new_email_address.html:64
+msgid "Change email"
+msgstr "تغيير البريد الإلكتروني"
+
+#: .\theme\templates\new_backup_email_address.html:53
+#: .\theme\templates\new_email_address.html:53
+#: .\theme\templates\new_password.html:53 .\theme\templates\reset_email.html:53
+#: .\theme\templates\reset_password.html:53
+msgid "Back to manager login"
+msgstr "العودة إلى تسجيل دخول المدير"
+
+#: .\theme\templates\new_backup_email_address.html:67
+msgid ""
+"Enter your new desired backup email to change your backup email address!"
+msgstr "أدخل بريدك الإلكتروني الاحتياطي الجديد المطلوب لتغيير عنوان بريدك الإلكتروني الاحتياطي!"
+
+#: .\theme\templates\new_backup_email_address.html:157
+msgid "New backup email address"
+msgstr "عنوان البريد الإلكتروني الاحتياطي الجديد"
+
+#: .\theme\templates\new_backup_email_address.html:163
+msgid "Enter your new backup email address"
+msgstr "أدخل عنوان بريدك الإلكتروني الاحتياطي الجديد"
+
+#: .\theme\templates\new_backup_email_address.html:172
+#: .\theme\templates\new_email_address.html:172
+#: .\theme\templates\reset_password.html:228
+msgid "Send Verification email"
+msgstr "إرسال بريد التحقق"
+
+#: .\theme\templates\new_email_address.html:67
+msgid "Enter your new desired email to change your email address!"
+msgstr "أدخل بريدك الإلكتروني الجديد المطلوب لتغيير عنوان بريدك الإلكتروني!"
+
+#: .\theme\templates\new_email_address.html:157
+msgid "New email address"
+msgstr "عنوان البريد الإلكتروني الجديد"
+
+#: .\theme\templates\new_email_address.html:163
+#: .\theme\templates\reset_email.html:224
+msgid "Enter your new email address"
+msgstr "أدخل عنوان بريدك الإلكتروني الجديد"
+
+#: .\theme\templates\new_password.html:11
+#: .\theme\templates\new_password.html:64
+#: .\theme\templates\reset_password.html:11
+#: .\theme\templates\reset_password.html:64
+msgid "Password Reset"
+msgstr "إعادة تعيين كلمة المرور"
+
+#: .\theme\templates\new_password.html:67
+msgid "Enter your new password below to reset your password."
+msgstr "أدخل كلمة المرور الجديدة أدناه لإعادة تعيين كلمة المرور."
+
+#: .\theme\templates\new_password.html:306
+msgid "Change Password"
+msgstr "تغيير كلمة المرور"
+
+#: .\theme\templates\partials\form_field.html:19
+#, python-format
+msgid "Select %(label)s"
+msgstr "اختر %(label)s"
+
+#: .\theme\templates\partials\form_field.html:54
+#: .\theme\templates\partials\form_field.html:86
+msgid "Select date"
+msgstr "اختر التاريخ"
+
+#: .\theme\templates\partials\form_field.html:496
+msgid "Enter number"
+msgstr "أدخل الرقم"
+
+#: .\theme\templates\partials\header.html:701
+#: .\theme\templates\users_management.html:8
+msgid "Users Management"
+msgstr "إدارة المستخدمين"
+
+#: .\theme\templates\partials\header.html:724
+msgid "Business settings"
+msgstr "إعدادات العمل"
+
+#: .\theme\templates\partials\header.html:749
+msgid "Log Out"
+msgstr "تسجيل الخروج"
+
+#: .\theme\templates\partials\sidebar.html:60
+msgid "MENU"
+msgstr "القائمة"
+
+#: .\theme\templates\partials\sidebar.html:116
+msgid "Ready for sale"
+msgstr "جاهز للبيع"
+
+#: .\theme\templates\partials\sidebar.html:131
+#: .\theme\templates\partials\sidebar.html:140
+#: .\theme\templates\partials\table\transactions_table.html:10
+#: .\theme\templates\transaction_details.html:477
+#: .\theme\templates\transactions.html:8
+msgid "Transactions"
+msgstr "المعاملات"
+
+#: .\theme\templates\partials\table\transactions_table.html:10
+#: .\theme\templates\partials\table\vehicles_table.html:4
+msgid "showing"
+msgstr "عرض"
+
+#: .\theme\templates\partials\table\transactions_table.html:10
+#: .\theme\templates\partials\table\vehicles_table.html:4
+msgid "results"
+msgstr "نتيجة"
+
+#: .\theme\templates\partials\table\transactions_table.html:25
+#: .\theme\templates\partials\table\vehicles_table.html:16
+msgid "Sort by"
+msgstr "ترتيب حسب"
+
+#: .\theme\templates\partials\table\transactions_table.html:44
+#: .\theme\templates\partials\table\vehicles_table.html:35
+msgid "Alphabetical"
+msgstr "أبجدي"
+
+#: .\theme\templates\partials\table\transactions_table.html:45
+msgid "Category (A-Z)"
+msgstr "الفئة (أ-ي)"
+
+#: .\theme\templates\partials\table\transactions_table.html:46
+msgid "Category (Z-A)"
+msgstr "الفئة (ي-أ)"
+
+#: .\theme\templates\partials\table\transactions_table.html:47
+msgid "Subcategory (A-Z)"
+msgstr "الفئة الفرعية (أ-ي)"
+
+#: .\theme\templates\partials\table\transactions_table.html:48
+msgid "Subcategory (Z-A)"
+msgstr "الفئة الفرعية (ي-أ)"
+
+#: .\theme\templates\partials\table\transactions_table.html:51
+#: .\theme\templates\partials\table\vehicles_table.html:42
+msgid "Numeric"
+msgstr "رقمي"
+
+#: .\theme\templates\partials\table\transactions_table.html:52
+msgid "Amount (Low-High)"
+msgstr "المبلغ (منخفض-مرتفع)"
+
+#: .\theme\templates\partials\table\transactions_table.html:53
+msgid "Amount (High-Low)"
+msgstr "المبلغ (مرتفع-منخفض)"
+
+#: .\theme\templates\partials\table\transactions_table.html:58
+msgid "Date (Oldest)"
+msgstr "التاريخ (الأقدم)"
+
+#: .\theme\templates\partials\table\transactions_table.html:59
+msgid "Date (Newest)"
+msgstr "التاريخ (الأحدث)"
+
+#: .\theme\templates\partials\table\transactions_table.html:63
+msgid "Method (A-Z)"
+msgstr "الطريقة (أ-ي)"
+
+#: .\theme\templates\partials\table\transactions_table.html:64
+msgid "Method (Z-A)"
+msgstr "الطريقة (ي-أ)"
+
+#: .\theme\templates\partials\table\transactions_table.html:65
+msgid "Vehicle (A-Z)"
+msgstr "المركبة (أ-ي)"
+
+#: .\theme\templates\partials\table\transactions_table.html:66
+msgid "Vehicle (Z-A)"
+msgstr "المركبة (ي-أ)"
+
+#: .\theme\templates\partials\table\transactions_table.html:67
+#: .\theme\templates\partials\table\vehicles_table.html:80
+msgid "Internal ID (Low-High)"
+msgstr "المعرف الداخلي (منخفض-مرتفع)"
+
+#: .\theme\templates\partials\table\transactions_table.html:68
+#: .\theme\templates\partials\table\vehicles_table.html:81
+msgid "Internal ID (High-Low)"
+msgstr "المعرف الداخلي (مرتفع-منخفض)"
+
+#: .\theme\templates\partials\table\transactions_table.html:69
+#: .\theme\templates\partials\table\vehicles_table.html:82
+msgid "Status (A-Z)"
+msgstr "الحالة (أ-ي)"
+
+#: .\theme\templates\partials\table\transactions_table.html:70
+#: .\theme\templates\partials\table\vehicles_table.html:83
+msgid "Status (Z-A)"
+msgstr "الحالة (ي-أ)"
+
+#: .\theme\templates\partials\table\transactions_table.html:79
+msgid "Upload Transactions from StarMoney"
+msgstr "تحميل المعاملات من StarMoney"
+
+#: .\theme\templates\partials\table\transactions_table.html:90
+msgid "Add new (quick)"
+msgstr "إضافة جديد (سريع)"
+
+#: .\theme\templates\partials\table\transactions_table.html:105
+msgid "Add new (manual)"
+msgstr "إضافة جديد (يدوي)"
+
+#: .\theme\templates\partials\table\transactions_table.html:122
+#: .\theme\templates\transaction_details.html:536
+#: .\theme\templates\vehicle_details.html:763
+msgid "Transaction"
+msgstr "المعاملة"
+
+#: .\theme\templates\partials\table\transactions_table.html:182
+#: .\theme\templates\transaction_details.html:162
+#: .\theme\templates\transaction_details.html:168
+#: .\theme\templates\transaction_details.html:596
+#: .\theme\templates\transactions.html:226
+#: .\theme\templates\vehicle_details.html:153
+#: .\theme\templates\vehicle_details.html:823
+#: .\theme\templates\vehicles.html:249
+msgid "Status"
+msgstr "الحالة"
+
+#: .\theme\templates\partials\table\transactions_table.html:193
+#: .\theme\templates\transaction_details.html:607
+#: .\theme\templates\vehicle_details.html:834
+msgid "Edit"
+msgstr "تحرير"
+
+#: .\theme\templates\partials\table\transactions_table.html:204
+msgid "pdf"
+msgstr "pdf"
+
+#: .\theme\templates\partials\table\transactions_table.html:215
+#: .\theme\templates\transaction_details.html:629
+#: .\theme\templates\vehicle_details.html:856
+msgid "Action"
+msgstr "الإجراء"
+
+#: .\theme\templates\partials\table\transactions_table.html:237
+#: .\theme\templates\partials\table\vehicles_table.html:132
+#: .\theme\templates\transaction_details.html:651
+#: .\theme\templates\vehicle_details.html:878
+msgid "Internal Id:"
+msgstr "المعرف الداخلي:"
+
+#: .\theme\templates\partials\table\transactions_table.html:240
+#: .\theme\templates\transaction_details.html:653
+#: .\theme\templates\vehicle_details.html:880
+msgid "Vehicle:"
+msgstr "المركبة:"
+
+#: .\theme\templates\partials\table\transactions_table.html:306
+#: .\theme\templates\transaction_details.html:187
+#: .\theme\templates\transaction_details.html:718
+#: .\theme\templates\vehicle_details.html:204
+#: .\theme\templates\vehicle_details.html:945
+msgid "Not specified"
+msgstr "غير محدد"
+
+#: .\theme\templates\partials\table\transactions_table.html:316
+#: .\theme\templates\transaction_details.html:728
+#: .\theme\templates\vehicle_details.html:955
+msgid "Edit transaction details"
+msgstr "تحرير تفاصيل المعاملة"
+
+#: .\theme\templates\partials\table\transactions_table.html:331
+#: .\theme\templates\transaction_details.html:743
+#: .\theme\templates\vehicle_details.html:399
+#: .\theme\templates\vehicle_details.html:416
+#: .\theme\templates\vehicle_details.html:525
+#: .\theme\templates\vehicle_details.html:542
+#: .\theme\templates\vehicle_details.html:970
+msgid "Generate Contract"
+msgstr "إنشاء عقد"
+
+#: .\theme\templates\partials\table\transactions_table.html:339
+#: .\theme\templates\transaction_details.html:751
+#: .\theme\templates\vehicle_details.html:978
+msgid "Complete all sale details including buyer to generate contract"
+msgstr "أكمل جميع تفاصيل البيع بما في ذلك المشتري لإنشاء العقد"
+
+#: .\theme\templates\partials\table\transactions_table.html:356
+#: .\theme\templates\partials\table\transactions_table.html:386
+#: .\theme\templates\partials\table\transactions_table.html:407
+#: .\theme\templates\transaction_details.html:768
+#: .\theme\templates\transaction_details.html:798
+#: .\theme\templates\transaction_details.html:819
+#: .\theme\templates\vehicle_details.html:995
+#: .\theme\templates\vehicle_details.html:1025
+#: .\theme\templates\vehicle_details.html:1046
+msgid "Activate Transaction"
+msgstr "تفعيل المعاملة"
+
+#: .\theme\templates\partials\table\transactions_table.html:391
+#: .\theme\templates\transaction_details.html:803
+#: .\theme\templates\vehicle_details.html:1030
+msgid "Are you sure you want to activate"
+msgstr "هل أنت متأكد أنك تريد تفعيل"
+
+#: .\theme\templates\partials\table\transactions_table.html:393
+#: .\theme\templates\partials\table\transactions_table.html:456
+#: .\theme\templates\transaction_details.html:805
+#: .\theme\templates\transaction_details.html:868
+#: .\theme\templates\vehicle_details.html:1032
+#: .\theme\templates\vehicle_details.html:1095
+msgid "This will make the Transaction"
+msgstr "هذا سيجعل المعاملة"
+
+#: .\theme\templates\partials\table\transactions_table.html:393
+#: .\theme\templates\transaction_details.html:805
+#: .\theme\templates\vehicle_details.html:1032
+msgid "active"
+msgstr "نشطة"
+
+#: .\theme\templates\partials\table\transactions_table.html:393
+#: .\theme\templates\transaction_details.html:805
+#: .\theme\templates\vehicle_details.html:1032
+msgid "and it will be available in the inventory."
+msgstr "وستكون متاحة في المخزون."
+
+#: .\theme\templates\partials\table\transactions_table.html:395
+#: .\theme\templates\transaction_details.html:807
+#: .\theme\templates\vehicle_details.html:1034
+msgid "Note:"
+msgstr "ملاحظة:"
+
+#: .\theme\templates\partials\table\transactions_table.html:395
+#: .\theme\templates\transaction_details.html:807
+#: .\theme\templates\vehicle_details.html:1034
+msgid ""
+"If any of the unique identifiers (chassis number, registration number, or "
+"license plate) are already used by another active transaction, the "
+"activation will fail."
+msgstr "إذا كان أي من المعرفات الفريدة (رقم الهيكل، رقم التسجيل، أو لوحة الترخيص) مستخدم بالفعل في معاملة نشطة أخرى، فسيفشل التفعيل."
+
+#: .\theme\templates\partials\table\transactions_table.html:403
+#: .\theme\templates\partials\table\transactions_table.html:464
+#: .\theme\templates\transaction_details.html:815
+#: .\theme\templates\transaction_details.html:876
+#: .\theme\templates\vehicle_details.html:1042
+#: .\theme\templates\vehicle_details.html:1103
+msgid "Cancel"
+msgstr "إلغاء"
+
+#: .\theme\templates\partials\table\transactions_table.html:419
+#: .\theme\templates\partials\table\transactions_table.html:449
+#: .\theme\templates\partials\table\transactions_table.html:468
+#: .\theme\templates\transaction_details.html:831
+#: .\theme\templates\transaction_details.html:861
+#: .\theme\templates\transaction_details.html:880
+#: .\theme\templates\vehicle_details.html:1058
+#: .\theme\templates\vehicle_details.html:1088
+#: .\theme\templates\vehicle_details.html:1107
+msgid "Delete Transaction"
+msgstr "حذف المعاملة"
+
+#: .\theme\templates\partials\table\transactions_table.html:454
+#: .\theme\templates\transaction_details.html:866
+#: .\theme\templates\vehicle_details.html:1093
+msgid "Are you sure you want to delete"
+msgstr "هل أنت متأكد أنك تريد حذف"
+
+#: .\theme\templates\partials\table\transactions_table.html:456
+#: .\theme\templates\transaction_details.html:868
+#: .\theme\templates\vehicle_details.html:1095
+msgid "inactive"
+msgstr "غير نشط"
+
+#: .\theme\templates\partials\table\transactions_table.html:456
+#: .\theme\templates\transaction_details.html:868
+#: .\theme\templates\vehicle_details.html:1095
+msgid "and it will no longer show in the active inventory."
+msgstr "ولن تظهر بعد الآن في المخزون النشط."
+
+#: .\theme\templates\partials\table\transactions_table.html:489
+#: .\theme\templates\partials\table\vehicles_table.html:330
+msgid "Page"
+msgstr "الصفحة"
+
+#: .\theme\templates\partials\table\transactions_table.html:489
+#: .\theme\templates\partials\table\vehicles_table.html:330
+msgid "of"
+msgstr "من"
+
+#: .\theme\templates\partials\table\transactions_table.html:495
+#: .\theme\templates\partials\table\transactions_table.html:500
+#: .\theme\templates\partials\table\vehicles_table.html:335
+#: .\theme\templates\partials\table\vehicles_table.html:340
+msgid "Previous"
+msgstr "السابق"
+
+#: .\theme\templates\partials\table\transactions_table.html:506
+#: .\theme\templates\partials\table\transactions_table.html:511
+#: .\theme\templates\partials\table\vehicles_table.html:346
+#: .\theme\templates\partials\table\vehicles_table.html:351
+msgid "Next"
+msgstr "التالي"
+
+#: .\theme\templates\partials\table\vehicles_table.html:36
+msgid "Manufacturer (A-Z)"
+msgstr "الشركة المصنعة (أ-ي)"
+
+#: .\theme\templates\partials\table\vehicles_table.html:37
+msgid "Manufacturer (Z-A)"
+msgstr "الشركة المصنعة (ي-أ)"
+
+#: .\theme\templates\partials\table\vehicles_table.html:38
+msgid "Model (A-Z)"
+msgstr "الموديل (أ-ي)"
+
+#: .\theme\templates\partials\table\vehicles_table.html:39
+msgid "Model (Z-A)"
+msgstr "الموديل (ي-أ)"
+
+#: .\theme\templates\partials\table\vehicles_table.html:43
+msgid "Buy Price (Low-High)"
+msgstr "سعر الشراء (منخفض-مرتفع)"
+
+#: .\theme\templates\partials\table\vehicles_table.html:44
+msgid "Buy Price (High-Low)"
+msgstr "سعر الشراء (مرتفع-منخفض)"
+
+#: .\theme\templates\partials\table\vehicles_table.html:45
+msgid "Sale Price (Low-High)"
+msgstr "سعر البيع (منخفض-مرتفع)"
+
+#: .\theme\templates\partials\table\vehicles_table.html:46
+msgid "Sale Price (High-Low)"
+msgstr "سعر البيع (مرتفع-منخفض)"
+
+#: .\theme\templates\partials\table\vehicles_table.html:47
+msgid "Kilometer (Low-High)"
+msgstr "الكيلومتر (منخفض-مرتفع)"
+
+#: .\theme\templates\partials\table\vehicles_table.html:48
+msgid "Kilometer (High-Low)"
+msgstr "الكيلومتر (مرتفع-منخفض)"
+
+#: .\theme\templates\partials\table\vehicles_table.html:52
+msgid "Buy Date (Oldest)"
+msgstr "تاريخ الشراء (الأقدم)"
+
+#: .\theme\templates\partials\table\vehicles_table.html:53
+msgid "Buy Date (Newest)"
+msgstr "تاريخ الشراء (الأحدث)"
+
+#: .\theme\templates\partials\table\vehicles_table.html:54
+msgid "Sale Date (Oldest)"
+msgstr "تاريخ البيع (الأقدم)"
+
+#: .\theme\templates\partials\table\vehicles_table.html:55
+msgid "Sale Date (Newest)"
+msgstr "تاريخ البيع (الأحدث)"
+
+#: .\theme\templates\partials\table\vehicles_table.html:59
+msgid "Power (Low-High)"
+msgstr "القوة (منخفض-مرتفع)"
+
+#: .\theme\templates\partials\table\vehicles_table.html:60
+msgid "Power (High-Low)"
+msgstr "القوة (مرتفع-منخفض)"
+
+#: .\theme\templates\partials\table\vehicles_table.html:61
+msgid "Doors (Low-High)"
+msgstr "الأبواب (منخفض-مرتفع)"
+
+#: .\theme\templates\partials\table\vehicles_table.html:62
+msgid "Doors (High-Low)"
+msgstr "الأبواب (مرتفع-منخفض)"
+
+#: .\theme\templates\partials\table\vehicles_table.html:63
+msgid "Vehicle Type (A-Z)"
+msgstr "نوع المركبة (أ-ي)"
+
+#: .\theme\templates\partials\table\vehicles_table.html:64
+msgid "Vehicle Type (Z-A)"
+msgstr "نوع المركبة (ي-أ)"
+
+#: .\theme\templates\partials\table\vehicles_table.html:65
+msgid "Body Type (A-Z)"
+msgstr "نوع الهيكل (أ-ي)"
+
+#: .\theme\templates\partials\table\vehicles_table.html:66
+msgid "Body Type (Z-A)"
+msgstr "نوع الهيكل (ي-أ)"
+
+#: .\theme\templates\partials\table\vehicles_table.html:67
+msgid "Fuel Type (A-Z)"
+msgstr "نوع الوقود (أ-ي)"
+
+#: .\theme\templates\partials\table\vehicles_table.html:68
+msgid "Fuel Type (Z-A)"
+msgstr "نوع الوقود (ي-أ)"
+
+#: .\theme\templates\partials\table\vehicles_table.html:69
+msgid "Color (A-Z)"
+msgstr "اللون (أ-ي)"
+
+#: .\theme\templates\partials\table\vehicles_table.html:70
+msgid "Color (Z-A)"
+msgstr "اللون (ي-أ)"
+
+#: .\theme\templates\partials\table\vehicles_table.html:71
+msgid "Damage type (A-Z)"
+msgstr "نوع الضرر (أ-ي)"
+
+#: .\theme\templates\partials\table\vehicles_table.html:72
+msgid "Damage type (Z-A)"
+msgstr "نوع الضرر (ي-أ)"
+
+#: .\theme\templates\partials\table\vehicles_table.html:75
+msgid "Business & Other"
+msgstr "العمل وغيرها"
+
+#: .\theme\templates\partials\table\vehicles_table.html:76
+msgid "Branch (A-Z)"
+msgstr "الفرع (أ-ي)"
+
+#: .\theme\templates\partials\table\vehicles_table.html:77
+msgid "Branch (Z-A)"
+msgstr "الفرع (ي-أ)"
+
+#: .\theme\templates\partials\table\vehicles_table.html:84
+msgid "Year (Oldest)"
+msgstr "السنة (الأقدم)"
+
+#: .\theme\templates\partials\table\vehicles_table.html:85
+msgid "Year (Newest)"
+msgstr "السنة (الأحدث)"
+
+#: .\theme\templates\partials\table\vehicles_table.html:90
+msgid "Add new"
+msgstr "إضافة جديد"
+
+#: .\theme\templates\partials\table\vehicles_table.html:132
+msgid "Branch:"
+msgstr "الفرع:"
+
+#: .\theme\templates\partials\table\vehicles_table.html:147
+msgid "Active for:"
+msgstr "نشط لمدة:"
+
+#: .\theme\templates\partials\table\vehicles_table.html:156
+msgid "Buy (Gross):"
+msgstr "الشراء (الإجمالي):"
+
+#: .\theme\templates\partials\table\vehicles_table.html:159
+msgid "Buy (Net):"
+msgstr "الشراء (الصافي):"
+
+#: .\theme\templates\partials\table\vehicles_table.html:165
+msgid "Buy date:"
+msgstr "تاريخ الشراء:"
+
+#: .\theme\templates\partials\table\vehicles_table.html:169
+msgid "Sale (Gross):"
+msgstr "البيع (الإجمالي):"
+
+#: .\theme\templates\partials\table\vehicles_table.html:172
+msgid "Sale (Net):"
+msgstr "البيع (الصافي):"
+
+#: .\theme\templates\partials\table\vehicles_table.html:177
+msgid "Sale date:"
+msgstr "تاريخ البيع:"
+
+#: .\theme\templates\partials\table\vehicles_table.html:184
+msgid "Chassis:"
+msgstr "الهيكل:"
+
+#: .\theme\templates\partials\table\vehicles_table.html:185
+msgid "Reg:"
+msgstr "التسجيل:"
+
+#: .\theme\templates\partials\table\vehicles_table.html:186
+msgid "Plate:"
+msgstr "اللوحة:"
+
+#: .\theme\templates\partials\table\vehicles_table.html:191
+msgid "Damage:"
+msgstr "الضرر:"
+
+#: .\theme\templates\partials\table\vehicles_table.html:192
+msgid "Year:"
+msgstr "السنة:"
+
+#: .\theme\templates\partials\table\vehicles_table.html:193
+msgid "Kilometer:"
+msgstr "الكيلومتر:"
+
+#: .\theme\templates\partials\table\vehicles_table.html:198
+msgid "Type:"
+msgstr "النوع:"
+
+#: .\theme\templates\partials\table\vehicles_table.html:199
+msgid "Body:"
+msgstr "الهيكل:"
+
+#: .\theme\templates\partials\table\vehicles_table.html:200
+msgid "Color:"
+msgstr "اللون:"
+
+#: .\theme\templates\partials\table\vehicles_table.html:201
+msgid "Doors:"
+msgstr "الأبواب:"
+
+#: .\theme\templates\partials\table\vehicles_table.html:202
+msgid "Fuel:"
+msgstr "الوقود:"
+
+#: .\theme\templates\partials\table\vehicles_table.html:203
+msgid "Power:"
+msgstr "القوة:"
+
+#: .\theme\templates\partials\table\vehicles_table.html:241
+#: .\theme\templates\partials\table\vehicles_table.html:265
+msgid "Generate contract"
+msgstr "إنشاء عقد"
+
+#: .\theme\templates\partials\table\vehicles_table.html:253
+#: .\theme\templates\partials\table\vehicles_table.html:277
+msgid "Contract not available"
+msgstr "العقد غير متاح"
+
+#: .\theme\templates\partials\table\vehicles_table.html:292
+msgid "Activate this vehicle?"
+msgstr "تفعيل هذه المركبة؟"
+
+#: .\theme\templates\partials\table\vehicles_table.html:292
+msgid "Activate"
+msgstr "تفعيل"
+
+#: .\theme\templates\partials\table\vehicles_table.html:294
+msgid "Delete (deactivate) this vehicle?"
+msgstr "حذف (إلغاء تفعيل) هذه المركبة؟"
+
+#: .\theme\templates\partials\table\vehicles_table.html:294
+msgid "Delete"
+msgstr "حذف"
+
+#: .\theme\templates\partials\table\vehicles_table.html:304
+msgid "Ready"
+msgstr "جاهز"
+
+#: .\theme\templates\partials\table\vehicles_table.html:308
+msgid "Reserve"
+msgstr "حجز"
+
+#: .\theme\templates\reset_email.html:11 .\theme\templates\reset_email.html:64
+msgid "Email Reset"
+msgstr "إعادة تعيين البريد الإلكتروني"
+
+#: .\theme\templates\reset_email.html:67
+msgid ""
+"Enter your username, current password, and new email address to reset your "
+"email!"
+msgstr "أدخل اسم المستخدم، كلمة المرور الحالية، وعنوان البريد الإلكتروني الجديد لإعادة تعيين بريدك الإلكتروني!"
+
+#: .\theme\templates\reset_email.html:163
+#: .\theme\templates\reset_password.html:163
+msgid "Enter your username"
+msgstr "أدخل اسم المستخدم"
+
+#: .\theme\templates\reset_email.html:174
+msgid "Current Password"
+msgstr "كلمة المرور الحالية"
+
+#: .\theme\templates\reset_email.html:181
+msgid "Enter your current password"
+msgstr "أدخل كلمة المرور الحالية"
+
+#: .\theme\templates\reset_email.html:201
+msgid "Backup Email Address"
+msgstr "عنوان البريد الإلكتروني الاحتياطي"
+
+#: .\theme\templates\reset_email.html:207
+msgid "Enter your backup email address"
+msgstr "أدخل عنوان بريدك الإلكتروني الاحتياطي"
+
+#: .\theme\templates\reset_email.html:218
+msgid "New Email Address"
+msgstr "عنوان البريد الإلكتروني الجديد"
+
+#: .\theme\templates\reset_email.html:235
+msgid "Send Verification Email"
+msgstr "إرسال بريد التحقق"
+
+#: .\theme\templates\reset_password.html:67
+msgid "Enter your username OR email to reset your password!"
+msgstr "أدخل اسم المستخدم أو البريد الإلكتروني لإعادة تعيين كلمة المرور!"
+
+#: .\theme\templates\reset_password.html:178
+msgid "Enter your email address"
+msgstr "أدخل عنوان بريدك الإلكتروني"
+
+#: .\theme\templates\transaction_details.html:8
+msgid "Edit transaction #"
+msgstr "تحرير المعاملة #"
+
+#: .\theme\templates\transaction_details.html:252
+msgid "Tax Amount:"
+msgstr "مبلغ الضريبة:"
+
+#: .\theme\templates\transaction_details.html:272
+#: .\theme\templates\vehicle_details.html:427
+msgid "Sale details"
+msgstr "تفاصيل البيع"
+
+#: .\theme\templates\transaction_details.html:386
+msgid "Confirm details"
+msgstr "تأكيد التفاصيل"
+
+#: .\theme\templates\transaction_details.html:394
+msgid "Next/Previous transaction"
+msgstr "المعاملة التالية/السابقة"
+
+#: .\theme\templates\transaction_details.html:399
+msgid "Previous transaction"
+msgstr "المعاملة السابقة"
+
+#: .\theme\templates\transaction_details.html:406
+msgid "No previous transaction"
+msgstr "لا توجد معاملة سابقة"
+
+#: .\theme\templates\transaction_details.html:418
+msgid "Next transaction"
+msgstr "المعاملة التالية"
+
+#: .\theme\templates\transaction_details.html:425
+msgid "No next transaction"
+msgstr "لا توجد معاملة تالية"
+
+#: .\theme\templates\transaction_details.html:435
+msgid "Next/Previous transaction (review required)"
+msgstr "المعاملة التالية/السابقة (تتطلب مراجعة)"
+
+#: .\theme\templates\transaction_details.html:439
+msgid "Previous review-required transaction"
+msgstr "المعاملة السابقة التي تتطلب مراجعة"
+
+#: .\theme\templates\transaction_details.html:445
+msgid "No previous review-required transaction"
+msgstr "لا توجد معاملة سابقة تتطلب مراجعة"
+
+#: .\theme\templates\transaction_details.html:455
+msgid "Next review-required transaction"
+msgstr "المعاملة التالية التي تتطلب مراجعة"
+
+#: .\theme\templates\transaction_details.html:461
+msgid "No next review-required transaction"
+msgstr "لا توجد معاملة تالية تتطلب مراجعة"
+
+#: .\theme\templates\transaction_details.html:487
+#: .\theme\templates\transactions.html:101
+#: .\theme\templates\vehicle_details.html:714
+#: .\theme\templates\vehicles.html:101
+msgid "Total revenue"
+msgstr "إجمالي الإيرادات"
+
+#: .\theme\templates\transaction_details.html:489
+#: .\theme\templates\transactions.html:103
+#: .\theme\templates\vehicle_details.html:716
+#: .\theme\templates\vehicles.html:103
+msgid "Total expenses"
+msgstr "إجمالي المصروفات"
+
+#: .\theme\templates\transaction_details.html:493
+#: .\theme\templates\transaction_details.html:495
+#: .\theme\templates\transaction_details.html:497
+#: .\theme\templates\transactions.html:107
+#: .\theme\templates\transactions.html:109
+#: .\theme\templates\transactions.html:111
+#: .\theme\templates\vehicle_details.html:720
+#: .\theme\templates\vehicle_details.html:722
+#: .\theme\templates\vehicle_details.html:724
+#: .\theme\templates\vehicles.html:107 .\theme\templates\vehicles.html:109
+#: .\theme\templates\vehicles.html:111
+msgid "Net profit"
+msgstr "صافي الربح"
+
+#: .\theme\templates\transaction_details.html:618
+#: .\theme\templates\vehicle_details.html:845
+msgid "Contract"
+msgstr "العقد"
+
+#: .\theme\templates\transactions.html:151
+msgid "Transaction Filters"
+msgstr "فلاتر المعاملات"
+
+#: .\theme\templates\transactions.html:175 .\theme\templates\vehicles.html:175
+msgid "Show Filters"
+msgstr "إظهار الفلاتر"
+
+#: .\theme\templates\transactions.html:189 .\theme\templates\vehicles.html:189
+msgid "Clear All"
+msgstr "مسح الكل"
+
+#: .\theme\templates\transactions.html:203 .\theme\templates\vehicles.html:203
+msgid "Quick Search"
+msgstr "بحث سريع"
+
+#: .\theme\templates\transactions.html:208
+msgid "Transaction ID"
+msgstr "معرف المعاملة"
+
+#: .\theme\templates\transactions.html:209 .\theme\templates\vehicles.html:209
+msgid "Search by ID"
+msgstr "البحث بالمعرف"
+
+#: .\theme\templates\transactions.html:228 .\theme\templates\vehicles.html:251
+msgid "All Statuses"
+msgstr "جميع الحالات"
+
+#: .\theme\templates\transactions.html:239
+msgid "All Currencies"
+msgstr "جميع العملات"
+
+#: .\theme\templates\transactions.html:250
+msgid "All Categories"
+msgstr "جميع الفئات"
+
+#: .\theme\templates\transactions.html:271
+msgid "All Vehicles"
+msgstr "جميع المركبات"
+
+#: .\theme\templates\transactions.html:281
+msgid "All Methods"
+msgstr "جميع الطرق"
+
+#: .\theme\templates\transactions.html:300 .\theme\templates\vehicles.html:370
+msgid "Price & Financial"
+msgstr "السعر والمالية"
+
+#: .\theme\templates\transactions.html:305
+msgid "Min Amount"
+msgstr "الحد الأدنى للمبلغ"
+
+#: .\theme\templates\transactions.html:310
+msgid "Max Amount"
+msgstr "الحد الأقصى للمبلغ"
+
+#: .\theme\templates\transactions.html:323 .\theme\templates\vehicles.html:415
+msgid "Dates & Time"
+msgstr "التواريخ والوقت"
+
+#: .\theme\templates\transactions.html:328
+msgid "Min Date"
+msgstr "الحد الأدنى للتاريخ"
+
+#: .\theme\templates\transactions.html:333
+msgid "Max Date"
+msgstr "الحد الأقصى للتاريخ"
+
+#: .\theme\templates\transactions.html:378 .\theme\templates\vehicles.html:550
+msgid "Apply Filters"
+msgstr "تطبيق الفلاتر"
+
+#: .\theme\templates\users_management.html:94
+msgid "Change Manager password or email"
+msgstr "تغيير كلمة مرور أو بريد المدير الإلكتروني"
+
+#: .\theme\templates\users_management.html:332
+msgid "Edit Users details"
+msgstr "تحرير تفاصيل المستخدمين"
+
+#: .\theme\templates\users_management.html:415
+msgid "Manager(You):"
+msgstr "المدير(أنت):"
+
+#: .\theme\templates\users_management.html:473
+msgid "Employees:"
+msgstr "الموظفون:"
+
+#: .\theme\templates\users_management.html:548
+msgid "Username field cannot be empty"
+msgstr "حقل اسم المستخدم لا يمكن أن يكون فارغًا"
+
+#: .\theme\templates\vehicle_details.html:8
+msgid "Edit Vehicle #"
+msgstr "تحرير المركبة #"
+
+#: .\theme\templates\vehicle_details.html:229
+msgid "Make"
+msgstr "الطراز"
+
+#: .\theme\templates\vehicle_details.html:330
+msgid "Purchase Price Taxes %"
+msgstr "نسبة ضرائب سعر الشراء %"
+
+#: .\theme\templates\vehicle_details.html:389
+#: .\theme\templates\vehicle_details.html:405
+#: .\theme\templates\vehicle_details.html:515
+#: .\theme\templates\vehicle_details.html:531
+msgid "Contract Generation"
+msgstr "إنشاء العقد"
+
+#: .\theme\templates\vehicle_details.html:390
+#: .\theme\templates\vehicle_details.html:406
+#: .\theme\templates\vehicle_details.html:516
+#: .\theme\templates\vehicle_details.html:532
+msgid "Generate a PDF contract for this vehicle sale"
+msgstr "إنشاء عقد PDF لبيع هذه المركبة"
+
+#: .\theme\templates\vehicle_details.html:411
+#: .\theme\templates\vehicle_details.html:537
+msgid "Fill all required sale fields to enable contract generation"
+msgstr "املأ جميع حقول البيع المطلوبة لتمكين إنشاء العقد"
+
+#: .\theme\templates\vehicle_details.html:433
+msgid "Sale Price"
+msgstr "سعر البيع"
+
+#: .\theme\templates\vehicle_details.html:436
+msgid "Sale Price Taxes %"
+msgstr "نسبة ضرائب سعر البيع %"
+
+#: .\theme\templates\vehicle_details.html:439
+msgid "Sale Date"
+msgstr "تاريخ البيع"
+
+#: .\theme\templates\vehicle_details.html:442
+msgid "Sale Delivery/Collection Date"
+msgstr "تاريخ تسليم/استلام البيع"
+
+#: .\theme\templates\vehicle_details.html:555
+msgid "Sale Price Breakdown"
+msgstr "تفصيل سعر البيع"
+
+#: .\theme\templates\vehicle_details.html:561
+msgid "Sale Net Price"
+msgstr "سعر البيع الصافي"
+
+#: .\theme\templates\vehicle_details.html:567
+msgid "Sale Tax Amount"
+msgstr "مبلغ ضريبة البيع"
+
+#: .\theme\templates\vehicle_details.html:573
+#: .\theme\templates\vehicle_details.html:601
+msgid "Sale Gross Price"
+msgstr "سعر البيع الإجمالي"
+
+#: .\theme\templates\vehicle_details.html:579
+msgid "Sale Tax Rate"
+msgstr "معدل ضريبة البيع"
+
+#: .\theme\templates\vehicle_details.html:589
+msgid "Profit Calculation"
+msgstr "حساب الربح"
+
+#: .\theme\templates\vehicle_details.html:595
+msgid "Purchase Gross Price"
+msgstr "سعر الشراء الإجمالي"
+
+#: .\theme\templates\vehicle_details.html:607
+msgid "Estimated Profit/Loss"
+msgstr "الربح/الخسارة المقدرة"
+
+#: .\theme\templates\vehicle_details.html:613
+msgid "Profit Margin"
+msgstr "هامش الربح"
+
+#: .\theme\templates\vehicle_details.html:619
+msgid "Return on Investment"
+msgstr "العائد على الاستثمار"
+
+#: .\theme\templates\vehicle_details.html:641
+msgid "Current image:"
+msgstr "الصورة الحالية:"
+
+#: .\theme\templates\vehicle_details.html:692
+msgid "Update Vehicle"
+msgstr "تحديث المركبة"
+
+#: .\theme\templates\vehicle_details.html:704
+msgid "Vehicle Transactions"
+msgstr "معاملات المركبة"
+
+#: .\theme\templates\vehicles.html:151
+msgid "Vehicle Filters"
+msgstr "فلاتر المركبات"
+
+#: .\theme\templates\vehicles.html:208
+msgid "Vehicle ID"
+msgstr "معرف المركبة"
+
+#: .\theme\templates\vehicles.html:214
+msgid "Chassis Number"
+msgstr "رقم الهيكل"
+
+#: .\theme\templates\vehicles.html:215
+msgid "Search by chassis"
+msgstr "البحث بالهيكل"
+
+#: .\theme\templates\vehicles.html:220
+msgid "Registration Number"
+msgstr "رقم التسجيل"
+
+#: .\theme\templates\vehicles.html:221
+msgid "Search by registration"
+msgstr "البحث بالتسجيل"
+
+#: .\theme\templates\vehicles.html:226
+msgid "License Plate"
+msgstr "لوحة الترخيص"
+
+#: .\theme\templates\vehicles.html:227
+msgid "Search by license plate"
+msgstr "البحث بلوحة الترخيص"
+
+#: .\theme\templates\vehicles.html:232
+msgid "Invoice Number"
+msgstr "رقم الفاتورة"
+
+#: .\theme\templates\vehicles.html:233
+msgid "Search by invoice number"
+msgstr "البحث برقم الفاتورة"
+
+#: .\theme\templates\vehicles.html:262
+msgid "All Manufacturers"
+msgstr "جميع الشركات المصنعة"
+
+#: .\theme\templates\vehicles.html:273
+msgid "All Models"
+msgstr "جميع الموديلات"
+
+#: .\theme\templates\vehicles.html:281
+msgid "All Branches"
+msgstr "جميع الفروع"
+
+#: .\theme\templates\vehicles.html:292
+msgid "All Types"
+msgstr "جميع الأنواع"
+
+#: .\theme\templates\vehicles.html:303
+msgid "All Body Types"
+msgstr "جميع أنواع الهياكل"
+
+#: .\theme\templates\vehicles.html:314
+msgid "All Doors"
+msgstr "جميع الأبواب"
+
+#: .\theme\templates\vehicles.html:325
+msgid "All Fuel Types"
+msgstr "جميع أنواع الوقود"
+
+#: .\theme\templates\vehicles.html:336
+msgid "All Colors"
+msgstr "جميع الألوان"
+
+#: .\theme\templates\vehicles.html:346
+msgid "All Damage Types"
+msgstr "جميع أنواع الأضرار"
+
+#: .\theme\templates\vehicles.html:375
+msgid "Min Buy Price"
+msgstr "الحد الأدنى لسعر الشراء"
+
+#: .\theme\templates\vehicles.html:380
+msgid "Max Buy Price"
+msgstr "الحد الأقصى لسعر الشراء"
+
+#: .\theme\templates\vehicles.html:385
+msgid "Specific Buy Price"
+msgstr "سعر شراء محدد"
+
+#: .\theme\templates\vehicles.html:391
+msgid "Min Sale Price"
+msgstr "الحد الأدنى لسعر البيع"
+
+#: .\theme\templates\vehicles.html:396
+msgid "Specific Sale Price"
+msgstr "سعر بيع محدد"
+
+#: .\theme\templates\vehicles.html:401
+msgid "Max Sale Price"
+msgstr "الحد الأقصى لسعر البيع"
+
+#: .\theme\templates\vehicles.html:420
+msgid "Min Buy Date"
+msgstr "الحد الأدنى لتاريخ الشراء"
+
+#: .\theme\templates\vehicles.html:425
+msgid "Max Buy Date"
+msgstr "الحد الأقصى لتاريخ الشراء"
+
+#: .\theme\templates\vehicles.html:437
+msgid "Min Sale Date"
+msgstr "الحد الأدنى لتاريخ البيع"
+
+#: .\theme\templates\vehicles.html:442
+msgid "Max Sale Date"
+msgstr "الحد الأقصى لتاريخ البيع"
+
+#: .\theme\templates\vehicles.html:459
+msgid "Technical Specifications"
+msgstr "المواصفات الفنية"
+
+#: .\theme\templates\vehicles.html:464
+msgid "Min Year"
+msgstr "الحد الأدنى للسنة"
+
+#: .\theme\templates\vehicles.html:469
+msgid "Max Year"
+msgstr "الحد الأقصى للسنة"
+
+#: .\theme\templates\vehicles.html:480
+msgid "Min Kilometer"
+msgstr "الحد الأدنى للكيلومتر"
+
+#: .\theme\templates\vehicles.html:485
+msgid "Max Kilometer"
+msgstr "الحد الأقصى للكيلومتر"
+
+#: .\theme\templates\vehicles.html:496
+msgid "Min Power (KW)"
+msgstr "الحد الأدنى للقوة (كيلوواط)"
+
+#: .\theme\templates\vehicles.html:501
+msgid "Max Power (KW)"
+msgstr "الحد الأقصى للقوة (كيلوواط)"

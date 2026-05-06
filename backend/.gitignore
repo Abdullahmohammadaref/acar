@@ -1,0 +1,54 @@
+# Environment variables
+.env
+.env.local
+.env.production
+
+# Database
+db.sqlite3
+*.sqlite3
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Node modules
+node_modules/
+npm-debug.log*
+
+# Media files (user uploads)
+media/
+
+# Static files (generated)
+staticfiles/
+theme/static/css/dist/
+
+# some templates for pages and elements from tailadmin template
+theme/templates/temp_drafts/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Ignore compiled message catalogs
+**/locale/**/LC_MESSAGES/*.mo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+# Confidential PDF generation templates (only __init__.py is tracked)
+manager/pdf_generators/*.py
+!manager/pdf_generators/__init__.py
+/manager/templates/

@@ -1,0 +1,52 @@
+import * as React from "react"
+
+import { cn } from "@/lib/utils"
+
+function Input({ className, type, onWheel, onKeyDown, ...props }: React.ComponentProps<"input">) {
+  /**
+   * UX Fix: Prevent accidental value changes on number inputs
+   * 
+   * 1. Scroll Wheel: When a number input is focused and user scrolls,
+   *    the value would change instead of the page scrolling. We blur
+   *    the input to prevent this.
+   * 
+   * 2. Arrow Keys: ArrowUp/ArrowDown increment/decrement the value,
+   *    which can cause data entry errors. We block these keys.
+   */
+  
+  const handleWheel = (e: React.WheelEvent<HTMLInputElement>) => {
+    // Blur the input to prevent scroll from changing the value
+    if (type === "number") {
+      (e.target as HTMLInputElement).blur()
+    }
+    // Call user-provided handler if any
+    onWheel?.(e)
+  }
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    // Block arrow keys on number inputs to prevent value changes
+    if (type === "number" && (e.key === "ArrowUp" || e.key === "ArrowDown")) {
+      e.preventDefault()
+    }
+    // Call user-provided handler if any
+    onKeyDown?.(e)
+  }
+
+  return (
+    <input
+      type={type}
+      data-slot="input"
+      className={cn(
+        "file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground dark:bg-input/30 border-input h-9 w-full min-w-0 rounded-md border bg-transparent px-3 py-1 text-base shadow-xs transition-[color,box-shadow] outline-none file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm",
+        "focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]",
+        "aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive",
+        className
+      )}
+      onWheel={handleWheel}
+      onKeyDown={handleKeyDown}
+      {...props}
+    />
+  )
+}
+
+export { Input }

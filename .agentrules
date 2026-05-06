@@ -1,0 +1,335 @@
+# ============================================================================
+# ACAR — Agent Rules
+# Vehicle Management System for German Auto Dealerships
+# ============================================================================
+# This file governs ALL AI agent behavior in this repository.
+# Rules are MANDATORY and must NEVER be skipped, overridden, or summarized away.
+# ============================================================================
+
+
+# ============================================================================
+# 🔒 RULE 0: MANDATORY PRE-WORK CONTEXT LOADING
+# ============================================================================
+# Before writing ANY code, making ANY modification, or proposing ANY plan,
+# you MUST read and internalize the following files IN THIS ORDER:
+#
+# 1. README.md              — Project overview, tech stack, architecture
+# 2. schema.prisma          — Complete data model reference (all entities & relations)
+# 3. PROJECT_MAP.md         — File-level map of the codebase and module boundaries
+# 4. .agents/skills/        — Scan available skills for the current task (see §2)
+# 5. Relevant artifacts     — Check conversation artifacts for prior decisions
+#
+# DO NOT skip this step even if the task seems trivial.
+# DO NOT rely on memory from previous conversations — always re-read.
+# If any of these files are empty or missing, note it and proceed with caution.
+#
+# This rule exists because the codebase has domain-specific conventions
+# (German legal documents, multi-tenant isolation, dual auth flows) that
+# are easy to violate without full context.
+
+
+# ============================================================================
+# 📁 RULE 0.1: ARTIFACT PERSISTENCE
+# ============================================================================
+# When you create planning artifacts (implementation plans, task checklists,
+# walkthroughs, discovery reports, audit findings, etc.), you MUST also save
+# a copy to the project's artifact archive:
+#
+#   .agents/artifacts/<topic-name>/
+#
+# Structure each topic folder with descriptive filenames:
+#   .agents/artifacts/<topic-name>/<topic>-plan.md
+#   .agents/artifacts/<topic-name>/<topic>-tasks.md
+#   .agents/artifacts/<topic-name>/<topic>-walkthrough.md
+#
+# Examples:
+#   .agents/artifacts/security-audit/security-audit-plan.md
+#   .agents/artifacts/i18n-implementation/i18n-implementation-walkthrough.md
+#   .agents/artifacts/vehicle-form-refactor/vehicle-form-refactor-tasks.md
+#
+# This ensures that prior architectural decisions, completed work, and known
+# constraints are preserved across conversations and accessible to future agents.
+# DO NOT dump all artifacts in the root — always use a descriptive subdirectory.
+# DO NOT change the contents of existing artifact files unless explicitly asked.
+
+
+# ============================================================================
+# 🔄 RULE 0.2: LIVING DOCUMENTATION — KEEP REFERENCE FILES UP TO DATE
+# ============================================================================
+# The following three files are the project's source of truth for agents and
+# developers. After completing work that changes the codebase structure, data
+# model, or project capabilities, you MUST update the affected files:
+#
+# 1. README.md       — Update if: tech stack changes, new features added,
+#                       setup steps change, API endpoints added/removed,
+#                       environment variables change, or auth flows evolve.
+#
+# 2. schema.prisma   — Update if: Django models are added, modified, or
+#                       deleted. Any change to models.py (new fields, new
+#                       models, renamed columns, new relations) MUST be
+#                       reflected here to keep it in sync with the ORM.
+#
+# 3. PROJECT_MAP.md  — Update if: new files/modules are created, files are
+#                       renamed or deleted, new pages/components/hooks are
+#                       added, API endpoint files change, or the directory
+#                       structure is reorganized.
+#
+# These updates should happen AT THE END of your work, after all code changes
+# are verified and working. Do not update them speculatively.
+# When in doubt, update — stale docs are worse than a few extra lines.
+
+
+# ============================================================================
+# §1 — PROJECT IDENTITY & DOMAIN
+# ============================================================================
+
+## 1.1 What this project is
+# ACAR is a multi-tenant vehicle management platform for used-car dealerships
+# in Germany. It manages vehicles, financial transactions, legal entities
+# (buyers/sellers), and generates legally-compliant German PDF documents.
+
+## 1.2 Tech stack (never deviate without explicit user approval)
+# Backend:  Python 3 · Django 5.2 · Django Ninja (REST API) · SQLite (dev)
+# Frontend: React 19 · TypeScript · Vite 7 · TailwindCSS 4 · Radix UI
+#           React Router 7 · TanStack Query · TanStack Table
+#           React Hook Form + Zod · i18next · Axios · Lucide React
+# Auth:     Session-based + CSRF · Manager magic-link · Employee approval-polling
+# PDF:      ReportLab · num2words (German)
+# i18n:     German (default), English, Turkish, Arabic (RTL)
+
+## 1.3 Multi-tenancy model
+# ALL data is scoped to a Business entity. Every query MUST filter by
+# business_id. Cross-tenant data leaks are a critical security violation.
+# When writing any new API endpoint or query:
+#   - Always filter by request.user.business
+#   - Never expose raw database IDs in URLs (use internal_id per business)
+#   - Verify data ownership before any mutation
+
+
+# ============================================================================
+# §2 — SKILL ROUTING (when to consult .agents/skills/)
+# ============================================================================
+# The project has 65+ skills in .agents/skills/. Before starting work,
+# identify which skills are relevant and READ their SKILL.md files.
+#
+# Use this routing table to match tasks to skills:
+
+## Backend / Django work
+# - Models, ORM, migrations         → django-expert, django-patterns, django-pro
+# - Security, auth, RBAC            → django-security, django-patterns
+# - Admin panel                     → django-dev-unfold
+# - API endpoint design             → api-design, backend-engineering
+# - Database schema changes         → database-engineering, database-schema-designer, data-modeling
+
+## Frontend / React work
+# - Writing React components        → react-writing-code, react-components
+# - UI patterns & state             → react-ui-patterns, frontend-design
+# - Form handling & validation      → designing-zod-schemas
+# - Styling with Tailwind           → tailwind-css
+# - i18n / translations             → i18n, localization-i18n
+# - Testing React components        → react-testing
+
+## Full-stack / cross-cutting
+# - Code quality & refactoring      → clean-code, refactoring-patterns, software-principles
+# - TypeScript patterns             → typescript-writing-code
+# - Testing strategy                → test-strategy, typescript-testing, node-testing
+# - Documentation                   → code-documentation, technical-writing
+# - Multi-tenant architecture       → multi-tenant-architecture
+# - Domain modeling                 → domain-driven-design
+
+## Planning & research
+# - New features / discovery        → discovery, project-management
+# - PRD writing                     → prd-mastery-context-aware-expert-driven-and-token-efficient-refinement
+# - Architecture migration          → migrate-architecture, migrate-framework
+# - Security audit                  → audit
+# - Research                        → research-methods
+
+## Financial / business logic
+# - Financial calculations          → finance-guide, financial-modeling
+# - Bookkeeping                     → bookkeeping-automation
+# - Reporting                       → financial-reporting
+
+## Specialized
+# - PDF editing                     → nano-pdf
+# - CSV processing                  → csv-processor
+# - Regex                           → regex-mastery
+# - SQLite debugging                → sqlite-analyzer
+# - Context optimization            → context-optimization, token-budget
+# - Prompt engineering              → prompt-engineering
+
+
+# ============================================================================
+# §3 — BACKEND CONVENTIONS (Django)
+# ============================================================================
+
+## 3.1 API layer
+# - All new API endpoints use Django Ninja (not DRF, not raw views)
+# - Schemas live in schemas.py or domain-specific schema files (e.g., transaction_schemas.py)
+# - Use Pydantic models for request/response validation
+# - API routes are registered in acar/urls.py via api.add_router()
+# - Legacy views.py is maintained for PDF generation only — do NOT add new view logic there
+
+## 3.2 Models
+# - All models live in manager/models.py
+# - Use gettext_lazy (_) for ALL field verbose_name values
+# - Dynamic choices (vehicle types, colors, etc.) use FK to choice models, NOT CharField choices
+# - Auto-generate internal_id in save() — never rely on the database pk for user-facing IDs
+# - Respect unique_together constraints: [business, internal_id] is the standard pattern
+# - When adding fields, ALWAYS make them nullable/blank for backwards compatibility
+
+## 3.3 Business logic
+# - Keep views/API handlers thin — complex logic belongs in model methods or service functions
+# - Financial calculations MUST use Decimal, never float
+# - Tax calculations: gross = net × (1 + tax_rate); net = gross / (1 + tax_rate)
+# - Always handle is_no_tax flag on TaxPercentage
+
+## 3.4 Migrations
+# - Never edit an applied migration
+# - Always run makemigrations and migrate after model changes
+# - Test that migrations are reversible when possible
+
+## 3.5 Security
+# - CSRF is enabled on all Ninja API endpoints (csrf=True on NinjaAPI instance)
+# - Session authentication — no JWT tokens
+# - Rate limiting via django-ratelimit on sensitive endpoints
+# - Never expose email, password hashes, or approval_tokens in API responses
+# - Filter querysets by request.user.business — no exceptions
+
+
+# ============================================================================
+# §4 — FRONTEND CONVENTIONS (React + TypeScript)
+# ============================================================================
+
+## 4.1 File organization
+# - Pages go in src/pages/ (one file per page)
+# - Reusable components in src/components/ (organized by domain: ui/, layout/, vehicles/, etc.)
+# - Custom hooks in src/hooks/ (one hook per file, prefixed with "use")
+# - API client config in src/lib/api.ts
+# - Auth context in src/lib/auth.tsx
+# - Validation schemas in src/lib/validations.ts or src/schemas/
+
+## 4.2 Component patterns
+# - Use functional components only (no class components)
+# - shadcn/ui + Radix UI for all interactive primitives
+# - TailwindCSS for styling — no inline styles, no CSS modules
+# - All user-facing text MUST use the t() function from react-i18next
+# - Never hardcode German strings — always use translation keys
+
+## 4.3 Data fetching
+# - Use TanStack Query (useQuery, useMutation) for all API calls
+# - Custom hooks wrap TanStack Query (useVehicles, useTransactions, etc.)
+# - Axios instance in lib/api.ts handles CSRF token injection and base URL
+# - Never use raw fetch() — always use the configured Axios instance
+
+## 4.4 Forms
+# - React Hook Form + Zod for all forms
+# - Validation schemas use Zod and live in schemas/ or lib/validations.ts
+# - Auto-save via useAutoSave hook where appropriate
+
+## 4.5 Routing
+# - React Router v7 with URL pattern: /:business_slug/:locale/...
+# - Locale defaults to 'de' when omitted from URL
+# - All protected routes wrapped in <ProtectedRoute />
+# - Auth routes use <PublicRoute /> + <AuthLayout />
+
+## 4.6 State management
+# - Server state: TanStack Query (never duplicate in local state)
+# - Auth state: React Context (AuthProvider)
+# - UI state: useState / useReducer (local)
+# - URL state: useParams / useSearchParams
+# - Do NOT introduce Zustand, Redux, or other state libraries without explicit approval
+
+## 4.7 TypeScript
+# - Strict mode enabled
+# - No `any` types — use `unknown` and narrow
+# - Prefer interfaces for object shapes, types for unions
+# - All API response types defined in src/types/
+
+
+# ============================================================================
+# §5 — INTERNATIONALIZATION (i18n)
+# ============================================================================
+
+## 5.1 Supported locales
+# de (German — default), en (English), tr (Turkish), ar (Arabic — RTL)
+
+## 5.2 Frontend
+# - Translation files: src/locales/{de,en,tr,ar}.json
+# - ALL user-visible strings must use t('key') — no hardcoded text
+# - New features must add keys to ALL four locale files
+# - Arabic triggers RTL layout via document.documentElement.dir = 'rtl'
+
+## 5.3 Backend
+# - Model fields use gettext_lazy (_) for verbose_name
+# - Translation files in backend/locale/ (.po/.mo)
+# - Rosetta UI available at /rosetta/ for managing translations
+
+
+# ============================================================================
+# §6 — PDF GENERATION
+# ============================================================================
+
+## 6.1 General rules
+# - All PDFs use ReportLab
+# - PDF generators live in backend/manager/views.py (legacy) and pdf_helpers.py
+# - German number-to-words via num2words library
+# - PDFs include: business logo, full address, bank details, tax IDs
+# - Never change existing PDF layout without explicit user approval
+
+## 6.2 Document types
+# - Kaufvertrag (Sale Contract)
+# - Verbindliche Bestellung (Binding Order)
+# - Verkaufvertrag (Purchase Agreement)
+# - Quittung (Receipt) — includes price in German words
+# - Identitätsprüfung (Identity Check)
+# - Transaktionsbeleg (Transaction Receipt)
+
+
+# ============================================================================
+# §7 — CODE QUALITY & SAFETY
+# ============================================================================
+
+## 7.1 Before committing
+# - Backend: python manage.py test manager.tests (all tests must pass)
+# - Frontend: npm run build (TypeScript must compile without errors)
+# - Never commit .env files, db.sqlite3, node_modules, or __pycache__
+
+## 7.2 Naming conventions
+# - Python: snake_case for variables/functions, PascalCase for classes
+# - TypeScript: camelCase for variables/functions, PascalCase for components/types
+# - Database columns: snake_case (Django default)
+# - API endpoints: kebab-case in URLs
+# - Translation keys: dot.separated.camelCase (e.g., vehicles.addNew)
+
+## 7.3 Comments & documentation
+# - Preserve ALL existing comments and docstrings unless explicitly told to remove them
+# - Add docstrings to new Django model methods and API endpoints
+# - Never delete TODO/FIXME comments — they track known technical debt
+
+## 7.4 Error handling
+# - Backend: raise appropriate HTTP exceptions (400, 401, 403, 404, 422)
+# - Frontend: show user-friendly error messages via toast/alert
+# - Never silently swallow errors
+
+## 7.5 Git hygiene
+# - Write clear, descriptive commit messages
+# - One logical change per commit
+# - Never force-push to shared branches
+
+
+# ============================================================================
+# §8 — THINGS YOU MUST NEVER DO
+# ============================================================================
+
+# ❌ Never expose data from one business to another (multi-tenant violation)
+# ❌ Never use float for money — always Decimal
+# ❌ Never hardcode German text in React — always use i18n translation keys
+# ❌ Never add a new state management library without approval
+# ❌ Never delete or rename existing API endpoints without a migration plan
+# ❌ Never edit applied Django migrations
+# ❌ Never commit secrets, API keys, or passwords to the repository
+# ❌ Never use raw SQL without parameterized queries
+# ❌ Never skip CSRF protection on mutation endpoints
+# ❌ Never return password hashes, approval tokens, or session IDs in API responses
+# ❌ Never use `any` in TypeScript
+# ❌ Never remove existing comments/docstrings unless explicitly asked

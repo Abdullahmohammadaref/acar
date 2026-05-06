@@ -1,0 +1,954 @@
+import { useState, useEffect, useCallback, useRef } from "react"
+import { useNavigate, useParams } from "react-router-dom"
+import { Loader2, CalendarDays, FileText, CheckCircle, AlertCircle, XCircle, Download, RotateCcw, Trash2 } from "lucide-react"
+import { useTranslation } from "react-i18next"
+
+import { StickyFooter } from "@/components/StickyFooter"
+import { AutoSaveIndicator } from "@/components/AutoSaveIndicator"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
+import { SearchableSelect } from "@/components/ui/searchable-select"
+import { DynamicSelect } from "@/components/ui/dynamic-select"
+import { RelatedTransactionsTable } from "@/components/transactions/RelatedTransactionsTable"
+import { RecordNavigation } from "@/components/RecordNavigation"
+import { useTransactionChoices, useSubcategories, useDeleteTransaction, useActivateTransaction } from "@/hooks/useTransactions"
+import { useChoices } from "@/hooks/useVehicles"  // For tax_percentages
+import type { AutoSaveStatus } from "@/hooks/useAutoSave"
+import type { TransactionFormData, TransactionDetail } from "@/types/transaction"
+
+interface TransactionFormProps {
+    mode: "create" | "edit"
+    initialData?: TransactionDetail | null
+    onSubmit: (data: TransactionFormData) => Promise<void>
+    isLoading?: boolean
+    highlightedTransactionId?: number  // For edit mode, to highlight the current row in related transactions
+    // Auto-save callbacks (only used in edit mode)
+    onAutoSave?: (data: Partial<TransactionFormData>) => void
+    onAutoSaveDebounced?: (data: Partial<TransactionFormData>) => void
+    // Auto-save status (for footer indicator)
+    autoSaveStatus?: AutoSaveStatus
+    autoSaveErrorMessage?: string | null
+}
+
+/**
+ * SubcategorySelect - Dependent dropdown for selecting subcategories based on Category ID
+ * Uses DynamicSelect for "Add New" functionality
+ */
+interface SubcategorySelectProps {
+    categoryId: number | undefined
+    value: number | null
+    onChange: (value: number | null, name?: string) => void
+}
+
+function SubcategorySelect({ categoryId, value, onChange }: SubcategorySelectProps) {
+    const { data: subcategoriesData, isLoading } = useSubcategories(categoryId)
+
+    // Convert subcategories to options format for DynamicSelect
+    const options = subcategoriesData?.subcategories?.map((s) => ({
+        id: s.id,
+        name: s.name,
+    })) ?? []
+
+    // Handle change with name lookup
+    const handleChange = (id: number | null) => {
+        const subcategory = options.find(s => s.id === id)
+        onChange(id, subcategory?.name)
+    }
+
+    return (
+        <div className="space-y-2">
+            <Label htmlFor="subcategory">Subcategory <span className="text-red-500">*</span></Label>
+            <DynamicSelect
+                choiceType="subcategory"
+                options={options}
+                value={value}
+                onChange={handleChange}
+                placeholder={
+                    !categoryId
+                        ? "Select a category first"
+                        : isLoading
+                            ? "Loading..."
+                            : "Select subcategory"
+                }
+                disabled={!categoryId || isLoading}
+                allowCreate={!!categoryId}
+                createLabel="Subcategory"
+                parentId={categoryId}
+            />
+        </div>
+    )
+}
+
+/**
+ * Shared form component for creating and editing transactions
+ * Mirrors the legacy add_new_transaction.html structure
+ * 
+ * In edit mode:
+ * - Auto-saves on field changes (debounced for text, immediate for dropdowns)
+ * - Shows navigation arrows instead of Save button
+ */
+export function TransactionForm({
+    mode,
+    initialData,
+    onSubmit,
+    isLoading = false,
+    highlightedTransactionId,
+    onAutoSave,
+    onAutoSaveDebounced,
+    autoSaveStatus = "idle",
+    autoSaveErrorMessage,
+}: TransactionFormProps) {
+    const { t } = useTranslation()
+
+    const navigate = useNavigate()
+    const { business_slug } = useParams()
+
+    // Hooks for status toggle actions
+    const deleteTransaction = useDeleteTransaction()
+    const activateTransaction = useActivateTransaction()
+    const [statusToggleLoading, setStatusToggleLoading] = useState(false)
+
+    // Form state
+    const [formData, setFormData] = useState<TransactionFormData>({
+        category: "",
+        subcategory: "",
+        vehicle_id: undefined,
+        amount: undefined,  // Start empty, not 0
+        currency: "EUR",
+        tax: undefined,
+        date: "",  // Start empty - user must manually select
+        method: "",
+        from_or_to: "",
+        description: "",
+        internal_comments: "",
+        // NOTE: status is auto-computed by backend — not set from frontend
+    })
+
+    // Track category and subcategory IDs separately (for DynamicSelect)
+    const [categoryId, setCategoryId] = useState<number | null>(null)
+    const [subcategoryId, setSubcategoryId] = useState<number | null>(null)
+    const [methodId, setMethodId] = useState<number | null>(null)
+    const [currencyId, setCurrencyId] = useState<number | null>(null)
+    const [taxId, setTaxId] = useState<number | null>(null)  // For tax percentage dropdown
+
+    // Flag to block auto-save during initial data population
+    // This prevents the "Failed to save" error on page load
+    const isInitializingRef = useRef(mode === "edit")
+
+    // Validation error state
+    const [validationErrors, setValidationErrors] = useState<Record<string, string>>({})
+
+    // Fetch choices from API
+    const { data: choices, isLoading: choicesLoading } = useTransactionChoices()
+
+    // Convert category choices to DynamicSelect format (id, name)
+    const categoryOptions = choices?.category_choices?.map((c) => ({
+        id: parseInt(c.value),
+        name: c.label,
+    })) ?? []
+
+    // Convert method choices to DynamicSelect format (id, name)
+    const methodOptions = choices?.method_choices?.map((m) => ({
+        id: parseInt(m.value),
+        name: m.label,
+    })) ?? []
+
+    // Convert currency choices to DynamicSelect format (id, name)
+    const currencyOptions = choices?.currency_choices?.map((c) => ({
+        id: parseInt(c.value),
+        name: c.label,
+    })) ?? []
+
+    // Fetch vehicle choices for tax_percentages (shared with Vehicle forms)
+    const { data: vehicleChoices } = useChoices()
+
+    // Convert tax percentage choices to DynamicSelect format with "Name (Percentage%)" display
+    const taxOptions = vehicleChoices?.tax_percentages?.map((t) => ({
+        id: t.id,
+        name: `${t.name} (${t.percentage}%)`,  // Format: "VAT (19%)"
+        percentage: t.percentage,  // Keep for calculations
+    })) ?? []
+    const { data: subcategoriesData } = useSubcategories(categoryId ?? undefined)
+
+    // Populate form with initial data for edit mode
+    useEffect(() => {
+        if (mode === "edit" && initialData) {
+            // Block auto-save during initial population
+            isInitializingRef.current = true
+
+            setFormData({
+                category: initialData.category || "",
+                subcategory: initialData.subcategory || "",
+                vehicle_id: initialData.vehicle_internal_id || undefined,  // Use internal_id for vehicle reference
+                amount: parseFloat(String(initialData.amount || 0)),
+                currency: initialData.currency || "EUR",
+                tax: initialData.tax ? parseFloat(String(initialData.tax)) : undefined,
+                date: initialData.date || new Date().toISOString().split("T")[0],
+                method: initialData.method || "",
+                from_or_to: initialData.from_or_to || "",
+                description: initialData.description || "",
+                internal_comments: initialData.internal_comments || "",
+                // NOTE: status is auto-computed by backend, not editable
+            })
+
+            // Allow auto-save after a short delay to ensure all initialization is complete
+            // Using setTimeout to defer this until after all effects have run
+            setTimeout(() => {
+                isInitializingRef.current = false
+            }, 500)
+        }
+    }, [mode, initialData])
+
+    // Initialize dropdown IDs for edit mode (based on string values matching options)
+    // Separated from tax initialization to avoid dependency timing issues
+    useEffect(() => {
+        if (mode === "edit" && initialData && choices) {
+            // Match category by name
+            const matchedCategory = categoryOptions.find(c => c.name === initialData.category)
+            if (matchedCategory) {
+                setCategoryId(matchedCategory.id)
+            }
+
+            // Match method by name  
+            const matchedMethod = methodOptions.find(m => m.name === initialData.method)
+            if (matchedMethod) {
+                setMethodId(matchedMethod.id)
+            }
+
+            // Match currency by name
+            const matchedCurrency = currencyOptions.find(c => c.name === initialData.currency)
+            if (matchedCurrency) {
+                setCurrencyId(matchedCurrency.id)
+            }
+        }
+    }, [mode, initialData, choices, categoryOptions, methodOptions, currencyOptions])
+
+    // Separate useEffect for tax initialization - runs after vehicleChoices loads
+    // This ensures taxOptions is populated before we try to match
+    useEffect(() => {
+        if (mode === "edit" && initialData && vehicleChoices?.tax_percentages && vehicleChoices.tax_percentages.length > 0) {
+            // Match tax by percentage value
+            // IMPORTANT: API returns percentage as string (e.g., "19.00"), so we must parse both sides
+            if (initialData.tax !== undefined && initialData.tax !== null) {
+                const taxPercent = parseFloat(String(initialData.tax))
+                // Use parseFloat on t.percentage to handle string-to-number comparison
+                const matchedTax = vehicleChoices.tax_percentages.find(t => parseFloat(String(t.percentage)) === taxPercent)
+                if (matchedTax) {
+                    setTaxId(matchedTax.id)
+                }
+            }
+        }
+    }, [mode, initialData, vehicleChoices])
+
+    // Initialize subcategoryId for edit mode (after subcategories are loaded for the selected category)
+    useEffect(() => {
+        if (mode === "edit" && initialData && subcategoriesData?.subcategories && categoryId && !subcategoryId) {
+            // Match subcategory by name
+            const matchedSubcategory = subcategoriesData.subcategories.find(s => s.name === initialData.subcategory)
+            if (matchedSubcategory) {
+                setSubcategoryId(matchedSubcategory.id)
+            }
+        }
+    }, [mode, initialData, subcategoriesData, categoryId, subcategoryId])
+
+
+    // Handle field changes - with auto-save support for edit mode
+    const handleChange = useCallback((field: keyof TransactionFormData, value: string | number | undefined) => {
+        setFormData((prev) => {
+            const newData = {
+                ...prev,
+                [field]: value,
+                // Reset subcategory when category changes
+                ...(field === "category" ? { subcategory: "" } : {}),
+            }
+            return newData
+        })
+
+        // Trigger auto-save in edit mode (debounced for text inputs)
+        // Skip during initialization to prevent false "Failed to save" errors
+        if (mode === "edit" && onAutoSaveDebounced && !isInitializingRef.current) {
+            onAutoSaveDebounced({ [field]: value })
+        }
+    }, [mode, onAutoSaveDebounced])
+
+    // Calculate price breakdown
+    const netAmount = formData.amount || 0
+    const taxRate = formData.tax || 0
+    // Compute tax such that Net - Tax = Gross
+    const taxAmount = -(netAmount * (taxRate / 100))
+    const grossAmount = netAmount - taxAmount
+
+    // Extract currency code/symbol from currency name format: "Name (CODE)" or "Name (Symbol)"
+    // Examples: "Euro (EUR)" → EUR, "US Dollar (USD)" → USD, "Saudi Riyal (﷼)" → ﷼
+    // Uses a permissive regex to capture ANY content inside the last parentheses (Unicode-safe)
+    const getCurrencyCode = (currencyName: string | undefined): string => {
+        if (!currencyName) return "EUR" // Default fallback
+
+        // Try to extract content from the last set of parentheses: "Name (CODE)" or "Name (Symbol)"
+        // This regex captures anything that is NOT a closing parenthesis, inside parentheses at the end
+        const match = currencyName.match(/\(([^)]+)\)$/)
+        if (match) {
+            const extracted = match[1].trim()
+            // Return the extracted value (could be ISO code like USD or symbol like ﷼)
+            if (extracted) return extracted
+        }
+
+        // If no parentheses found, check if it's already a standalone code (e.g., "EUR", "USD")
+        // Accept 2-4 character codes (like "EUR", "USD", "USDN", etc.)
+        if (/^[A-Za-z]{2,4}$/.test(currencyName.trim())) {
+            return currencyName.trim().toUpperCase()
+        }
+
+        // Fallback to EUR if we can't determine the code
+        return "EUR"
+    }
+
+    const currencyCode = getCurrencyCode(formData.currency)
+
+    // Helper for formatting currency - uses selected currency
+    const formatMoney = (amount: number) => {
+        try {
+            return new Intl.NumberFormat("en-US", {
+                style: "currency",
+                currency: currencyCode,
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+            }).format(amount)
+        } catch {
+            // Fallback if invalid currency code (e.g., when symbol is used instead of ISO code)
+            // Format manually with the symbol/code prepended
+            const formatted = new Intl.NumberFormat("en-US", {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+            }).format(amount)
+            return `${currencyCode} ${formatted}`
+        }
+    }
+
+    const getAmountColor = (amount: number) => {
+        if (amount === 0) return "text-muted-foreground"
+        return amount > 0 ? "text-green-600 dark:text-green-400" : "text-red-500 dark:text-red-400"
+    }
+
+
+    // Validate required fields
+    const validateForm = useCallback((): boolean => {
+        const errors: Record<string, string> = {}
+
+        // Required dropdown fields
+        if (!categoryId) {
+            errors.category = "This field is required"
+        }
+        if (!subcategoryId) {
+            errors.subcategory = "This field is required"
+        }
+        if (!currencyId) {
+            errors.currency = "This field is required"
+        }
+        if (!methodId) {
+            errors.method = "This field is required"
+        }
+        if (!taxId) {
+            errors.tax = "This field is required"
+        }
+
+        // Required text fields
+        if (!formData.from_or_to.trim()) {
+            errors.from_or_to = "This field is required"
+        }
+        if (!formData.date) {
+            errors.date = "This field is required"
+        }
+        // Amount: allow any number (positive, negative, or zero) - only reject empty
+        if (formData.amount === undefined || formData.amount === null || String(formData.amount).trim() === "") {
+            errors.amount = "The amount field cannot be empty"
+        }
+
+        setValidationErrors(errors)
+        return Object.keys(errors).length === 0
+    }, [categoryId, subcategoryId, currencyId, methodId, taxId, formData.from_or_to, formData.date, formData.amount])
+
+    // Clear specific validation error when field is filled
+    const clearError = useCallback((field: string) => {
+        setValidationErrors(prev => {
+            if (prev[field]) {
+                const next = { ...prev }
+                delete next[field]
+                return next
+            }
+            return prev
+        })
+    }, [])
+
+    // Handle form submission
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault()
+
+        // Custom validation - blocks submission if invalid
+        if (!validateForm()) {
+            return
+        }
+
+        await onSubmit(formData)
+    }
+
+    // Handle cancel with smart back
+    const handleCancel = () => {
+        if (window.history.state && window.history.state.idx > 0) {
+            navigate(-1)
+        } else {
+            navigate(`/${business_slug}/transactions`)
+        }
+    }
+
+    // Convert vehicle choices to SearchableSelect format
+    const vehicleOptions = choices?.vehicle_choices?.map((v) => ({
+        value: String(v.value),
+        label: `#${v.value} - ${v.label}`,
+    })) ?? []
+
+    if (choicesLoading) {
+        return (
+            <div className="flex items-center justify-center h-64">
+                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            </div>
+        )
+    }
+
+    return (
+        <form onSubmit={handleSubmit} noValidate className="space-y-6">
+            <div className="grid gap-6 lg:grid-cols-2">
+                {/* Column 1: Transaction Details & Usage Details */}
+                <div className="space-y-6">
+                    {/* Transaction Details Section */}
+                    <div className="rounded-xl border border-border bg-card">
+                        <div className="border-b border-border px-5 py-4 flex items-center justify-between">
+                            <h3 className="text-base font-medium">Transaction Details</h3>
+                            {/* Auto-computed Status Badge */}
+                            {mode === "edit" && initialData?.status && (
+                                <span
+                                    className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold ${initialData.status === "confirmed"
+                                        ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 ring-1 ring-inset ring-emerald-500/25"
+                                        : initialData.status === "inactive"
+                                            ? "bg-muted text-muted-foreground ring-1 ring-inset ring-border"
+                                            : "bg-red-500/15 text-red-600 dark:text-red-400 ring-1 ring-inset ring-red-500/25"
+                                        }`}
+                                >
+                                    {initialData.status === "confirmed" ? (
+                                        <CheckCircle className="h-3.5 w-3.5" />
+                                    ) : initialData.status === "inactive" ? (
+                                        <XCircle className="h-3.5 w-3.5" />
+                                    ) : (
+                                        <AlertCircle className="h-3.5 w-3.5" />
+                                    )}
+                                    {t(`status.${initialData.status}`) || initialData.status_display || initialData.status}
+                                </span>
+                            )}
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-5">
+                            {/* Category - DynamicSelect with Add New */}
+                            <div className="space-y-2">
+                                <Label htmlFor="category">Category <span className="text-red-500">*</span></Label>
+                                <DynamicSelect
+                                    choiceType="category"
+                                    options={categoryOptions}
+                                    value={categoryId}
+                                    onChange={(id) => {
+                                        setCategoryId(id)
+                                        clearError("category")
+                                        // Reset subcategory when category changes
+                                        setSubcategoryId(null)
+                                        // Also update formData with category name for backend
+                                        const category = categoryOptions.find(c => c.id === id)
+                                        const categoryName = category?.name || ""
+                                        setFormData(prev => ({
+                                            ...prev,
+                                            category: categoryName,
+                                            subcategory: "",
+                                        }))
+                                        // Trigger immediate auto-save for dropdown
+                                        if (mode === "edit" && onAutoSave) {
+                                            onAutoSave({ category: categoryName, subcategory: "" })
+                                        }
+                                    }}
+                                    placeholder="Select category"
+                                    allowCreate={true}
+                                    createLabel="Category"
+                                />
+                                {validationErrors.category && (
+                                    <p className="text-sm text-red-500">{validationErrors.category}</p>
+                                )}
+                            </div>
+
+                            {/* Subcategory - DynamicSelect with Add New, dependent on Category */}
+                            <div className="space-y-2">
+                                <SubcategorySelect
+                                    categoryId={categoryId ?? undefined}
+                                    value={subcategoryId}
+                                    onChange={(id, name) => {
+                                        setSubcategoryId(id)
+                                        clearError("subcategory")
+                                        // Update formData with subcategory name for backend
+                                        const subcategoryName = name || ""
+                                        setFormData(prev => ({
+                                            ...prev,
+                                            subcategory: subcategoryName,
+                                        }))
+                                        // Trigger immediate auto-save for dropdown
+                                        if (mode === "edit" && onAutoSave) {
+                                            onAutoSave({ subcategory: subcategoryName })
+                                        }
+                                    }}
+                                />
+                                {validationErrors.subcategory && (
+                                    <p className="text-sm text-red-500">{validationErrors.subcategory}</p>
+                                )}
+                            </div>
+
+                            {/* Vehicle - Searchable */}
+                            <div className="space-y-2">
+                                <Label htmlFor="vehicle">Vehicle</Label>
+                                <SearchableSelect
+                                    options={vehicleOptions}
+                                    value={formData.vehicle_id?.toString() || ""}
+                                    onChange={(v) => {
+                                        const vehicleId = v ? parseInt(v) : undefined
+                                        handleChange("vehicle_id", vehicleId)
+                                        // Trigger immediate auto-save for dropdown
+                                        if (mode === "edit" && onAutoSave) {
+                                            onAutoSave({ vehicle_id: vehicleId })
+                                        }
+                                    }}
+                                    placeholder="Search vehicles..."
+                                    searchPlaceholder="Type to search..."
+                                />
+                            </div>
+                        </div>
+                    </div>
+                    {/* Column 3: Additional Information */}
+                    <div className="space-y-6">
+                        <div className="rounded-xl border border-border bg-card">
+                            <div className="border-b border-border px-5 py-4">
+                                <h3 className="text-base font-medium">Additional Information</h3>
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-5">
+                                {/* Description */}
+                                <div className="space-y-2">
+                                    <Label htmlFor="description">Description</Label>
+                                    <Textarea
+                                        id="description"
+                                        value={formData.description}
+                                        onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => handleChange("description", e.target.value)}
+                                        placeholder="Transaction description..."
+                                        rows={4}
+                                    />
+                                </div>
+
+                                {/* Internal Comments */}
+                                <div className="space-y-2">
+                                    <Label htmlFor="internal_comments">Internal Comments</Label>
+                                    <Textarea
+                                        id="internal_comments"
+                                        value={formData.internal_comments}
+                                        onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => handleChange("internal_comments", e.target.value)}
+                                        placeholder="Internal notes..."
+                                        rows={4}
+                                    />
+                                </div>
+
+                                {/* Status is auto-computed by the backend based on category + subcategory + tax */}
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                {/* Column 2: Price Breakdown & Purchase Details */}
+                <div className="space-y-6">
+                    {/* Usage Details Section */}
+                    <div className="rounded-xl border border-border bg-card">
+                        <div className="border-b border-border px-5 py-4">
+                            <h3 className="text-base font-medium">Usage Details</h3>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-5">
+                            {/* Date */}
+                            <div className="space-y-2">
+                                <Label htmlFor="date">Date <span className="text-red-500">*</span></Label>
+                                <div className="relative">
+                                    <CalendarDays className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                    <Input
+                                        id="date"
+                                        type="date"
+                                        value={formData.date}
+                                        onChange={(e) => {
+                                            const dateValue = e.target.value
+                                            handleChange("date", dateValue)
+                                            clearError("date")
+                                            // Trigger immediate auto-save for date (not debounced)
+                                            if (mode === "edit" && onAutoSave) {
+                                                onAutoSave({ date: dateValue })
+                                            }
+                                        }}
+                                        className="pl-10"
+                                    />
+                                </div>
+                                {validationErrors.date && (
+                                    <p className="text-sm text-red-500">{validationErrors.date}</p>
+                                )}
+                            </div>
+
+                            {/* Method - DynamicSelect with Add New */}
+                            <div className="space-y-2">
+                                <Label htmlFor="method">Method <span className="text-red-500">*</span></Label>
+                                <DynamicSelect
+                                    choiceType="method"
+                                    options={methodOptions}
+                                    value={methodId}
+                                    onChange={(id) => {
+                                        setMethodId(id)
+                                        clearError("method")
+                                        // Update formData with method name for backend
+                                        const method = methodOptions.find(m => m.id === id)
+                                        const methodName = method?.name || ""
+                                        setFormData(prev => ({
+                                            ...prev,
+                                            method: methodName,
+                                        }))
+                                        // Trigger immediate auto-save for dropdown
+                                        if (mode === "edit" && onAutoSave) {
+                                            onAutoSave({ method: methodName })
+                                        }
+                                    }}
+                                    placeholder="Select method"
+                                    allowCreate={true}
+                                    createLabel="Method"
+                                />
+                                {validationErrors.method && (
+                                    <p className="text-sm text-red-500">{validationErrors.method}</p>
+                                )}
+                            </div>
+
+                            {/* From/To */}
+                            <div className="space-y-2">
+                                <Label htmlFor="from_or_to">From/To <span className="text-red-500">*</span></Label>
+                                <Input
+                                    id="from_or_to"
+                                    type="text"
+                                    value={formData.from_or_to}
+                                    onChange={(e) => {
+                                        handleChange("from_or_to", e.target.value)
+                                        if (e.target.value.trim()) {
+                                            clearError("from_or_to")
+                                        }
+                                    }}
+                                    placeholder="Sender or recipient name"
+                                />
+                                {validationErrors.from_or_to && (
+                                    <p className="text-sm text-red-500">{validationErrors.from_or_to}</p>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Purchase Details Section */}
+                    <div className="rounded-xl border border-border bg-card">
+                        <div className="border-b border-border px-5 py-4">
+                            <h3 className="text-base font-medium">Purchase Details</h3>
+                        </div>
+                        <div className="px-5 pt-5 pb-0">
+                            <div className="flex flex-row flex-wrap items-center gap-x-4 gap-y-1 min-w-0 rounded-md border p-2 shadow-sm transition-colors bg-background border-border/40 hover:border-border/80 w-full mb-2">
+                                <div className="flex items-center gap-1.5">
+                                    <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold whitespace-nowrap">Gross:</span>
+                                    <span className={`text-sm font-bold ${getAmountColor(grossAmount)} whitespace-nowrap`}>
+                                        {formatMoney(grossAmount)}
+                                    </span>
+                                </div>
+                                <div className="text-[10px] text-muted-foreground/50 font-medium whitespace-nowrap">
+                                    Net ({formatMoney(netAmount)}) + Tax {taxRate}% ({formatMoney(taxAmount)})
+                                </div>
+                            </div>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-5 pt-2">
+                            {/* Amount */}
+                            <div className="space-y-2">
+                                <Label htmlFor="amount">Amount <span className="text-red-500">*</span></Label>
+                                <div className="relative">
+                                    <Input
+                                        id="amount"
+                                        type="number"
+                                        step="0.01"
+                                        value={formData.amount ?? ""}
+                                        placeholder="Enter amount"
+                                        onChange={(e) => {
+                                            const inputVal = e.target.value
+                                            // Allow empty string (undefined) or any valid number
+                                            if (inputVal === "") {
+                                                handleChange("amount", undefined)
+                                            } else {
+                                                const val = parseFloat(inputVal)
+                                                if (!isNaN(val)) {
+                                                    handleChange("amount", val)
+                                                    clearError("amount")
+                                                }
+                                            }
+                                        }}
+                                    />
+                                </div>
+                                {validationErrors.amount && (
+                                    <p className="text-sm text-red-500">{validationErrors.amount}</p>
+                                )}
+                            </div>
+
+                            {/* Tax - DynamicSelect with Add New */}
+                            <div className="space-y-2">
+                                <Label htmlFor="tax">Tax <span className="text-red-500">*</span></Label>
+                                <DynamicSelect
+                                    choiceType="tax_percentage"
+                                    options={taxOptions}
+                                    value={taxId}
+                                    onChange={(id) => {
+                                        setTaxId(id)
+                                        clearError("tax")
+
+                                        // Note: For newly created items, taxOptions won't contain the new tax yet
+                                        // In that case, onCreated callback will handle setting the percentage
+                                        const taxOption = taxOptions.find(t => t.id === id)
+                                        const taxValue = taxOption !== undefined ? taxOption.percentage : undefined
+
+                                        // Only update form data if we actually found the option or it was cleared
+                                        // When handling "Create New", id is null initially until onCreated fires
+                                        if (taxOption !== undefined || id === null) {
+                                            setFormData(prev => ({
+                                                ...prev,
+                                                tax: taxValue,
+                                            }))
+                                            // Trigger immediate auto-save for dropdown
+                                            if (mode === "edit" && onAutoSave) {
+                                                onAutoSave({ tax: taxValue })
+                                            }
+                                        }
+                                    }}
+                                    onCreated={(item) => {
+                                        // Immediately update formData with the new tax percentage
+                                        // This fixes the Price Breakdown not updating when creating a new tax
+                                        if (item.percentage !== undefined) {
+                                            setFormData(prev => ({
+                                                ...prev,
+                                                tax: item.percentage,
+                                            }))
+                                            // Also trigger auto-save if in edit mode
+                                            if (mode === "edit" && onAutoSave) {
+                                                onAutoSave({ tax: item.percentage })
+                                            }
+                                        }
+                                    }}
+                                    placeholder="Select tax"
+                                    allowCreate={true}
+                                    createLabel="Tax Rate"
+                                    showPercentage
+                                />
+                                {validationErrors.tax && (
+                                    <p className="text-sm text-red-500">{validationErrors.tax}</p>
+                                )}
+                            </div>
+
+                            {/* Currency - DynamicSelect with Add New */}
+                            <div className="space-y-2">
+                                <Label htmlFor="currency">Currency <span className="text-red-500">*</span></Label>
+                                <DynamicSelect
+                                    choiceType="currency"
+                                    options={currencyOptions}
+                                    value={currencyId}
+                                    onChange={(id) => {
+                                        setCurrencyId(id)
+                                        clearError("currency")
+                                        // Update formData with currency code/name for backend
+                                        const currency = currencyOptions.find(c => c.id === id)
+                                        const currencyName = currency?.name || ""
+                                        setFormData(prev => ({
+                                            ...prev,
+                                            currency: currencyName,
+                                        }))
+                                        // Trigger immediate auto-save for dropdown
+                                        if (mode === "edit" && onAutoSave) {
+                                            onAutoSave({ currency: currencyName })
+                                        }
+                                    }}
+                                    placeholder="Select currency"
+                                    allowCreate={true}
+                                    createLabel="Currency"
+                                />
+                                {validationErrors.currency && (
+                                    <p className="text-sm text-red-500">{validationErrors.currency}</p>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+
+            </div>
+
+            {/* Related Transactions Table - Dynamic based on selected vehicle */}
+            {formData.vehicle_id && (
+                <div className="mt-6">
+                    <RelatedTransactionsTable
+                        vehicleId={formData.vehicle_id}
+                        vehicleName={vehicleOptions.find(v => v.value === String(formData.vehicle_id))?.label}
+                        highlightedTransactionId={highlightedTransactionId}
+                    />
+                </div>
+            )}
+
+            {/* Form Actions - Sticky Footer */}
+            <div className="pb-24" />
+            <StickyFooter>
+                <div className="flex w-full items-center justify-between">
+                    <div className="flex items-center gap-2">
+                        <Button type="button" variant="outline" onClick={handleCancel}>
+                            {mode === "edit" ? "Back to List" : "Cancel"}
+                        </Button>
+
+                        {/* Activate/Deactivate toggle (edit mode only) */}
+                        {mode === "edit" && initialData && (
+                            initialData.status === "inactive" ? (
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    className="gap-2 text-green-600 border-green-300 hover:bg-green-50 hover:text-green-700 dark:text-green-400 dark:border-green-700 dark:hover:bg-green-900/30"
+                                    disabled={statusToggleLoading}
+                                    onClick={async () => {
+                                        if (!initialData.internal_id) return
+                                        setStatusToggleLoading(true)
+                                        try {
+                                            await activateTransaction.mutateAsync(initialData.internal_id)
+                                            // Reload the page to reflect updated status
+                                            window.location.reload()
+                                        } catch (err) {
+                                            console.error("Failed to activate transaction:", err)
+                                        } finally {
+                                            setStatusToggleLoading(false)
+                                        }
+                                    }}
+                                >
+                                    {statusToggleLoading ? (
+                                        <Loader2 className="h-4 w-4 animate-spin" />
+                                    ) : (
+                                        <RotateCcw className="h-4 w-4" />
+                                    )}
+                                    Activate
+                                </Button>
+                            ) : (
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    className="gap-2 text-red-500 border-red-300 hover:bg-red-50 hover:text-red-700 dark:text-red-400 dark:border-red-700 dark:hover:bg-red-900/30"
+                                    disabled={statusToggleLoading}
+                                    onClick={async () => {
+                                        if (!initialData.internal_id) return
+                                        setStatusToggleLoading(true)
+                                        try {
+                                            await deleteTransaction.mutateAsync(initialData.internal_id)
+                                            // Reload the page to reflect updated status
+                                            window.location.reload()
+                                        } catch (err) {
+                                            console.error("Failed to deactivate transaction:", err)
+                                        } finally {
+                                            setStatusToggleLoading(false)
+                                        }
+                                    }}
+                                >
+                                    {statusToggleLoading ? (
+                                        <Loader2 className="h-4 w-4 animate-spin" />
+                                    ) : (
+                                        <Trash2 className="h-4 w-4" />
+                                    )}
+                                    Deactivate
+                                </Button>
+                            )
+                        )}
+                    </div>
+
+                    {mode === "create" ? (
+                        // Create mode: Show submit button
+                        <Button
+                            type="submit"
+                            disabled={isLoading}
+                            className="gap-2"
+                        >
+                            {isLoading ? (
+                                <>
+                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                    Creating...
+                                </>
+                            ) : (
+                                <>
+                                    <FileText className="h-4 w-4" />
+                                    Add Transaction
+                                </>
+                            )}
+                        </Button>
+                    ) : (
+                        // Edit mode: Show autosave indicator, PDF button, and navigation
+                        <div className="flex items-center gap-3">
+                            {/* Auto-save status indicator */}
+                            <AutoSaveIndicator status={autoSaveStatus} errorMessage={autoSaveErrorMessage} />
+
+                            {/* Separator */}
+                            <div className="h-6 w-px bg-border" />
+
+                            {/* Generate PDF button */}
+                            {mode === "edit" && initialData && (() => {
+                                // PDF generation requires: amount, date, category, subcategory, tax (all present)
+                                // and logically evaluates properly without needing a database refresh
+                                const canGenerate = (
+                                    formData.amount !== undefined && formData.amount !== null &&
+                                    formData.date !== "" && formData.date !== null && formData.date !== undefined &&
+                                    (formData.category !== "" || categoryId !== null) &&
+                                    (formData.subcategory !== "" || subcategoryId !== null) &&
+                                    formData.tax !== undefined && formData.tax !== null && formData.tax >= 0
+                                );
+
+                                return canGenerate ? (
+                                    <a
+                                        href={`/api/transactions/${initialData.internal_id}/pdf`}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="inline-flex items-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm font-medium shadow-sm hover:bg-accent hover:text-accent-foreground transition-colors"
+                                    >
+                                        <Download className="h-4 w-4" />
+                                        PDF
+                                    </a>
+                                ) : (
+                                    <span
+                                        className="inline-flex items-center gap-2 rounded-md border border-input bg-muted px-4 py-2 text-sm font-medium text-muted-foreground cursor-not-allowed opacity-50"
+                                        title="Complete all required fields (amount, date, category, subcategory, tax) to generate PDF"
+                                    >
+                                        <Download className="h-4 w-4" />
+                                        PDF
+                                    </span>
+                                );
+                            })()}
+
+                            {/* Separator */}
+                            <div className="h-6 w-px bg-border" />
+
+
+
+                            {/* Standard Navigation */}
+                            <RecordNavigation
+                                basePath={`/${business_slug}/transactions`}
+                                prevId={initialData?.prev_transaction_internal_id}
+                                nextId={initialData?.next_transaction_internal_id}
+                                pathSuffix="/edit"
+                                label="Transaction"
+                            />
+                        </div>
+                    )}
+                </div>
+            </StickyFooter>
+        </form>
+    )
+}

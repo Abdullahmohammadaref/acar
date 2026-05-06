@@ -1,0 +1,1699 @@
+"""
+Django Ninja API for Vehicle Management System.
+
+This module provides REST API endpoints for:
+- Vehicle CRUD operations
+- Dynamic choice management (Makes, Colors, etc.)
+- PDF generation triggers
+- Financial summaries
+
+Authentication: Uses Django session authentication (same-domain SPA).
+"""
+
+from ninja import Router, Query, File, Form
+from ninja.files import UploadedFile
+from ninja.security import django_auth
+from django.shortcuts import get_object_or_404
+from django.http import FileResponse, HttpResponse
+from django.db.models import Q, Sum, Case, When, F, Value, DecimalField
+from django.db.models.functions import Coalesce
+from django.core.paginator import Paginator
+from django.utils import timezone
+from typing import Optional, List
+from decimal import Decimal
+from datetime import datetime
+import io
+
+from .models import (
+    Vehicle, Business, Branch, LegalEntity,
+    VehicleType, BodyType, Make, VehicleModel,
+    Color, FuelType, DamageType, DoorsChoice,
+    PaymentMethod, TaxPercentage, Currency, Category, Subcategory,
+    ActivityLog
+)
+from .schemas import (
+    VehicleListOut, VehicleDetailOut, VehicleCreate, VehicleUpdate,
+    VehicleFilters, PaginatedVehicles, FinancialSummary, AllChoices,
+    VehiclesResponse, ChoiceBase, ChoiceCreate, ChoiceCreatedResponse,
+    TaxPercentageOut, TaxPercentageCreate, VehicleModelOut,
+    VehicleModelCreate, LegalEntityOut, LegalEntityCreate,
+    LegalEntityListOut, LegalEntityUpdate, LegalEntityFilters, LegalEntitiesListResponse,
+    BranchOut, ErrorResponse, SuccessResponse
+)
+from .image_processing import process_vehicle_image
+
+# Create router with session authentication
+router = Router(auth=django_auth, tags=["Vehicles"])
+
+VEHICLE_DETAIL_RELATIONS = (
+    'branch', 'make', 'model', 'body_type', 'color', 'fuel_type',
+    'doors', 'damage_type', 'vehicle_type', 'buy_tax', 'sale_tax',
+    'buy_payment_method', 'sale_payment_method', 'seller', 'buyer'
+)
+
+
+# =============================================================================
+# Helper Functions
+# =============================================================================
+
+def get_user_business(request) -> Business:
+    """Get the authenticated user's business"""
+    return request.user.business
+
+
+def log_activity(
+    request,
+    action: str,
+    entity_type: str,
+    entity_id: int = None,
+    entity_name: str = "",
+    details: str = ""
+):
+    """
+    Log a user activity.
+    
+    Args:
+        request: The HTTP request (to get user and business)
+        action: One of 'create', 'update', 'delete', 'status_change'
+        entity_type: One of 'vehicle', 'transaction', 'legal_entity', 'user', 'business_settings', 'choice'
+        entity_id: Internal ID of the affected entity (optional)
+        entity_name: Display name for the entity (e.g., "BMW X5", "Transaction #123")
+        details: Additional details about the action
+    """
+    print(f"[ActivityLog] ========== LOGGING ACTIVITY ==========")
+    print(f"[ActivityLog] Action: {action}")
+    print(f"[ActivityLog] Entity Type: {entity_type}")
+    print(f"[ActivityLog] Entity ID: {entity_id}")
+    print(f"[ActivityLog] Entity Name: {entity_name}")
+    print(f"[ActivityLog] Details: {details}")
+    
+    try:
+        # Check user context
+        user = getattr(request, 'user', None)
+        print(f"[ActivityLog] User from request: {user}")
+        print(f"[ActivityLog] User is authenticated: {user.is_authenticated if user else 'N/A'}")
+        
+        if not user or not user.is_authenticated:
+            print(f"[ActivityLog] ERROR: User is not authenticated or missing!")
+            return
+        
+        business = getattr(user, 'business', None)
+        print(f"[ActivityLog] Business: {business}")
+        
+        if not business:
+            print(f"[ActivityLog] ERROR: User has no business!")
+            return
+        
+        # Create the log entry
+        print(f"[ActivityLog] Creating ActivityLog entry...")
+        log_entry = ActivityLog.objects.create(
+            business=business,
+            user=user,
+            action=action,
+            entity_type=entity_type,
+            entity_id=entity_id,
+            entity_name=entity_name,
+            details=details
+        )
+        print(f"[ActivityLog] SUCCESS! Created log entry with ID: {log_entry.id}")
+        print(f"[ActivityLog] =========================================")
+        
+    except Exception as e:
+        import traceback
+        print(f"[ActivityLog] EXCEPTION OCCURRED: {type(e).__name__}: {e}")
+        print(f"[ActivityLog] Traceback:")
+        traceback.print_exc()
+        print(f"[ActivityLog] =========================================")
+
+
+def serialize_vehicle_list(vehicle: Vehicle) -> dict:
+    """Serialize a Vehicle for list display"""
+    # Get status display and convert lazy translation to string
+    status_display = None
+    if vehicle.status:
+        status_choices_dict = dict(Vehicle.STATUS_CHOICES)
+        status_display = str(status_choices_dict.get(vehicle.status, vehicle.status))
+    
+    # Determine if buy contract can be generated
+    # Requires: buy_price, buy_date, buy_payment_method, seller
+    can_generate_buy = all([
+        vehicle.buy_price,
+        vehicle.buy_date,
+        vehicle.buy_payment_method,
+        vehicle.seller,
+    ])
+    
+    # Determine if sale contract can be generated
+    # Requires: sale_price, sale_date, sale_payment_method, buyer
+    can_generate_sale = all([
+        vehicle.sale_price,
+        vehicle.sale_date,
+        vehicle.sale_payment_method,
+        vehicle.buyer,
+    ])
+    
+    return {
+        "id": vehicle.id,
+        "internal_id": vehicle.internal_id,
+        "status": vehicle.status,
+        "status_display": status_display,
+        "make_name": vehicle.make.name if vehicle.make else None,
+        "model_name": vehicle.model.name if vehicle.model else (vehicle.manufacturer_model or None),  # Fallback to legacy field
+        "body_type_name": vehicle.body_type.name if vehicle.body_type else None,
+        "color_name": vehicle.color.name if vehicle.color else None,
+        "year_of_construction": vehicle.year_of_construction,
+        "kilometer": vehicle.kilometer,
+        "power_kw": vehicle.power_kw,
+        "fuel_type_name": vehicle.fuel_type.name if vehicle.fuel_type else None,
+        "buy_price": vehicle.buy_price,
+        "buy_price_net": vehicle.buy_price_net,
+        "sale_price": vehicle.sale_price,
+        "sale_price_net": vehicle.sale_price_net,
+        "buy_date": vehicle.buy_date,
+        "sale_date": vehicle.sale_date,
+        "active_for": vehicle.active_for,
+        "chassis_number": vehicle.chassis_number,
+        "official_license_plate": vehicle.official_license_plate,
+        "sale_invoice_number": vehicle.sale_invoice_number,
+        "image_url": vehicle.image.url if vehicle.image else None,
+        # Additional fields for VehicleCard
+        "branch_name": vehicle.branch.name if vehicle.branch else None,
+        "doors_name": vehicle.doors.name if vehicle.doors else None,
+        "vehicle_type_name": vehicle.vehicle_type.name if vehicle.vehicle_type else None,
+        "damage_type_name": vehicle.damage_type.name if vehicle.damage_type else None,
+        "motor_vehicle_registration_number": vehicle.motor_vehicle_registration_number,
+        "internal_comments": vehicle.internal_comments,
+        # Contract availability flags
+        "can_generate_buy_contract": can_generate_buy,
+        "can_generate_sale_contract": can_generate_sale,
+    }
+
+
+def serialize_vehicle_detail(vehicle: Vehicle) -> dict:
+    """Serialize a Vehicle for detail/edit view"""
+    data = serialize_vehicle_list(vehicle)
+    
+    # Add additional detail fields
+    data.update({
+        "description": vehicle.description,
+        "internal_comments": vehicle.internal_comments,
+        
+        # Branch
+        "branch_id": vehicle.branch_id,
+        "branch_name": vehicle.branch.name if vehicle.branch else None,
+        
+        # Official details
+        "motor_vehicle_registration_number": vehicle.motor_vehicle_registration_number,
+        
+        # Usage details
+        "damage_type_id": vehicle.damage_type_id,
+        "damage_type_name": vehicle.damage_type.name if vehicle.damage_type else None,
+        "first_registration_date": vehicle.first_registration_date,
+        
+        # Vehicle details (FK IDs for form binding)
+        "vehicle_type_id": vehicle.vehicle_type_id,
+        "vehicle_type_name": vehicle.vehicle_type.name if vehicle.vehicle_type else None,
+        "body_type_id": vehicle.body_type_id,
+        "make_id": vehicle.make_id,
+        "make_name": vehicle.make.name if vehicle.make else None,
+        "model_id": vehicle.model_id,
+        "model_name": vehicle.model.name if vehicle.model else (vehicle.manufacturer_model or None),
+        "color_id": vehicle.color_id,
+        "doors_id": vehicle.doors_id,
+        "doors_name": vehicle.doors.name if vehicle.doors else None,
+        "fuel_type_id": vehicle.fuel_type_id,
+        
+        # Buy details
+        "buy_tax_id": vehicle.buy_tax_id,
+        "buy_tax_name": vehicle.buy_tax.name if vehicle.buy_tax else None,
+        "buy_tax_percentage": vehicle.buy_tax.percentage if vehicle.buy_tax else None,
+        "buy_delivery_collection_date": vehicle.buy_delivery_collection_date,
+        "buy_payment_method_id": vehicle.buy_payment_method_id,
+        "buy_payment_method_name": vehicle.buy_payment_method.name if vehicle.buy_payment_method else None,
+        "seller_id": vehicle.seller_id,
+        "seller_name": vehicle.seller.name if vehicle.seller else None,
+        
+        # Sale details
+        "sale_tax_id": vehicle.sale_tax_id,
+        "sale_tax_name": vehicle.sale_tax.name if vehicle.sale_tax else None,
+        "sale_tax_percentage": vehicle.sale_tax.percentage if vehicle.sale_tax else None,
+        "sale_commission": vehicle.sale_commission,
+        "sale_delivery_collection_date": vehicle.sale_delivery_collection_date,
+        "sale_payment_method_id": vehicle.sale_payment_method_id,
+        "sale_payment_method_name": vehicle.sale_payment_method.name if vehicle.sale_payment_method else None,
+        "buyer_id": vehicle.buyer_id,
+        "buyer_name": vehicle.buyer.name if vehicle.buyer else None,
+        
+        # Computed properties
+        "buy_price_after_tax": vehicle.buy_price_after_tax,
+        "sale_price_after_tax": vehicle.sale_price_after_tax,
+        
+        # Financial summary from transactions
+        "total_revenue": vehicle.total_revenue,
+        "total_expenses": vehicle.total_expenses,
+        "net_profit": vehicle.net_profit,
+        "transactions": [
+            {
+                "id": t.id,
+                "internal_id": t.internal_id,
+                "date": t.date,
+                "amount": t.amount,
+                "tax": t.tax,
+                "description": t.description,
+                "category": t.category,
+                "category_display": t.category_display,
+                "subcategory": t.subcategory,
+                "status": t.status,
+            }
+            for t in vehicle.vehicle_transactions.exclude(status='inactive')
+        ],
+        
+        # Metadata
+        "date_created": vehicle.date_created,
+    })
+    
+    return data
+
+
+def build_vehicle_detail_response(business: Business, vehicle: Vehicle) -> dict:
+    """Serialize a vehicle and include prev/next navigation metadata."""
+    detail = serialize_vehicle_detail(vehicle)
+
+    all_vehicles = Vehicle.objects.filter(business=business).exclude(status='inactive').order_by('internal_id')
+    prev_vehicle = all_vehicles.filter(internal_id__lt=vehicle.internal_id).order_by('-internal_id').first()
+    next_vehicle = all_vehicles.filter(internal_id__gt=vehicle.internal_id).order_by('internal_id').first()
+
+    detail["prev_vehicle_internal_id"] = prev_vehicle.internal_id if prev_vehicle else None
+    detail["next_vehicle_internal_id"] = next_vehicle.internal_id if next_vehicle else None
+
+    return detail
+
+
+def apply_vehicle_filters(qs, filters: VehicleFilters):
+    """Apply filters to vehicle queryset"""
+    
+    # General search across multiple fields
+    if filters.search:
+        search_term = filters.search
+        
+        # Base string queries
+        query = (
+            Q(status__icontains=search_term) |
+            Q(chassis_number__icontains=search_term) |
+            Q(make__name__icontains=search_term) |
+            Q(model__name__icontains=search_term) |
+            Q(official_license_plate__icontains=search_term) |
+            Q(color__name__icontains=search_term) |
+            Q(fuel_type__name__icontains=search_term) |
+            Q(vehicle_type__name__icontains=search_term) |
+            Q(body_type__name__icontains=search_term) |
+            Q(damage_type__name__icontains=search_term) |
+            Q(doors__name__icontains=search_term) |
+            Q(sale_invoice_number__icontains=search_term) |
+            Q(motor_vehicle_registration_number__icontains=search_term) |
+            Q(description__icontains=search_term) |
+            Q(internal_comments__icontains=search_term) |
+            Q(branch__name__icontains=search_term) |
+            Q(seller__name__icontains=search_term) |
+            Q(buyer__name__icontains=search_term) |
+            Q(buy_tax__name__icontains=search_term) |
+            Q(sale_tax__name__icontains=search_term) |
+            Q(buy_payment_method__name__icontains=search_term) |
+            Q(sale_payment_method__name__icontains=search_term)
+        )
+
+        # Numerical queries (integer)
+        try:
+            num = int(search_term)
+            query |= Q(internal_id=num)
+            query |= Q(year_of_construction=num)
+            query |= Q(kilometer=num)
+            query |= Q(power_kw=num)
+        except ValueError:
+            pass
+
+        # Numerical queries (decimal)
+        try:
+            dec = Decimal(search_term)
+            query |= Q(buy_price=dec)
+            query |= Q(sale_price=dec)
+        except Exception:
+            pass
+            
+        qs = qs.filter(query)
+    # Quick search filters
+    if filters.vehicle_id_search:
+        qs = qs.filter(internal_id=filters.vehicle_id_search)
+    
+    if filters.chassis_number_search:
+        qs = qs.filter(chassis_number__icontains=filters.chassis_number_search)
+    
+    if filters.motor_vehicle_registration_search:
+        qs = qs.filter(
+            motor_vehicle_registration_number__icontains=filters.motor_vehicle_registration_search
+        )
+    
+    if filters.official_license_plate_search:
+        qs = qs.filter(
+            official_license_plate__icontains=filters.official_license_plate_search
+        )
+    
+    if filters.sale_invoice_number_search:
+        qs = qs.filter(
+            sale_invoice_number__icontains=filters.sale_invoice_number_search
+        )
+    
+    # Vehicle detail filters
+    if filters.status:
+        qs = qs.filter(status=filters.status)
+    
+    if filters.make:
+        qs = qs.filter(make_id=filters.make)
+    
+    if filters.model:
+        qs = qs.filter(model_id=filters.model)
+    
+    if filters.branch:
+        qs = qs.filter(branch_id=filters.branch)
+    
+    if filters.vehicle_type:
+        qs = qs.filter(vehicle_type_id=filters.vehicle_type)
+    
+    if filters.body_type:
+        qs = qs.filter(body_type_id=filters.body_type)
+    
+    if filters.doors:
+        qs = qs.filter(doors_id=filters.doors)
+    
+    if filters.fuel_type:
+        qs = qs.filter(fuel_type_id=filters.fuel_type)
+    
+    if filters.color:
+        qs = qs.filter(color_id=filters.color)
+    
+    if filters.damage_type:
+        qs = qs.filter(damage_type_id=filters.damage_type)
+    
+    # Price range filters
+    if filters.min_buy_price:
+        qs = qs.filter(buy_price__gte=filters.min_buy_price)
+    
+    if filters.max_buy_price:
+        qs = qs.filter(buy_price__lte=filters.max_buy_price)
+    
+    if filters.specific_buy_price:
+        qs = qs.filter(buy_price=filters.specific_buy_price)
+    
+    if filters.min_sale_price:
+        qs = qs.filter(sale_price__gte=filters.min_sale_price)
+    
+    if filters.max_sale_price:
+        qs = qs.filter(sale_price__lte=filters.max_sale_price)
+    
+    if filters.specific_sale_price:
+        qs = qs.filter(sale_price=filters.specific_sale_price)
+    
+    # Date range filters
+    if filters.min_buy_date:
+        qs = qs.filter(buy_date__gte=filters.min_buy_date)
+    
+    if filters.max_buy_date:
+        qs = qs.filter(buy_date__lte=filters.max_buy_date)
+    
+    if filters.min_sale_date:
+        qs = qs.filter(sale_date__gte=filters.min_sale_date)
+    
+    if filters.max_sale_date:
+        qs = qs.filter(sale_date__lte=filters.max_sale_date)
+    
+    # Technical spec filters
+    if filters.min_year:
+        qs = qs.filter(year_of_construction__gte=filters.min_year)
+    
+    if filters.max_year:
+        qs = qs.filter(year_of_construction__lte=filters.max_year)
+    
+    if filters.min_kilometer:
+        qs = qs.filter(kilometer__gte=filters.min_kilometer)
+    
+    if filters.max_kilometer:
+        qs = qs.filter(kilometer__lte=filters.max_kilometer)
+    
+    if filters.min_power_kw:
+        qs = qs.filter(power_kw__gte=filters.min_power_kw)
+    
+    if filters.max_power_kw:
+        qs = qs.filter(power_kw__lte=filters.max_power_kw)
+    
+    return qs
+
+
+def apply_vehicle_sorting(qs, filters: VehicleFilters):
+    """Apply sorting to vehicle queryset"""
+    sort_field = filters.sort or "internal_id"
+    
+    # Map frontend sort keys to model fields
+    sort_mapping = {
+        "internal_id": "internal_id",
+        "status": "status",
+        "make": "make__name",
+        "buy_price": "buy_price",
+        "sale_price": "sale_price",
+        "buy_date": "buy_date",
+        "sale_date": "sale_date",
+        "kilometer": "kilometer",
+        "year_of_construction": "year_of_construction",
+    }
+    
+    db_field = sort_mapping.get(sort_field, "internal_id")
+    
+    if filters.order == "desc":
+        db_field = f"-{db_field}"
+    
+    return qs.order_by(db_field)
+
+
+def calculate_financial_summary(vehicles_qs) -> dict:
+    """Calculate financial summary for a vehicle queryset"""
+    # Initialize totals
+    net_revenue = Decimal("0")
+    net_expenses = Decimal("0")
+    tax_revenue = Decimal("0")
+    tax_expenses = Decimal("0")
+    
+    total_active_days = 0
+    vehicle_count = vehicles_qs.count()
+    
+    for vehicle in vehicles_qs:
+        total_active_days += vehicle.active_for
+        # Revenue from sales
+        if vehicle.sale_price:
+            sale_net = vehicle.sale_price_net or vehicle.sale_price
+            net_revenue += sale_net
+            if vehicle.sale_price_after_tax and vehicle.sale_price_net:
+                tax_revenue += vehicle.sale_price_after_tax - vehicle.sale_price_net
+        
+        # Expenses from purchases
+        if vehicle.buy_price:
+            buy_net = vehicle.buy_price_net or vehicle.buy_price
+            net_expenses += buy_net
+            if vehicle.buy_price_after_tax and vehicle.buy_price_net:
+                tax_expenses += vehicle.buy_price_after_tax - vehicle.buy_price_net
+    
+    gross_revenue = net_revenue + tax_revenue
+    gross_expenses = net_expenses + tax_expenses
+    total_profit = net_revenue - net_expenses
+    
+    avg_days = Decimal(total_active_days) / Decimal(vehicle_count) if vehicle_count > 0 else Decimal("0")
+    avg_roi = (total_profit / net_expenses * Decimal("100")) if net_expenses > 0 else Decimal("0")
+    avg_margin = (total_profit / net_revenue * Decimal("100")) if net_revenue > 0 else Decimal("0")
+    
+    return {
+        "net_total_revenue": net_revenue,
+        "net_total_expenses": net_expenses,
+        "net_difference": total_profit,
+        "tax_total_revenue": tax_revenue,
+        "tax_total_expenses": tax_expenses,
+        "tax_difference": tax_revenue - tax_expenses,
+        "gross_total_revenue": gross_revenue,
+        "gross_total_expenses": gross_expenses,
+        "gross_difference": gross_revenue - gross_expenses,
+        "avg_days_on_stock": avg_days.quantize(Decimal("0.1")),
+        "avg_roi": avg_roi.quantize(Decimal("0.01")),
+        "avg_profit_margin": avg_margin.quantize(Decimal("0.01")),
+        "total_profit": total_profit,
+    }
+
+
+# =============================================================================
+# Vehicle CRUD Endpoints
+# =============================================================================
+
+@router.get("/vehicles", response=VehiclesResponse)
+def list_vehicles(request, filters: VehicleFilters = Query(...)):
+    """
+    List vehicles with filtering, sorting, and pagination.
+    Returns both paginated vehicles and financial summary.
+    """
+    business = get_user_business(request)
+    
+    # Base queryset - exclude inactive by default unless specifically requested
+    qs = Vehicle.objects.filter(business=business).select_related(
+        'branch', 'make', 'model', 'body_type', 'color', 'fuel_type',
+        'doors', 'damage_type', 'vehicle_type', 'buy_tax', 'sale_tax',
+        'buy_payment_method', 'sale_payment_method', 'seller', 'buyer'
+    )
+    
+    if filters.status != 'inactive':
+        qs = qs.exclude(status='inactive')
+    
+    # Apply filters
+    qs = apply_vehicle_filters(qs, filters)
+    
+    # Calculate financial summary BEFORE pagination
+    financial_summary = calculate_financial_summary(qs)
+    
+    # Apply sorting
+    qs = apply_vehicle_sorting(qs, filters)
+    
+    # Pagination
+    total = qs.count()
+    pages = (total + filters.per_page - 1) // filters.per_page
+    offset = (filters.page - 1) * filters.per_page
+    vehicles = qs[offset:offset + filters.per_page]
+    
+    return {
+        "vehicles": {
+            "items": [serialize_vehicle_list(v) for v in vehicles],
+            "total": total,
+            "page": filters.page,
+            "per_page": filters.per_page,
+            "pages": pages,
+        },
+        "financial_summary": financial_summary,
+    }
+
+
+@router.get("/vehicles/next-id", response={200: dict})
+def get_next_vehicle_id(request):
+    """
+    Get the projected next internal ID for a new vehicle.
+    This is a projection based on MAX(internal_id) + 1.
+    """
+    business = get_user_business(request)
+    
+    # Get the highest internal_id for this business
+    last_vehicle = Vehicle.objects.filter(business=business).order_by('-internal_id').first()
+    next_id = (last_vehicle.internal_id + 1) if last_vehicle and last_vehicle.internal_id else 1
+    
+    return {"next_id": next_id}
+
+
+@router.get("/vehicles/{internal_id}", response={200: VehicleDetailOut, 404: ErrorResponse})
+def get_vehicle(request, internal_id: int):
+    """Get single vehicle details by internal ID"""
+    business = get_user_business(request)
+    
+    vehicle = get_object_or_404(
+        Vehicle.objects.select_related(*VEHICLE_DETAIL_RELATIONS),
+        business=business,
+        internal_id=internal_id
+    )
+
+    return build_vehicle_detail_response(business, vehicle)
+
+
+@router.post("/vehicles", response={201: VehicleDetailOut, 400: ErrorResponse})
+def create_vehicle(
+    request,
+    payload: VehicleCreate
+):
+    """Create a new vehicle"""
+    business = get_user_business(request)
+    
+    # Validate foreign keys belong to the same business
+    branch = get_object_or_404(Branch, id=payload.branch_id, business=business)
+    vehicle_type = get_object_or_404(VehicleType, id=payload.vehicle_type_id, business=business)
+    body_type = get_object_or_404(BodyType, id=payload.body_type_id, business=business)
+    make = get_object_or_404(Make, id=payload.make_id, business=business)
+    color = get_object_or_404(Color, id=payload.color_id, business=business)
+    doors = get_object_or_404(DoorsChoice, id=payload.doors_id, business=business)
+    fuel_type = get_object_or_404(FuelType, id=payload.fuel_type_id, business=business)
+    damage_type = get_object_or_404(DamageType, id=payload.damage_type_id, business=business)
+    payment_method = get_object_or_404(PaymentMethod, id=payload.buy_payment_method_id, business=business)
+    seller = get_object_or_404(LegalEntity, id=payload.seller_id, business=business)
+    
+    buy_tax = None
+    if payload.buy_tax_id:
+        buy_tax = get_object_or_404(TaxPercentage, id=payload.buy_tax_id, business=business)
+    
+    # Get model if provided
+    vehicle_model = None
+    if payload.model_id:
+        vehicle_model = get_object_or_404(VehicleModel, id=payload.model_id, make=make, business=business)
+    
+    # Create vehicle
+    vehicle = Vehicle(
+        business=business,
+        status='purchased',  # Default status for new vehicles
+        branch=branch,
+        vehicle_type=vehicle_type,
+        body_type=body_type,
+        make=make,
+        model=vehicle_model,
+        color=color,
+        doors=doors,
+        fuel_type=fuel_type,
+        power_kw=payload.power_kw,
+        damage_type=damage_type,
+        first_registration_date=payload.first_registration_date,
+        year_of_construction=payload.year_of_construction,
+        kilometer=payload.kilometer,
+        chassis_number=payload.chassis_number.upper(),
+        motor_vehicle_registration_number=payload.motor_vehicle_registration_number,
+        official_license_plate=payload.official_license_plate,
+        buy_price=payload.buy_price,
+        buy_tax=buy_tax,
+        buy_date=payload.buy_date,
+        buy_delivery_collection_date=payload.buy_delivery_collection_date,
+        buy_payment_method=payment_method,
+        seller=seller,
+        description=payload.description,
+        internal_comments=payload.internal_comments,
+    )
+    
+    vehicle.save()
+    
+    # Log the create action
+    vehicle_name = f"{vehicle.make.name if vehicle.make else ''} {vehicle.model.name if vehicle.model else ''}".strip() or f"Vehicle #{vehicle.internal_id}"
+    log_activity(
+        request,
+        action='create',
+        entity_type='vehicle',
+        entity_id=vehicle.internal_id,
+        entity_name=vehicle_name
+    )
+
+    vehicle = Vehicle.objects.select_related(*VEHICLE_DETAIL_RELATIONS).get(id=vehicle.id)
+    return 201, build_vehicle_detail_response(business, vehicle)
+
+
+@router.patch("/vehicles/{internal_id}", response={200: VehicleDetailOut, 400: ErrorResponse, 404: ErrorResponse})
+def update_vehicle(
+    request,
+    internal_id: int,
+    payload: VehicleUpdate
+):
+    """Update vehicle details. Only provided fields will be updated."""
+    business = get_user_business(request)
+    
+    vehicle = get_object_or_404(Vehicle, business=business, internal_id=internal_id)
+    
+    # Get the payload as a dict, excluding None values
+    update_data = payload.dict(exclude_unset=True, exclude_none=True)
+    
+    # Handle FK fields - validate they belong to the business
+    fk_mappings = {
+        'branch_id': (Branch, 'branch'),
+        'vehicle_type_id': (VehicleType, 'vehicle_type'),
+        'body_type_id': (BodyType, 'body_type'),
+        'make_id': (Make, 'make'),
+        'model_id': (VehicleModel, 'model'),
+        'color_id': (Color, 'color'),
+        'doors_id': (DoorsChoice, 'doors'),
+        'fuel_type_id': (FuelType, 'fuel_type'),
+        'damage_type_id': (DamageType, 'damage_type'),
+        'buy_tax_id': (TaxPercentage, 'buy_tax'),
+        'sale_tax_id': (TaxPercentage, 'sale_tax'),
+        'buy_payment_method_id': (PaymentMethod, 'buy_payment_method'),
+        'sale_payment_method_id': (PaymentMethod, 'sale_payment_method'),
+        'seller_id': (LegalEntity, 'seller'),
+        'buyer_id': (LegalEntity, 'buyer'),
+    }
+    
+    for field_id, (model_class, field_name) in fk_mappings.items():
+        if field_id in update_data:
+            fk_value = update_data.pop(field_id)
+            if fk_value is not None:
+                obj = get_object_or_404(model_class, id=fk_value, business=business)
+                setattr(vehicle, field_name, obj)
+            else:
+                setattr(vehicle, field_name, None)
+    
+    # Update regular fields
+    for field, value in update_data.items():
+        if field == 'chassis_number' and value:
+            value = value.upper()
+        setattr(vehicle, field, value)
+    
+    vehicle.save()
+    
+    # Reload with related objects
+    vehicle = Vehicle.objects.select_related(*VEHICLE_DETAIL_RELATIONS).get(id=vehicle.id)
+    
+    # Log the update action
+    vehicle_name = f"{vehicle.make.name if vehicle.make else ''} {vehicle.model.name if vehicle.model else ''}".strip() or f"Vehicle #{vehicle.internal_id}"
+    log_activity(
+        request,
+        action='update',
+        entity_type='vehicle',
+        entity_id=vehicle.internal_id,
+        entity_name=vehicle_name
+    )
+
+    return build_vehicle_detail_response(business, vehicle)
+
+
+@router.delete("/vehicles/{internal_id}", response={200: SuccessResponse, 404: ErrorResponse})
+def delete_vehicle(request, internal_id: int):
+    """Soft delete a vehicle (set status to inactive)"""
+    business = get_user_business(request)
+    
+    vehicle = get_object_or_404(Vehicle, business=business, internal_id=internal_id)
+    old_status = vehicle.status
+    vehicle.status = 'inactive'
+    vehicle.save()
+    
+    # Log the delete action
+    vehicle_name = f"{vehicle.make.name if vehicle.make else ''} {vehicle.model.name if vehicle.model else ''}".strip() or f"Vehicle #{vehicle.internal_id}"
+    log_activity(
+        request,
+        action='delete',
+        entity_type='vehicle',
+        entity_id=vehicle.internal_id,
+        entity_name=vehicle_name,
+        details=f"Status changed from {old_status} to inactive"
+    )
+    
+    return {"success": True, "message": "Vehicle deactivated successfully"}
+
+
+@router.post("/vehicles/{internal_id}/activate", response={200: SuccessResponse, 400: ErrorResponse, 404: ErrorResponse})
+def activate_vehicle(request, internal_id: int):
+    """Reactivate an inactive vehicle"""
+    business = get_user_business(request)
+    
+    vehicle = get_object_or_404(Vehicle, business=business, internal_id=internal_id)
+    
+    if vehicle.status != 'inactive':
+        return 400, {"detail": "Vehicle is not inactive"}
+    
+    # Set to purchased as default reactivation status
+    vehicle.status = 'purchased'
+    vehicle.save()
+    
+    # Log the status change
+    vehicle_name = f"{vehicle.make.name if vehicle.make else ''} {vehicle.model.name if vehicle.model else ''}".strip() or f"Vehicle #{vehicle.internal_id}"
+    log_activity(
+        request,
+        action='status_change',
+        entity_type='vehicle',
+        entity_id=vehicle.internal_id,
+        entity_name=vehicle_name,
+        details="Reactivated (inactive → purchased)"
+    )
+    
+    return {"success": True, "message": "Vehicle activated successfully"}
+
+
+@router.post("/vehicles/{internal_id}/change-status", response={200: VehicleDetailOut, 400: ErrorResponse})
+def change_vehicle_status(request, internal_id: int, status: str = Form(...)):
+    """Change vehicle status"""
+    business = get_user_business(request)
+    
+    valid_statuses = ['purchased', 'ready_for_sale', 'reserved', 'sold', 'inactive']
+    if status not in valid_statuses:
+        return 400, {"detail": f"Invalid status. Must be one of: {', '.join(valid_statuses)}"}
+    
+    vehicle = get_object_or_404(Vehicle, business=business, internal_id=internal_id)
+    old_status = vehicle.status
+    vehicle.status = status
+    vehicle.save()
+    
+    # Log the status change
+    vehicle_name = f"{vehicle.make.name if vehicle.make else ''} {vehicle.model.name if vehicle.model else ''}".strip() or f"Vehicle #{vehicle.internal_id}"
+    log_activity(
+        request,
+        action='status_change',
+        entity_type='vehicle',
+        entity_id=vehicle.internal_id,
+        entity_name=vehicle_name,
+        details=f"Status changed: {old_status} → {status}"
+    )
+    
+    vehicle = Vehicle.objects.select_related(*VEHICLE_DETAIL_RELATIONS).get(id=vehicle.id)
+
+    return build_vehicle_detail_response(business, vehicle)
+
+
+@router.post("/vehicles/{internal_id}/image", response={200: VehicleDetailOut, 400: ErrorResponse, 404: ErrorResponse})
+def upload_vehicle_image(request, internal_id: int, image: UploadedFile = File(...)):
+    """Upload or replace the image for a vehicle."""
+    business = get_user_business(request)
+    vehicle = get_object_or_404(Vehicle, business=business, internal_id=internal_id)
+    timestamp_suffix = timezone.now().strftime("%Y%m%d%H%M%S%f")
+
+    try:
+        processed_image = process_vehicle_image(
+            image,
+            filename_stem=f"vehicle-{vehicle.internal_id}-{timestamp_suffix}",
+        )
+    except ValueError as exc:
+        return 400, {"detail": str(exc)}
+
+    if vehicle.image:
+        vehicle.image.delete(save=False)
+
+    vehicle.image.save(processed_image.name, processed_image, save=False)
+    vehicle.save(update_fields=["image"])
+
+    vehicle = Vehicle.objects.select_related(*VEHICLE_DETAIL_RELATIONS).get(id=vehicle.id)
+    vehicle_name = f"{vehicle.make.name if vehicle.make else ''} {vehicle.model.name if vehicle.model else ''}".strip() or f"Vehicle #{vehicle.internal_id}"
+    log_activity(
+        request,
+        action='update',
+        entity_type='vehicle',
+        entity_id=vehicle.internal_id,
+        entity_name=vehicle_name,
+        details="Vehicle image updated"
+    )
+
+    return build_vehicle_detail_response(business, vehicle)
+
+
+# =============================================================================
+# Dynamic Choices Endpoints
+# =============================================================================
+
+@router.get("/choices", response=AllChoices)
+def get_all_choices(request):
+    """
+    Get all form dropdown options.
+    Called once when the vehicle form loads.
+    """
+    business = get_user_business(request)
+    
+    # Generate year choices (current year + 2 down to 1900)
+    current_year = datetime.now().year
+    year_choices = list(range(current_year + 2, 1899, -1))
+    
+    return {
+        "branches": list(Branch.objects.filter(business=business, is_active=True).values('id', 'name', 'address', 'is_active')),
+        "vehicle_types": list(VehicleType.objects.filter(business=business, is_active=True).values('id', 'name')),
+        "body_types": list(BodyType.objects.filter(business=business, is_active=True).values('id', 'name')),
+        "makes": list(Make.objects.filter(business=business, is_active=True).values('id', 'name')),
+        "colors": list(Color.objects.filter(business=business, is_active=True).values('id', 'name')),
+        "fuel_types": list(FuelType.objects.filter(business=business, is_active=True).values('id', 'name')),
+        "damage_types": list(DamageType.objects.filter(business=business, is_active=True).values('id', 'name')),
+        "doors": list(DoorsChoice.objects.filter(business=business, is_active=True).values('id', 'name')),
+        "payment_methods": list(PaymentMethod.objects.filter(business=business, is_active=True).values('id', 'name')),
+        "tax_percentages": list(TaxPercentage.objects.filter(business=business, is_active=True).values('id', 'name', 'percentage', 'is_no_tax')),
+        "legal_entities": list(LegalEntity.objects.filter(business=business).exclude(status='inactive').values(
+            'id', 'internal_id', 'name', 'type', 
+            'address_street', 'address_street_number', 'address_postal_code',
+            'address_city', 'address_country', 'email', 'phone_number',
+            'tax_identification_number'
+        )),
+        "status_choices": [
+            {"value": "purchased", "label": "Purchased"},
+            {"value": "ready_for_sale", "label": "Ready for Sale"},
+            {"value": "reserved", "label": "Reserved"},
+            {"value": "sold", "label": "Sold"},
+            {"value": "inactive", "label": "Inactive"},
+        ],
+        "year_choices": year_choices,
+    }
+
+
+@router.get("/choices/models/{make_id}", response=List[VehicleModelOut])
+def get_models_for_make(request, make_id: int):
+    """Get models for a specific make"""
+    business = get_user_business(request)
+    
+    models = VehicleModel.objects.filter(
+        make_id=make_id,
+        business=business,
+        is_active=True
+    ).select_related('make')
+    
+    return [
+        {
+            "id": m.id,
+            "name": m.name,
+            "make_id": m.make_id,
+            "make_name": m.make.name,
+        }
+        for m in models
+    ]
+
+
+@router.get("/choices/management")
+def get_choices_for_management(request):
+    """
+    Get all choices with active/inactive split for the management page.
+    Returns structured data for all choice types, including parent-child relationships.
+    """
+    business = get_user_business(request)
+    
+    # Gather all choice types with active/inactive items
+    choice_types = {
+        'make': {
+            'name': 'Manufacturers',
+            'displayName': 'Hersteller',
+            'active': list(Make.objects.filter(business=business, is_active=True).values('id', 'name')),
+            'inactive': list(Make.objects.filter(business=business, is_active=False).values('id', 'name')),
+        },
+        'vehicle_type': {
+            'name': 'Vehicle Types',
+            'displayName': 'Fahrzeugtypen',
+            'active': list(VehicleType.objects.filter(business=business, is_active=True).values('id', 'name')),
+            'inactive': list(VehicleType.objects.filter(business=business, is_active=False).values('id', 'name')),
+        },
+        'body_type': {
+            'name': 'Body Types',
+            'displayName': 'Karosserietypen',
+            'active': list(BodyType.objects.filter(business=business, is_active=True).values('id', 'name')),
+            'inactive': list(BodyType.objects.filter(business=business, is_active=False).values('id', 'name')),
+        },
+        'color': {
+            'name': 'Colors',
+            'displayName': 'Farben',
+            'active': list(Color.objects.filter(business=business, is_active=True).values('id', 'name')),
+            'inactive': list(Color.objects.filter(business=business, is_active=False).values('id', 'name')),
+        },
+        'fuel_type': {
+            'name': 'Fuel Types',
+            'displayName': 'Kraftstoffarten',
+            'active': list(FuelType.objects.filter(business=business, is_active=True).values('id', 'name')),
+            'inactive': list(FuelType.objects.filter(business=business, is_active=False).values('id', 'name')),
+        },
+        'damage_type': {
+            'name': 'Damage Types',
+            'displayName': 'Schadensarten',
+            'active': list(DamageType.objects.filter(business=business, is_active=True).values('id', 'name')),
+            'inactive': list(DamageType.objects.filter(business=business, is_active=False).values('id', 'name')),
+        },
+        'doors': {
+            'name': 'Door Options',
+            'displayName': 'Türoptionen',
+            'active': list(DoorsChoice.objects.filter(business=business, is_active=True).values('id', 'name')),
+            'inactive': list(DoorsChoice.objects.filter(business=business, is_active=False).values('id', 'name')),
+        },
+        'payment_method': {
+            'name': 'Payment Methods',
+            'displayName': 'Zahlungsmethoden',
+            'active': list(PaymentMethod.objects.filter(business=business, is_active=True).values('id', 'name')),
+            'inactive': list(PaymentMethod.objects.filter(business=business, is_active=False).values('id', 'name')),
+        },
+        'tax_percentage': {
+            'name': 'Tax Percentages',
+            'displayName': 'Steuersätze',
+            'active': [{'id': t.id, 'name': str(t), 'is_protected': t.is_no_tax} for t in TaxPercentage.objects.filter(business=business, is_active=True)],
+            'inactive': [{'id': t.id, 'name': str(t), 'is_protected': t.is_no_tax} for t in TaxPercentage.objects.filter(business=business, is_active=False)],
+        },
+        'currency': {
+            'name': 'Currencies',
+            'displayName': 'Währungen',
+            'active': [{'id': c.id, 'name': str(c)} for c in Currency.objects.filter(business=business, is_active=True)],
+            'inactive': [{'id': c.id, 'name': str(c)} for c in Currency.objects.filter(business=business, is_active=False)],
+        },
+        'category': {
+            'name': 'Categories',
+            'displayName': 'Kategorien',
+            'active': list(Category.objects.filter(business=business, is_active=True).values('id', 'name')),
+            'inactive': list(Category.objects.filter(business=business, is_active=False).values('id', 'name')),
+        },
+    }
+    
+    # Get makes with their models for parent-child management
+    makes_with_models = []
+    for mk in Make.objects.filter(business=business, is_active=True).order_by('name'):
+        models_active = list(VehicleModel.objects.filter(make=mk, is_active=True).values('id', 'name'))
+        models_inactive = list(VehicleModel.objects.filter(make=mk, is_active=False).values('id', 'name'))
+        makes_with_models.append({
+            'id': mk.id,
+            'name': mk.name,
+            'models_active': models_active,
+            'models_inactive': models_inactive,
+        })
+    
+    # Get categories with their subcategories for parent-child management
+    categories_with_subcategories = []
+    for cat in Category.objects.filter(business=business, is_active=True).order_by('name'):
+        subs_active = list(Subcategory.objects.filter(category=cat, is_active=True).values('id', 'name'))
+        subs_inactive = list(Subcategory.objects.filter(category=cat, is_active=False).values('id', 'name'))
+        categories_with_subcategories.append({
+            'id': cat.id,
+            'name': cat.name,
+            'subs_active': subs_active,
+            'subs_inactive': subs_inactive,
+        })
+    
+    return {
+        'choice_types': choice_types,
+        'makes_with_models': makes_with_models,
+        'manufacturers_with_models': makes_with_models,
+        'categories_with_subcategories': categories_with_subcategories,
+    }
+
+
+@router.post("/choices/{choice_type}", response={201: ChoiceCreatedResponse, 400: ErrorResponse, 403: ErrorResponse})
+def create_choice(
+    request,
+    choice_type: str,
+    name: str = Form(...),
+    percentage: Optional[Decimal] = Form(None),
+    make_id: Optional[int] = Form(None),
+    category_id: Optional[int] = Form(None),
+):
+    """
+    Create a new dynamic choice option (managers only).
+    
+    choice_type must be one of:
+    - vehicle_type
+    - body_type
+    - make
+    - vehicle_model (requires make_id)
+    - color
+    - fuel_type
+    - damage_type
+    - doors
+    - payment_method
+    - tax_percentage (requires percentage)
+    """
+    if not request.user.is_manager:
+        return 403, {"detail": "Only managers can create choices."}
+    
+    business = get_user_business(request)
+    
+    # Map choice_type to model class
+    choice_models = {
+        'vehicle_type': VehicleType,
+        'body_type': BodyType,
+        'make': Make,
+        'color': Color,
+        'fuel_type': FuelType,
+        'damage_type': DamageType,
+        'doors': DoorsChoice,
+        'payment_method': PaymentMethod,
+        'category': Category,
+    }
+    
+    name = name.strip()
+    if not name:
+        return 400, {"detail": "Name is required"}
+    
+    # Handle special cases
+    if choice_type == 'tax_percentage':
+        if percentage is None:
+            return 400, {"detail": "Percentage is required for tax_percentage"}
+        
+        # Check for duplicate
+        if TaxPercentage.objects.filter(business=business, name=name).exists():
+            return 400, {"detail": f"Tax percentage '{name}' already exists"}
+        
+        obj = TaxPercentage.objects.create(
+            business=business,
+            name=name,
+            percentage=percentage,
+            is_active=True
+        )
+        return 201, {
+            "success": True,
+            "id": obj.id,
+            "name": str(obj),  # Includes percentage in display
+            "message": f"Tax percentage '{name}' created successfully"
+        }
+    
+    elif choice_type == 'vehicle_model':
+        if not make_id:
+            return 400, {"detail": "make_id is required for vehicle_model"}
+        
+        make = get_object_or_404(Make, id=make_id, business=business)
+        
+        # Check for duplicate
+        if VehicleModel.objects.filter(
+            business=business, make=make, name=name
+        ).exists():
+            return 400, {"detail": f"Model '{name}' already exists for this make"}
+        
+        obj = VehicleModel.objects.create(
+            business=business,
+            make=make,
+            name=name,
+            is_active=True
+        )
+        return 201, {
+            "success": True,
+            "id": obj.id,
+            "name": obj.name,
+            "message": f"Model '{name}' created successfully"
+        }
+
+    elif choice_type == 'subcategory':
+        if not category_id:
+            return 400, {"detail": "category_id is required for subcategory"}
+
+        category = get_object_or_404(Category, id=category_id, business=business)
+
+        if Subcategory.objects.filter(
+            business=business, category=category, name=name
+        ).exists():
+            return 400, {"detail": f"Subcategory '{name}' already exists for this category"}
+
+        obj = Subcategory.objects.create(
+            business=business,
+            category=category,
+            name=name,
+            is_active=True
+        )
+        return 201, {
+            "success": True,
+            "id": obj.id,
+            "name": obj.name,
+            "message": f"Subcategory '{name}' created successfully"
+        }
+    
+    elif choice_type in choice_models:
+        model_class = choice_models[choice_type]
+        
+        # Check for duplicate
+        if model_class.objects.filter(business=business, name=name).exists():
+            return 400, {"detail": f"'{name}' already exists"}
+        
+        obj = model_class.objects.create(
+            business=business,
+            name=name,
+            is_active=True
+        )
+        return 201, {
+            "success": True,
+            "id": obj.id,
+            "name": obj.name,
+            "message": f"'{name}' created successfully"
+        }
+    
+    else:
+        return 400, {"detail": f"Unknown choice type: {choice_type}"}
+
+
+@router.post("/choices/{choice_type}/{choice_id}/deactivate", response={200: SuccessResponse, 400: ErrorResponse, 403: ErrorResponse, 404: ErrorResponse})
+def deactivate_choice(request, choice_type: str, choice_id: int):
+    """Deactivate (soft-delete) a choice option (managers only)."""
+    if not request.user.is_manager:
+        return 403, {"detail": "Only managers can deactivate choices."}
+    
+    business = get_user_business(request)
+    
+    # Map choice_type to model class
+    model_map = {
+        'payment_method': PaymentMethod,
+        'vehicle_type': VehicleType,
+        'body_type': BodyType,
+        'make': Make,
+        'vehicle_model': VehicleModel,
+        'color': Color,
+        'fuel_type': FuelType,
+        'damage_type': DamageType,
+        'doors': DoorsChoice,
+        'tax_percentage': TaxPercentage,
+        'category': Category,
+        'subcategory': Subcategory,
+        'currency': Currency,
+    }
+    
+    model_class = model_map.get(choice_type)
+    if not model_class:
+        return 400, {"detail": f"Invalid choice type: {choice_type}"}
+    
+    try:
+        choice = model_class.objects.get(id=choice_id, business=business)
+        
+        # Prevent deactivation of protected No Tax option
+        if choice_type == 'tax_percentage' and hasattr(choice, 'is_no_tax') and choice.is_no_tax:
+            return 400, {"detail": "Cannot deactivate the No Tax option"}
+        
+        choice.is_active = False
+        choice.save()
+        
+        return {"success": True, "message": f"Choice deactivated successfully"}
+    except model_class.DoesNotExist:
+        return 404, {"detail": "Choice not found"}
+
+
+@router.post("/choices/{choice_type}/{choice_id}/reactivate", response={200: SuccessResponse, 400: ErrorResponse, 403: ErrorResponse, 404: ErrorResponse})
+def reactivate_choice(request, choice_type: str, choice_id: int):
+    """Reactivate a deactivated choice option (managers only)."""
+    if not request.user.is_manager:
+        return 403, {"detail": "Only managers can reactivate choices."}
+    
+    business = get_user_business(request)
+    
+    # Map choice_type to model class
+    model_map = {
+        'payment_method': PaymentMethod,
+        'vehicle_type': VehicleType,
+        'body_type': BodyType,
+        'make': Make,
+        'vehicle_model': VehicleModel,
+        'color': Color,
+        'fuel_type': FuelType,
+        'damage_type': DamageType,
+        'doors': DoorsChoice,
+        'tax_percentage': TaxPercentage,
+        'category': Category,
+        'subcategory': Subcategory,
+        'currency': Currency,
+    }
+    
+    model_class = model_map.get(choice_type)
+    if not model_class:
+        return 400, {"detail": f"Invalid choice type: {choice_type}"}
+    
+    try:
+        choice = model_class.objects.get(id=choice_id, business=business)
+        choice.is_active = True
+        choice.save()
+        
+        return {"success": True, "message": f"Choice reactivated successfully"}
+    except model_class.DoesNotExist:
+        return 404, {"detail": "Choice not found"}
+
+
+# =============================================================================
+# Legal Entity Endpoints
+# =============================================================================
+
+@router.post("/legal-entities", response={201: LegalEntityOut, 400: ErrorResponse})
+def create_legal_entity(request, payload: LegalEntityCreate):
+    """Create a new legal entity"""
+    business = get_user_business(request)
+    
+    # Check for duplicate name
+    if LegalEntity.objects.filter(business=business, name=payload.name).exists():
+        return 400, {"detail": f"Legal entity '{payload.name}' already exists"}
+    
+    entity = LegalEntity(
+        business=business,
+        name=payload.name,
+        type=payload.type,
+        address_street=payload.address_street,
+        address_street_number=payload.address_street_number,
+        address_postal_code=payload.address_postal_code,
+        address_city=payload.address_city,
+        address_country=payload.address_country,
+        email=payload.email,
+        phone_number=payload.phone_number,
+        tax_identification_number=payload.tax_identification_number,
+    )
+    entity.save()
+    
+    # Log the create action
+    log_activity(
+        request,
+        action='create',
+        entity_type='legal_entity',
+        entity_id=entity.internal_id,
+        entity_name=entity.name
+    )
+    
+    return 201, {
+        "id": entity.id,
+        "internal_id": entity.internal_id,
+        "name": entity.name,
+        "type": entity.type,
+        "address_street": entity.address_street,
+        "address_street_number": entity.address_street_number,
+        "address_postal_code": entity.address_postal_code,
+        "address_city": entity.address_city,
+        "address_country": entity.address_country,
+        "email": entity.email,
+        "phone_number": entity.phone_number,
+        "tax_identification_number": entity.tax_identification_number,
+    }
+
+
+@router.get("/legal-entities", response=LegalEntitiesListResponse)
+def list_legal_entities(request, filters: LegalEntityFilters = Query(...)):
+    """
+    List legal entities with filtering, sorting, and pagination.
+    Supports filtering by type (individual/company), status (active/inactive), and search.
+    """
+    business = get_user_business(request)
+    
+    # Base queryset
+    qs = LegalEntity.objects.filter(business=business).order_by('name')
+    
+    # Apply filters
+    if filters.type:
+        qs = qs.filter(type=filters.type)
+    
+    if filters.status:
+        qs = qs.filter(status=filters.status)
+    else:
+        # By default, exclude inactive unless specifically requested
+        qs = qs.exclude(status='inactive')
+    
+    if filters.search:
+        search_term = filters.search
+        query = (
+            Q(name__icontains=search_term) |
+            Q(type__icontains=search_term) |
+            Q(status__icontains=search_term) |
+            Q(address_street__icontains=search_term) |
+            Q(address_street_number__icontains=search_term) |
+            Q(address_postal_code__icontains=search_term) |
+            Q(address_city__icontains=search_term) |
+            Q(address_country__icontains=search_term) |
+            Q(email__icontains=search_term) |
+            Q(phone_number__icontains=search_term) |
+            Q(tax_identification_number__icontains=search_term)
+        )
+
+        try:
+            query |= Q(internal_id=int(search_term))
+        except ValueError:
+            pass
+
+        qs = qs.filter(query)
+    
+    # Apply sorting
+    sort_field = filters.sort or 'name'
+    if filters.order == 'desc':
+        sort_field = f'-{sort_field}'
+    qs = qs.order_by(sort_field)
+    
+    # Pagination
+    total = qs.count()
+    pages = (total + filters.per_page - 1) // filters.per_page if filters.per_page > 0 else 1
+    offset = (filters.page - 1) * filters.per_page
+    entities = qs[offset:offset + filters.per_page]
+    
+    # Serialize
+    items = [
+        {
+            "id": e.id,
+            "internal_id": e.internal_id,
+            "name": e.name,
+            "type": e.type,
+            "status": e.status,
+            "address_street": e.address_street,
+            "address_street_number": e.address_street_number,
+            "address_postal_code": e.address_postal_code,
+            "address_city": e.address_city,
+            "address_country": e.address_country,
+            "email": e.email,
+            "phone_number": e.phone_number,
+            "tax_identification_number": e.tax_identification_number,
+        }
+        for e in entities
+    ]
+    
+    return {
+        "items": items,
+        "total": total,
+        "page": filters.page,
+        "per_page": filters.per_page,
+        "pages": pages,
+    }
+
+
+@router.get("/legal-entities/{internal_id}", response={200: LegalEntityListOut, 404: ErrorResponse})
+def get_legal_entity(request, internal_id: int):
+    """Get single legal entity details by internal ID"""
+    business = get_user_business(request)
+    
+    entity = get_object_or_404(LegalEntity, business=business, internal_id=internal_id)
+    
+    return {
+        "id": entity.id,
+        "internal_id": entity.internal_id,
+        "name": entity.name,
+        "type": entity.type,
+        "status": entity.status,
+        "address_street": entity.address_street,
+        "address_street_number": entity.address_street_number,
+        "address_postal_code": entity.address_postal_code,
+        "address_city": entity.address_city,
+        "address_country": entity.address_country,
+        "email": entity.email,
+        "phone_number": entity.phone_number,
+        "tax_identification_number": entity.tax_identification_number,
+    }
+
+
+@router.patch("/legal-entities/{internal_id}", response={200: LegalEntityListOut, 400: ErrorResponse, 404: ErrorResponse})
+def update_legal_entity(request, internal_id: int, payload: LegalEntityUpdate):
+    """Update legal entity details. Only provided fields will be updated."""
+    business = get_user_business(request)
+    
+    entity = get_object_or_404(LegalEntity, business=business, internal_id=internal_id)
+    
+    # Get the payload as a dict, excluding None values
+    update_data = payload.dict(exclude_unset=True, exclude_none=True)
+    
+    # Validate: if changing to company type, tax ID is required
+    new_type = update_data.get('type', entity.type)
+    new_tax_id = update_data.get('tax_identification_number', entity.tax_identification_number)
+    if new_type == 'company' and not new_tax_id:
+        return 400, {"detail": "Tax identification number is required for companies"}
+    
+    # Check for duplicate name if name is being updated
+    if 'name' in update_data and update_data['name'] != entity.name:
+        if LegalEntity.objects.filter(business=business, name=update_data['name']).exclude(id=entity.id).exists():
+            return 400, {"detail": f"Legal entity '{update_data['name']}' already exists"}
+    
+    # Update fields
+    for field, value in update_data.items():
+        setattr(entity, field, value)
+    
+    entity.save()
+    
+    # Log the update action
+    log_activity(
+        request,
+        action='update',
+        entity_type='legal_entity',
+        entity_id=entity.internal_id,
+        entity_name=entity.name
+    )
+    
+    return {
+        "id": entity.id,
+        "internal_id": entity.internal_id,
+        "name": entity.name,
+        "type": entity.type,
+        "status": entity.status,
+        "address_street": entity.address_street,
+        "address_street_number": entity.address_street_number,
+        "address_postal_code": entity.address_postal_code,
+        "address_city": entity.address_city,
+        "address_country": entity.address_country,
+        "email": entity.email,
+        "phone_number": entity.phone_number,
+        "tax_identification_number": entity.tax_identification_number,
+    }
+
+
+@router.post("/legal-entities/{internal_id}/deactivate", response={200: SuccessResponse, 404: ErrorResponse})
+def deactivate_legal_entity(request, internal_id: int):
+    """Deactivate a legal entity (set status to inactive)"""
+    business = get_user_business(request)
+    
+    entity = get_object_or_404(LegalEntity, business=business, internal_id=internal_id)
+    entity.status = 'inactive'
+    entity.save()
+    
+    # Log the delete action
+    log_activity(
+        request,
+        action='delete',
+        entity_type='legal_entity',
+        entity_id=entity.internal_id,
+        entity_name=entity.name
+    )
+    
+    return {"success": True, "message": "Legal entity deactivated successfully"}
+
+
+@router.post("/legal-entities/{internal_id}/activate", response={200: SuccessResponse, 400: ErrorResponse, 404: ErrorResponse})
+def activate_legal_entity(request, internal_id: int):
+    """Reactivate an inactive legal entity"""
+    business = get_user_business(request)
+    
+    entity = get_object_or_404(LegalEntity, business=business, internal_id=internal_id)
+    
+    if entity.status != 'inactive':
+        return 400, {"detail": "Legal entity is not inactive"}
+    
+    entity.status = 'active'
+    entity.save()
+    
+    # Log the status change
+    log_activity(
+        request,
+        action='status_change',
+        entity_type='legal_entity',
+        entity_id=entity.internal_id,
+        entity_name=entity.name,
+        details="Reactivated (inactive → active)"
+    )
+    
+    return {"success": True, "message": "Legal entity activated successfully"}
+
+
+# =============================================================================
+# PDF Generation Endpoints
+# =============================================================================
+
+@router.get("/vehicles/{internal_id}/pdf/buy-contract")
+def download_buy_contract(request, internal_id: int):
+    """
+    Generate and download buy contract PDF.
+    Vehicle model has built-in get_*_display() compatibility for legacy PDF code.
+    """
+    business = get_user_business(request)
+    get_object_or_404(Vehicle, business=business, internal_id=internal_id)
+    
+    from . import views as legacy_views
+    return legacy_views.generate_vehicle_buy_contract_pdf(request, business.name, internal_id)
+
+
+@router.get("/vehicles/{internal_id}/pdf/sale-contract")
+def download_sale_contract(request, internal_id: int):
+    """Generate and download sale contract PDF"""
+    business = get_user_business(request)
+    get_object_or_404(Vehicle, business=business, internal_id=internal_id)
+    
+    from . import views as legacy_views
+    return legacy_views.generate_vehicle_sale_contract_pdf(request, business.name, internal_id)
+
+
+@router.get("/vehicles/{internal_id}/pdf/identity-check")
+def download_identity_check(request, internal_id: int):
+    """Generate and download identity check PDF"""
+    business = get_user_business(request)
+    get_object_or_404(Vehicle, business=business, internal_id=internal_id)
+    
+    from . import views as legacy_views
+    return legacy_views.generate_identity_check_pdf(request, business.name, internal_id)
+
+
+@router.get("/vehicles/{internal_id}/pdf/binding-order")
+def download_binding_order(request, internal_id: int):
+    """Generate and download binding order PDF"""
+    business = get_user_business(request)
+    get_object_or_404(Vehicle, business=business, internal_id=internal_id)
+    
+    from . import views as legacy_views
+    return legacy_views.generate_binding_order_pdf(request, business.name, internal_id)
+
+
+@router.get("/vehicles/{internal_id}/pdf/sale-agreement")
+def download_sale_agreement(request, internal_id: int):
+    """Generate and download sale agreement PDF"""
+    business = get_user_business(request)
+    get_object_or_404(Vehicle, business=business, internal_id=internal_id)
+    
+    from . import views as legacy_views
+    return legacy_views.generate_sale_agreement_pdf(request, business.name, internal_id)
+
+
+@router.get("/vehicles/{internal_id}/pdf/receipt")
+def download_receipt(request, internal_id: int, region: Optional[str] = Query(None)):
+    """Generate and download receipt PDF"""
+    business = get_user_business(request)
+    get_object_or_404(Vehicle, business=business, internal_id=internal_id)
+    
+    from . import views as legacy_views
+    return legacy_views.generate_receipt_verkaufvertrag_pdf(request, business.name, internal_id, region=region)
+
+
+
+# =============================================================================
+# Activity Log Endpoints
+# =============================================================================
+
+@router.get("/activity-logs/recent")
+def get_recent_activity_logs(request):
+    """
+    Get the 5 most recent activity logs for the header notification dropdown.
+    Returns minimal data for quick display.
+    """
+    business = get_user_business(request)
+    
+    print(f"[ActivityLog-API] Fetching recent logs for business: {business}")
+    
+    logs = ActivityLog.objects.filter(business=business).select_related('user')[:5]
+    
+    print(f"[ActivityLog-API] Found {logs.count() if hasattr(logs, 'count') else len(list(logs))} logs")
+    
+    # Check total count in database
+    total_count = ActivityLog.objects.filter(business=business).count()
+    print(f"[ActivityLog-API] Total logs in database for this business: {total_count}")
+    
+    # Also check all logs regardless of business
+    all_logs_count = ActivityLog.objects.count()
+    print(f"[ActivityLog-API] Total logs in database (all businesses): {all_logs_count}")
+    
+    result_logs = list(logs)
+    print(f"[ActivityLog-API] Returning {len(result_logs)} logs")
+    
+    return {
+        "logs": [
+            {
+                "id": log.id,
+                "user_name": log.user.username if log.user else "System",
+                "action": log.action,
+                "action_display": dict(ActivityLog.ACTION_CHOICES).get(log.action, log.action),
+                "entity_type": log.entity_type,
+                "entity_type_display": dict(ActivityLog.ENTITY_CHOICES).get(log.entity_type, log.entity_type),
+                "entity_id": log.entity_id,
+                "entity_name": log.entity_name,
+                "timestamp": log.timestamp.isoformat(),
+            }
+            for log in result_logs
+        ]
+    }
+
+
+
+@router.get("/activity-logs")
+def list_activity_logs(
+    request,
+    page: int = 1,
+    per_page: int = 20,
+    action: Optional[str] = None,
+    entity_type: Optional[str] = None,
+    sort: str = "timestamp",
+    order: str = "desc",
+):
+    """
+    List activity logs with pagination and filtering.
+    For the Activity Logs page.
+    """
+    business = get_user_business(request)
+    
+    qs = ActivityLog.objects.filter(business=business).select_related('user')
+    
+    # Apply filters
+    if action:
+        qs = qs.filter(action=action)
+    
+    if entity_type:
+        qs = qs.filter(entity_type=entity_type)
+    
+    # Apply sorting
+    sort_field = sort if sort in ["timestamp", "action", "entity_type", "user__username"] else "timestamp"
+    if order == "desc":
+        sort_field = f"-{sort_field}"
+    qs = qs.order_by(sort_field)
+    
+    # Pagination
+    total = qs.count()
+    pages = (total + per_page - 1) // per_page if total > 0 else 1
+    offset = (page - 1) * per_page
+    logs = qs[offset:offset + per_page]
+    
+    return {
+        "items": [
+            {
+                "id": log.id,
+                "user_name": log.user.username if log.user else "System",
+                "user_id": log.user.id if log.user else None,
+                "action": log.action,
+                "action_display": str(dict(ActivityLog.ACTION_CHOICES).get(log.action, log.action)),
+                "entity_type": log.entity_type,
+                "entity_type_display": str(dict(ActivityLog.ENTITY_CHOICES).get(log.entity_type, log.entity_type)),
+                "entity_id": log.entity_id,
+                "entity_name": log.entity_name,
+                "details": log.details,
+                "timestamp": log.timestamp.isoformat(),
+            }
+            for log in logs
+        ],
+        "total": total,
+        "page": page,
+        "per_page": per_page,
+        "pages": pages,
+    }

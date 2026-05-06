@@ -1,0 +1,459 @@
+import { useState, useEffect } from "react"
+import { RotateCcw } from "lucide-react"
+import {
+    Sheet,
+    SheetContent,
+    SheetDescription,
+    SheetHeader,
+    SheetTitle,
+    SheetFooter,
+} from "@/components/ui/sheet"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { FilterSelect } from "@/components/ui/filter-select"
+import { Separator } from "@/components/ui/separator"
+import { useChoices } from "@/hooks/useVehicles"
+import type { VehicleFilters } from "@/types/vehicle"
+
+interface VehicleFiltersProps {
+    open: boolean
+    onOpenChange: (open: boolean) => void
+    filters: VehicleFilters
+    onApplyFilters: (filters: VehicleFilters) => void
+}
+
+export function VehicleFiltersSheet({
+    open,
+    onOpenChange,
+    filters,
+    onApplyFilters,
+}: VehicleFiltersProps) {
+    const { data: choices } = useChoices()
+    const [localFilters, setLocalFilters] = useState<VehicleFilters>(filters)
+
+    // Sync local filters when sheet opens
+    useEffect(() => {
+        if (open) {
+            setLocalFilters(filters)
+        }
+    }, [open, filters])
+
+    // Apply filters and close sheet
+    const handleApply = () => {
+        onApplyFilters(localFilters)
+        onOpenChange(false)
+    }
+
+    // Reset filters to default
+    const handleReset = () => {
+        const resetFilters: VehicleFilters = {
+            page: 1,
+            per_page: filters.per_page || 20,
+        }
+        setLocalFilters(resetFilters)
+        onApplyFilters(resetFilters)
+        onOpenChange(false)
+    }
+
+    // Update a single filter value
+    const updateFilter = <K extends keyof VehicleFilters>(
+        key: K,
+        value: VehicleFilters[K]
+    ) => {
+        setLocalFilters((prev) => ({
+            ...prev,
+            [key]: value || undefined,
+        }))
+    }
+
+    return (
+        <Sheet open={open} onOpenChange={onOpenChange}>
+            <SheetContent className="w-full overflow-y-auto sm:max-w-md">
+                <SheetHeader>
+                    <SheetTitle className="text-foreground">Filter Vehicles</SheetTitle>
+                    <SheetDescription className="text-muted-foreground">
+                        Apply filters to narrow down the vehicle list
+                    </SheetDescription>
+                </SheetHeader>
+
+                <div className="space-y-6 py-4 px-1">
+                    {/* Quick Search Section */}
+                    <div className="space-y-4">
+                        <h3 className="text-sm font-medium text-foreground">
+                            Quick Search
+                        </h3>
+
+                        <div className="space-y-3">
+                            <div className="space-y-2">
+                                <Label htmlFor="vehicle_id" className="text-foreground">Vehicle ID</Label>
+                                <Input
+                                    id="vehicle_id"
+                                    type="number"
+                                    placeholder="Enter ID..."
+                                    className="text-foreground placeholder:text-muted-foreground"
+                                    value={localFilters.vehicle_id_search ?? ""}
+                                    onChange={(e) =>
+                                        updateFilter(
+                                            "vehicle_id_search",
+                                            e.target.value ? Number(e.target.value) : undefined
+                                        )
+                                    }
+                                />
+                            </div>
+
+                            <div className="space-y-2">
+                                <Label htmlFor="chassis" className="text-foreground">Chassis Number (VIN)</Label>
+                                <Input
+                                    id="chassis"
+                                    placeholder="Enter VIN..."
+                                    className="text-foreground placeholder:text-muted-foreground"
+                                    value={localFilters.chassis_number_search ?? ""}
+                                    onChange={(e) =>
+                                        updateFilter("chassis_number_search", e.target.value || undefined)
+                                    }
+                                />
+                            </div>
+
+                            <div className="space-y-2">
+                                <Label htmlFor="license_plate" className="text-foreground">License Plate</Label>
+                                <Input
+                                    id="license_plate"
+                                    placeholder="Enter plate..."
+                                    className="text-foreground placeholder:text-muted-foreground"
+                                    value={localFilters.official_license_plate_search ?? ""}
+                                    onChange={(e) =>
+                                        updateFilter("official_license_plate_search", e.target.value || undefined)
+                                    }
+                                />
+                            </div>
+                        </div>
+                    </div>
+
+                    <Separator />
+
+                    {/* Vehicle Details Section */}
+                    <div className="space-y-4">
+                        <h3 className="text-sm font-medium text-foreground">
+                            Vehicle Details
+                        </h3>
+
+                        <div className="space-y-3">
+                            <div className="space-y-2">
+                                <Label className="text-foreground">Status</Label>
+                                <FilterSelect
+                                    options={choices?.status_choices?.map((s) => ({
+                                        value: s.value,
+                                        label: s.label,
+                                    })) ?? []}
+                                    value={localFilters.status}
+                                    onChange={(value) => updateFilter("status", value)}
+                                    placeholder="All statuses"
+                                    allLabel="All statuses"
+                                    searchPlaceholder="Search statuses..."
+                                />
+                            </div>
+
+                            <div className="space-y-2">
+                                <Label className="text-foreground">Make</Label>
+                                <FilterSelect
+                                    options={choices?.makes?.map((mk) => ({
+                                        value: mk.id.toString(),
+                                        label: `#${mk.id} - ${mk.name}`,
+                                    })) ?? []}
+                                    value={localFilters.make?.toString()}
+                                    onChange={(value) => updateFilter("make", value ? Number(value) : undefined)}
+                                    placeholder="All makes"
+                                    allLabel="All makes"
+                                    searchPlaceholder="Search makes..."
+                                />
+                            </div>
+
+                            <div className="space-y-2">
+                                <Label className="text-foreground">Body Type</Label>
+                                <FilterSelect
+                                    options={choices?.body_types?.map((bt) => ({
+                                        value: bt.id.toString(),
+                                        label: bt.name,
+                                    })) ?? []}
+                                    value={localFilters.body_type?.toString()}
+                                    onChange={(value) => updateFilter("body_type", value ? Number(value) : undefined)}
+                                    placeholder="All body types"
+                                    allLabel="All body types"
+                                    searchPlaceholder="Search body types..."
+                                />
+                            </div>
+
+                            <div className="space-y-2">
+                                <Label className="text-foreground">Fuel Type</Label>
+                                <FilterSelect
+                                    options={choices?.fuel_types?.map((ft) => ({
+                                        value: ft.id.toString(),
+                                        label: ft.name,
+                                    })) ?? []}
+                                    value={localFilters.fuel_type?.toString()}
+                                    onChange={(value) => updateFilter("fuel_type", value ? Number(value) : undefined)}
+                                    placeholder="All fuel types"
+                                    allLabel="All fuel types"
+                                    searchPlaceholder="Search fuel types..."
+                                />
+                            </div>
+
+                            <div className="space-y-2">
+                                <Label className="text-foreground">Color</Label>
+                                <FilterSelect
+                                    options={choices?.colors?.map((c) => ({
+                                        value: c.id.toString(),
+                                        label: c.name,
+                                    })) ?? []}
+                                    value={localFilters.color?.toString()}
+                                    onChange={(value) => updateFilter("color", value ? Number(value) : undefined)}
+                                    placeholder="All colors"
+                                    allLabel="All colors"
+                                    searchPlaceholder="Search colors..."
+                                />
+                            </div>
+                        </div>
+                    </div>
+
+                    <Separator />
+
+                    {/* Price Range Section */}
+                    <div className="space-y-4">
+                        <h3 className="text-sm font-medium text-foreground">
+                            Price Range
+                        </h3>
+
+                        <div className="space-y-3">
+                            <div className="grid grid-cols-2 gap-3">
+                                <div className="space-y-2">
+                                    <Label htmlFor="min_buy" className="text-foreground">Min Buy Price</Label>
+                                    <Input
+                                        id="min_buy"
+                                        type="number"
+                                        placeholder="€ Min"
+                                        className="text-foreground placeholder:text-muted-foreground"
+                                        value={localFilters.min_buy_price ?? ""}
+                                        onChange={(e) =>
+                                            updateFilter(
+                                                "min_buy_price",
+                                                e.target.value ? Number(e.target.value) : undefined
+                                            )
+                                        }
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="max_buy" className="text-foreground">Max Buy Price</Label>
+                                    <Input
+                                        id="max_buy"
+                                        type="number"
+                                        placeholder="€ Max"
+                                        className="text-foreground placeholder:text-muted-foreground"
+                                        value={localFilters.max_buy_price ?? ""}
+                                        onChange={(e) =>
+                                            updateFilter(
+                                                "max_buy_price",
+                                                e.target.value ? Number(e.target.value) : undefined
+                                            )
+                                        }
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-3">
+                                <div className="space-y-2">
+                                    <Label htmlFor="min_sale" className="text-foreground">Min Sale Price</Label>
+                                    <Input
+                                        id="min_sale"
+                                        type="number"
+                                        placeholder="€ Min"
+                                        className="text-foreground placeholder:text-muted-foreground"
+                                        value={localFilters.min_sale_price ?? ""}
+                                        onChange={(e) =>
+                                            updateFilter(
+                                                "min_sale_price",
+                                                e.target.value ? Number(e.target.value) : undefined
+                                            )
+                                        }
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="max_sale" className="text-foreground">Max Sale Price</Label>
+                                    <Input
+                                        id="max_sale"
+                                        type="number"
+                                        placeholder="€ Max"
+                                        className="text-foreground placeholder:text-muted-foreground"
+                                        value={localFilters.max_sale_price ?? ""}
+                                        onChange={(e) =>
+                                            updateFilter(
+                                                "max_sale_price",
+                                                e.target.value ? Number(e.target.value) : undefined
+                                            )
+                                        }
+                                    />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <Separator />
+
+                    {/* Date Range Section */}
+                    <div className="space-y-4">
+                        <h3 className="text-sm font-medium text-foreground">
+                            Date Range
+                        </h3>
+
+                        <div className="space-y-3">
+                            <div className="grid grid-cols-2 gap-3">
+                                <div className="space-y-2">
+                                    <Label htmlFor="min_buy_date" className="text-foreground">Buy Date From</Label>
+                                    <Input
+                                        id="min_buy_date"
+                                        type="date"
+                                        className="text-foreground"
+                                        value={localFilters.min_buy_date ?? ""}
+                                        onChange={(e) =>
+                                            updateFilter("min_buy_date", e.target.value || undefined)
+                                        }
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="max_buy_date" className="text-foreground">Buy Date To</Label>
+                                    <Input
+                                        id="max_buy_date"
+                                        type="date"
+                                        className="text-foreground"
+                                        value={localFilters.max_buy_date ?? ""}
+                                        onChange={(e) =>
+                                            updateFilter("max_buy_date", e.target.value || undefined)
+                                        }
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-3">
+                                <div className="space-y-2">
+                                    <Label htmlFor="min_sale_date" className="text-foreground">Sale Date From</Label>
+                                    <Input
+                                        id="min_sale_date"
+                                        type="date"
+                                        className="text-foreground"
+                                        value={localFilters.min_sale_date ?? ""}
+                                        onChange={(e) =>
+                                            updateFilter("min_sale_date", e.target.value || undefined)
+                                        }
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="max_sale_date" className="text-foreground">Sale Date To</Label>
+                                    <Input
+                                        id="max_sale_date"
+                                        type="date"
+                                        className="text-foreground"
+                                        value={localFilters.max_sale_date ?? ""}
+                                        onChange={(e) =>
+                                            updateFilter("max_sale_date", e.target.value || undefined)
+                                        }
+                                    />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <Separator />
+
+                    {/* Technical Specs Section */}
+                    <div className="space-y-4">
+                        <h3 className="text-sm font-medium text-foreground">
+                            Technical Specs
+                        </h3>
+
+                        <div className="space-y-3">
+                            <div className="grid grid-cols-2 gap-3">
+                                <div className="space-y-2">
+                                    <Label htmlFor="min_year" className="text-foreground">Year From</Label>
+                                    <Input
+                                        id="min_year"
+                                        type="number"
+                                        placeholder="e.g. 2018"
+                                        className="text-foreground placeholder:text-muted-foreground"
+                                        value={localFilters.min_year ?? ""}
+                                        onChange={(e) =>
+                                            updateFilter(
+                                                "min_year",
+                                                e.target.value ? Number(e.target.value) : undefined
+                                            )
+                                        }
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="max_year" className="text-foreground">Year To</Label>
+                                    <Input
+                                        id="max_year"
+                                        type="number"
+                                        placeholder="e.g. 2024"
+                                        className="text-foreground placeholder:text-muted-foreground"
+                                        value={localFilters.max_year ?? ""}
+                                        onChange={(e) =>
+                                            updateFilter(
+                                                "max_year",
+                                                e.target.value ? Number(e.target.value) : undefined
+                                            )
+                                        }
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-3">
+                                <div className="space-y-2">
+                                    <Label htmlFor="min_km" className="text-foreground">Min Kilometer</Label>
+                                    <Input
+                                        id="min_km"
+                                        type="number"
+                                        placeholder="0"
+                                        className="text-foreground placeholder:text-muted-foreground"
+                                        value={localFilters.min_kilometer ?? ""}
+                                        onChange={(e) =>
+                                            updateFilter(
+                                                "min_kilometer",
+                                                e.target.value ? Number(e.target.value) : undefined
+                                            )
+                                        }
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="max_km" className="text-foreground">Max Kilometer</Label>
+                                    <Input
+                                        id="max_km"
+                                        type="number"
+                                        placeholder="200000"
+                                        className="text-foreground placeholder:text-muted-foreground"
+                                        value={localFilters.max_kilometer ?? ""}
+                                        onChange={(e) =>
+                                            updateFilter(
+                                                "max_kilometer",
+                                                e.target.value ? Number(e.target.value) : undefined
+                                            )
+                                        }
+                                    />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <SheetFooter className="flex gap-2 border-t border-border pt-4">
+                    <Button variant="outline" onClick={handleReset} className="flex-1 text-foreground">
+                        <RotateCcw className="mr-2 h-4 w-4" />
+                        Reset
+                    </Button>
+                    <Button onClick={handleApply} className="flex-1">
+                        Apply Filters
+                    </Button>
+                </SheetFooter>
+            </SheetContent>
+        </Sheet>
+    )
+}

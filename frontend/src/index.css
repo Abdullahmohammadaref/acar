@@ -1,0 +1,355 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+/* =============================================================================
+   HSL Color System - Vehicle Management System
+   Primary Blue: hsl(220 90% 56%)
+   ============================================================================= */
+
+@theme {
+  /* Primary Blue Palette - Legacy Match */
+  --color-primary-50: #ecf3ff;
+  --color-primary-100: #dde9ff;
+  --color-primary-200: #c2d6ff;
+  --color-primary-300: #9cb9ff;
+  --color-primary-400: #7592ff;
+  --color-primary-500: #465fff;
+  --color-primary-600: #3641f5;
+  --color-primary-700: #2a31d8;
+  --color-primary-800: #252dae;
+  --color-primary-900: #262e89;
+  --color-primary-950: #161950;
+
+  /* Status Colors */
+  --color-status-purchased: #f59e0b;
+  /* Warning/Orange */
+  --color-status-ready-for-sale: #465fff;
+  /* Primary/Blue */
+  --color-status-reserved: #9333ea;
+  /* Purple */
+  --color-status-sold: #16a34a;
+  /* Success/Green */
+  --color-status-inactive: #6b7280;
+  /* Gray */
+}
+
+/* =============================================================================
+   CSS Variables for shadcn/ui components
+   ============================================================================= */
+
+:root {
+  /* Background & Foreground */
+  --background: #ffffff;
+  --foreground: #101828;
+
+  /* Card */
+  --card: #ffffff;
+  --card-foreground: #101828;
+
+  /* Popover */
+  --popover: #ffffff;
+  --popover-foreground: #101828;
+
+  /* Primary - Legacy Brand Blue */
+  --primary: #465fff;
+  --primary-foreground: #ffffff;
+
+  /* Secondary */
+  --secondary: #f2f7ff;
+  /* brand-25 */
+  --secondary-foreground: #101828;
+
+  /* Muted */
+  --muted: #f2f4f7;
+  /* gray-100 */
+  --muted-foreground: #667085;
+  /* gray-500 */
+
+  /* Accent */
+  --accent: #f2f7ff;
+  --accent-foreground: #101828;
+
+  /* Destructive */
+  --destructive: #ef4444;
+  --destructive-foreground: #ffffff;
+
+  /* Border & Input */
+  --border: #e4e7ec;
+  /* gray-200 */
+  --input: #e4e7ec;
+  --ring: #465fff;
+
+  /* Chart colors */
+  --chart-1: #465fff;
+  --chart-2: #3641f5;
+  --chart-3: #2a31d8;
+  --chart-4: #7592ff;
+  --chart-5: #9cb9ff;
+
+  /* Radius */
+  --radius: 0.625rem;
+
+  /* Sidebar */
+  --sidebar-background: #ffffff;
+  --sidebar-foreground: #101828;
+  --sidebar-primary: #465fff;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #f2f7ff;
+  --sidebar-accent-foreground: #101828;
+  --sidebar-border: #e4e7ec;
+  --sidebar-ring: #465fff;
+  --sidebar: #ffffff;
+}
+
+/* Dark mode */
+.dark {
+  --background: #101828;
+  /* gray-900 */
+  --foreground: #ffffff;
+
+  --card: #1d2939;
+  /* gray-800 */
+  --card-foreground: #ffffff;
+
+  --popover: #1d2939;
+  --popover-foreground: #ffffff;
+
+  --primary: #465fff;
+  --primary-foreground: #ffffff;
+
+  --secondary: #1d2939;
+  --secondary-foreground: #ffffff;
+
+  --muted: #1d2939;
+  --muted-foreground: #98a2b3;
+  /* gray-400 */
+
+  --accent: #1d2939;
+  --accent-foreground: #ffffff;
+
+  --destructive: #7f1d1d;
+  --destructive-foreground: #ffffff;
+
+  --border: #344054;
+  /* gray-700 */
+  --input: #344054;
+  --ring: #465fff;
+
+  --sidebar-background: #101828;
+  --sidebar-foreground: #ffffff;
+  --sidebar-primary: #465fff;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #1d2939;
+  --sidebar-accent-foreground: #ffffff;
+  --sidebar-border: #344054;
+  --sidebar-ring: #465fff;
+  --chart-1: #465fff;
+  --chart-2: #3641f5;
+  --chart-3: #2a31d8;
+  --chart-4: #7592ff;
+  --chart-5: #9cb9ff;
+  --sidebar: #101828;
+}
+
+/* =============================================================================
+   Base Styles
+   ============================================================================= */
+
+* {
+  border-color: var(--border);
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  font-feature-settings: "rlig" 1, "calt" 1;
+  line-height: 1.625;
+}
+
+/* =============================================================================
+   Status Colors (Legacy Match)
+   ============================================================================= */
+
+.status-purchased {
+  --status-color: #f59e0b;
+}
+
+.status-ready-for-sale {
+  --status-color: #465fff;
+}
+
+.status-reserved {
+  --status-color: #9333ea;
+}
+
+.status-sold {
+  --status-color: #16a34a;
+}
+
+.status-inactive {
+  --status-color: #6b7280;
+}
+
+/* =============================================================================
+   Utility Classes
+   ============================================================================= */
+
+.text-success {
+  color: #16a34a;
+}
+
+.text-warning {
+  color: #f59e0b;
+}
+
+.text-error {
+  color: #ef4444;
+}
+
+.bg-success {
+  background-color: #16a34a;
+}
+
+.bg-warning {
+  background-color: #f59e0b;
+}
+
+.bg-error {
+  background-color: #ef4444;
+}
+
+@theme inline {
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+  --radius-3xl: calc(var(--radius) + 12px);
+  --radius-4xl: calc(var(--radius) + 16px);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* Dark mode date picker icon fix */
+.dark ::-webkit-calendar-picker-indicator {
+  filter: invert(1);
+}
+
+/* =============================================================================
+   Number Input Spinner Removal (UX Fix)
+   Hides ugly native up/down arrows on number inputs across all browsers
+   ============================================================================= */
+
+/* WebKit (Chrome, Edge, Safari) - Hide spinners */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Firefox - Hide spinners */
+input[type="number"] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+/* Fix: Prevent scrollbar flicker when Radix UI Select/Dialog opens.
+   Radix applies overflow: hidden to body, causing layout shift.
+   This keeps the scrollbar visible and stable. */
+body[data-scroll-locked] {
+  overflow-y: scroll !important;
+  padding-right: 0 !important;
+}
+
+/* =============================================================================
+   Global Custom Scrollbar Theme
+   ============================================================================= */
+
+/* Firefox Standard */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #888888 #f1f1f1;
+}
+
+.dark * {
+  scrollbar-color: #555555 #2d2d2d;
+}
+
+/* WebKit (Chrome, Edge, Safari) */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+/* Track */
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+.dark ::-webkit-scrollbar-track {
+  background: #2d2d2d;
+}
+
+/* Thumb */
+::-webkit-scrollbar-thumb {
+  background-color: #888888;
+  border-radius: 9999px;
+  /* Pill shape */
+  border: 2px solid #f1f1f1;
+  /* Creates padding effect */
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background-color: #555555;
+  border: 2px solid #2d2d2d;
+}
+
+/* Thumb Hover */
+::-webkit-scrollbar-thumb:hover {
+  background-color: #666666;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background-color: #777777;
+}

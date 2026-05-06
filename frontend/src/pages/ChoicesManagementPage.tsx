@@ -1,0 +1,789 @@
+import { useState } from "react"
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { useTranslation } from "react-i18next"
+import { ChevronDown, ChevronRight, Loader2, Plus, Search, X } from "lucide-react"
+import api from "@/lib/api"
+import { Input } from "@/components/ui/input"
+import { FilterSelect } from "@/components/ui/filter-select"
+import { SortMenuButton } from "@/components/ui/SortMenuButton"
+
+interface ChoiceItem {
+    id: number
+    name: string
+    is_protected?: boolean
+}
+
+interface ChoiceType {
+    name: string
+    displayName: string
+    active: ChoiceItem[]
+    inactive: ChoiceItem[]
+}
+
+interface MakeWithModels {
+    id: number
+    name: string
+    models_active: ChoiceItem[]
+    models_inactive: ChoiceItem[]
+}
+
+interface CategoryWithSubcategories {
+    id: number
+    name: string
+    subs_active: ChoiceItem[]
+    subs_inactive: ChoiceItem[]
+}
+
+interface ChoicesManagementData {
+    choice_types: Record<string, ChoiceType>
+    makes_with_models: MakeWithModels[]
+    manufacturers_with_models?: MakeWithModels[]
+    categories_with_subcategories: CategoryWithSubcategories[]
+}
+
+type StatusFilterValue = "all" | "active" | "inactive"
+
+const TAB_ORDER = [
+    "make",
+    "vehicle_model",
+    "category",
+    "subcategory",
+    "vehicle_type",
+    "body_type",
+    "color",
+    "fuel_type",
+    "damage_type",
+    "doors",
+    "payment_method",
+    "tax_percentage",
+    "currency",
+] as const
+
+const SORT_OPTIONS = [
+    { value: "name", label: "Name" },
+    { value: "status", label: "Status" },
+]
+
+type SortValue = "name" | "status"
+
+const ACTIVE_ITEM_CLASS =
+    "flex items-center justify-between rounded-lg border border-border bg-card/60 px-4 py-2.5 shadow-sm transition-all hover:border-primary/30 hover:bg-muted/50 group"
+const INACTIVE_ITEM_CLASS =
+    "flex items-center justify-between rounded-lg border border-zinc-200/50 dark:border-zinc-800/50 bg-zinc-50/50 dark:bg-zinc-900/20 px-4 py-2.5 opacity-70 transition-all hover:opacity-100 group shadow-sm"
+
+function matchesSearch(name: string, searchValue: string) {
+    return name.toLowerCase().includes(searchValue)
+}
+
+export default function ChoicesManagementPage() {
+    const { t } = useTranslation()
+    const queryClient = useQueryClient()
+
+    const [activeTab, setActiveTab] = useState<string>("make")
+    const [expandedMakes, setExpandedMakes] = useState<Set<number>>(new Set())
+    const [expandedCategories, setExpandedCategories] = useState<Set<number>>(new Set())
+    const [searchValue, setSearchValue] = useState("")
+    const [statusFilter, setStatusFilter] = useState<StatusFilterValue>("all")
+    const [sortBy, setSortBy] = useState<SortValue>("name")
+    const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc")
+
+    const [modalOpen, setModalOpen] = useState(false)
+    const [modalChoiceType, setModalChoiceType] = useState("")
+    const [modalTitle, setModalTitle] = useState("")
+    const [modalName, setModalName] = useState("")
+    const [modalPercentage, setModalPercentage] = useState("")
+    const [modalParentId, setModalParentId] = useState<number | null>(null)
+
+    const { data, isLoading, error } = useQuery<ChoicesManagementData>({
+        queryKey: ["choices-management"],
+        queryFn: async () => {
+            const response = await api.get("/choices/management")
+            return response.data
+        },
+    })
+
+    const choiceTypes = data?.choice_types ?? {}
+    const makesWithModels = data?.makes_with_models ?? data?.manufacturers_with_models ?? []
+    const categoriesWithSubcategories = data?.categories_with_subcategories ?? []
+
+    const addMutation = useMutation({
+        mutationFn: async (params: {
+            choiceType: string
+            name: string
+            percentage?: string
+            parentId?: number | null
+        }) => {
+            const formData = new FormData()
+            formData.append("name", params.name)
+
+            if (params.choiceType === "tax_percentage" && params.percentage) {
+                formData.append("percentage", params.percentage)
+            }
+            if (params.choiceType === "vehicle_model" && params.parentId) {
+                formData.append("make_id", params.parentId.toString())
+            }
+            if (params.choiceType === "subcategory" && params.parentId) {
+                formData.append("category_id", params.parentId.toString())
+            }
+
+            const response = await api.post(`/choices/${params.choiceType}`, formData, {
+                headers: { "Content-Type": "multipart/form-data" },
+            })
+            return response.data
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["choices-management"] })
+            closeModal()
+        },
+    })
+
+    const deactivateMutation = useMutation({
+        mutationFn: async (params: { choiceType: string; choiceId: number }) => {
+            const response = await api.post(`/choices/${params.choiceType}/${params.choiceId}/deactivate`)
+            return response.data
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["choices-management"] })
+        },
+    })
+
+    const reactivateMutation = useMutation({
+        mutationFn: async (params: { choiceType: string; choiceId: number }) => {
+            const response = await api.post(`/choices/${params.choiceType}/${params.choiceId}/reactivate`)
+            return response.data
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["choices-management"] })
+        },
+    })
+
+    const normalizedSearch = searchValue.trim().toLowerCase()
+
+    const sortItems = <T extends { name: string; is_active?: boolean }>(items: T[]) =>
+        [...items].sort((a, b) => {
+            if (sortBy === "status") {
+                const statusA = a.is_active === false ? 0 : 1
+                const statusB = b.is_active === false ? 0 : 1
+                return sortOrder === "asc" ? statusA - statusB : statusB - statusA
+            }
+            return sortOrder === "asc"
+                ? a.name.localeCompare(b.name)
+                : b.name.localeCompare(a.name)
+        })
+
+    const filterItems = <T extends { name: string }>(items: T[]) => {
+        if (!normalizedSearch) {
+            return items
+        }
+        return items.filter((item) => matchesSearch(item.name, normalizedSearch))
+    }
+
+    const getTabDisplayName = (key: string) => {
+        if (key === "make") return t("choices.manufacturers", "Manufacturers")
+        if (key === "vehicle_model") return t("choices.manufacturerModels", "Manufacturer Models")
+        if (key === "subcategory") return t("choices.subcategories", "Subcategories")
+        return choiceTypes[key]?.name || key
+    }
+
+    const openAddModal = (choiceType: string, title: string, parentId: number | null = null) => {
+        setModalChoiceType(choiceType)
+        setModalTitle(title)
+        setModalName("")
+        setModalPercentage("")
+        setModalParentId(parentId)
+        setModalOpen(true)
+    }
+
+    const closeModal = () => {
+        setModalOpen(false)
+        setModalName("")
+        setModalPercentage("")
+        setModalParentId(null)
+    }
+
+    const handleAddChoice = (event: React.FormEvent) => {
+        event.preventDefault()
+        if (!modalName.trim()) {
+            return
+        }
+
+        addMutation.mutate({
+            choiceType: modalChoiceType,
+            name: modalName.trim(),
+            percentage: modalPercentage,
+            parentId: modalParentId,
+        })
+    }
+
+    const handleDeactivate = (choiceType: string, choiceId: number) => {
+        if (!confirm(t("choices.confirmDeactivate", "Are you sure you want to deactivate this option?"))) {
+            return
+        }
+        deactivateMutation.mutate({ choiceType, choiceId })
+    }
+
+    const handleReactivate = (choiceType: string, choiceId: number) => {
+        reactivateMutation.mutate({ choiceType, choiceId })
+    }
+
+    const visibleTabKeys = TAB_ORDER.filter(
+        (key) => key === "vehicle_model" || key === "subcategory" || Boolean(choiceTypes[key])
+    )
+
+    const filteredMakesWithModels = sortItems(makesWithModels)
+        .map((makeGroup) => {
+            const parentMatches = normalizedSearch
+                ? matchesSearch(makeGroup.name, normalizedSearch)
+                : true
+
+            const activeModelsBase = statusFilter === "inactive" ? [] : sortItems(makeGroup.models_active)
+            const inactiveModelsBase = statusFilter === "active" ? [] : sortItems(makeGroup.models_inactive)
+
+            const activeModels = parentMatches ? activeModelsBase : filterItems(activeModelsBase)
+            const inactiveModels = parentMatches ? inactiveModelsBase : filterItems(inactiveModelsBase)
+
+            const isVisible = !normalizedSearch || parentMatches || activeModels.length > 0 || inactiveModels.length > 0
+
+            return {
+                ...makeGroup,
+                filteredActive: activeModels,
+                filteredInactive: inactiveModels,
+                isVisible,
+            }
+        })
+        .filter((makeGroup) => makeGroup.isVisible)
+
+    const filteredCategoriesWithSubcategories = sortItems(categoriesWithSubcategories)
+        .map((categoryGroup) => {
+            const parentMatches = normalizedSearch
+                ? matchesSearch(categoryGroup.name, normalizedSearch)
+                : true
+
+            const activeSubsBase = statusFilter === "inactive" ? [] : sortItems(categoryGroup.subs_active)
+            const inactiveSubsBase = statusFilter === "active" ? [] : sortItems(categoryGroup.subs_inactive)
+
+            const activeSubs = parentMatches ? activeSubsBase : filterItems(activeSubsBase)
+            const inactiveSubs = parentMatches ? inactiveSubsBase : filterItems(inactiveSubsBase)
+
+            const isVisible = !normalizedSearch || parentMatches || activeSubs.length > 0 || inactiveSubs.length > 0
+
+            return {
+                ...categoryGroup,
+                filteredActive: activeSubs,
+                filteredInactive: inactiveSubs,
+                isVisible,
+            }
+        })
+        .filter((categoryGroup) => categoryGroup.isVisible)
+
+    const renderChoiceTypeContent = (typeKey: string, typeData: ChoiceType) => {
+        const activeItems = statusFilter === "inactive" ? [] : sortItems(filterItems(typeData.active).map(i => ({ ...i, is_active: true })))
+        const inactiveItems = statusFilter === "active" ? [] : sortItems(filterItems(typeData.inactive).map(i => ({ ...i, is_active: false })))
+        const hasVisibleItems = activeItems.length > 0 || inactiveItems.length > 0
+
+        return (
+            <div>
+                <div className="mb-4 flex items-center justify-between">
+                    <h3 className="text-lg font-medium text-foreground">{getTabDisplayName(typeKey)}</h3>
+                    <button
+                        type="button"
+                        onClick={() => openAddModal(typeKey, `${t("choices.addNew", "Add New")} ${getTabDisplayName(typeKey)}`)}
+                        className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+                    >
+                        <Plus className="h-4 w-4" />
+                        {t("choices.addNew", "Add New")}
+                    </button>
+                </div>
+
+                {!hasVisibleItems ? (
+                    <p className="text-sm italic text-muted-foreground">
+                        {normalizedSearch
+                            ? t("choices.noMatchingItems", "No matching items found.")
+                            : t("choices.noItems", "No items available.")}
+                    </p>
+                ) : (
+                    <div className="space-y-6">
+                        {statusFilter !== "inactive" && (
+                            <div>
+                                <h4 className="mb-2 text-sm font-semibold text-muted-foreground">
+                                    {t("choices.active", "Active")} ({activeItems.length})
+                                </h4>
+                                <div className="space-y-2">
+                                    {activeItems.length > 0 ? (
+                                        activeItems.map((item) => (
+                                            <div key={item.id} className={ACTIVE_ITEM_CLASS}>
+                                                <span className="text-sm text-foreground">{item.name}</span>
+                                                {item.is_protected ? (
+                                                    <span className="text-xs italic text-muted-foreground">
+                                                        {t("choices.protected", "Protected")}
+                                                    </span>
+                                                ) : (
+                                                    <button
+                                                        onClick={() => handleDeactivate(typeKey, item.id)}
+                                                        disabled={deactivateMutation.isPending}
+                                                        className="text-xs font-semibold text-rose-500 hover:text-rose-600 dark:text-rose-400 dark:hover:text-rose-300 disabled:opacity-50 transition-colors"
+                                                    >
+                                                        {t("choices.deactivate", "Deactivate")}
+                                                    </button>
+                                                )}
+                                            </div>
+                                        ))
+                                    ) : (
+                                        <p className="text-sm italic text-muted-foreground">
+                                            {t("choices.noActiveItems", "No active items")}
+                                        </p>
+                                    )}
+                                </div>
+                            </div>
+                        )}
+
+                        {statusFilter !== "active" && (
+                            <div>
+                                <h4 className="mb-2 text-sm font-semibold text-muted-foreground">
+                                    {t("choices.inactive", "Inactive")} ({inactiveItems.length})
+                                </h4>
+                                <div className="space-y-2">
+                                    {inactiveItems.length > 0 ? (
+                                        inactiveItems.map((item) => (
+                                            <div key={item.id} className={INACTIVE_ITEM_CLASS}>
+                                                <span className="text-sm text-muted-foreground">{item.name}</span>
+                                                <button
+                                                    onClick={() => handleReactivate(typeKey, item.id)}
+                                                    disabled={reactivateMutation.isPending}
+                                                    className="text-xs font-semibold text-emerald-600 hover:text-emerald-500 dark:text-emerald-400 dark:hover:text-emerald-300 disabled:opacity-50 transition-colors"
+                                                >
+                                                    {t("choices.reactivate", "Reactivate")}
+                                                </button>
+                                            </div>
+                                        ))
+                                    ) : (
+                                        <p className="text-sm italic text-muted-foreground">
+                                            {t("choices.noInactiveItems", "No inactive items")}
+                                        </p>
+                                    )}
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                )}
+            </div>
+        )
+    }
+
+    const renderVehicleModelContent = () => (
+        <div>
+            <div className="mb-4">
+                <h3 className="text-lg font-medium text-foreground">
+                    {t("choices.manufacturerModels", "Manufacturer Models")}
+                </h3>
+                <p className="text-sm text-muted-foreground">
+                    {t("choices.selectManufacturerToManage", "Select a manufacturer to manage its models")}
+                </p>
+            </div>
+
+            {filteredMakesWithModels.length > 0 ? (
+                filteredMakesWithModels.map((makeGroup) => {
+                    const isExpanded = expandedMakes.has(makeGroup.id)
+                    const visibleChildrenCount = makeGroup.filteredActive.length + makeGroup.filteredInactive.length
+
+                    return (
+                        <div key={makeGroup.id} className="mb-4 rounded-lg border border-border">
+                            <button
+                                onClick={() =>
+                                    setExpandedMakes((previous) => {
+                                        const next = new Set(previous)
+                                        if (next.has(makeGroup.id)) {
+                                            next.delete(makeGroup.id)
+                                        } else {
+                                            next.add(makeGroup.id)
+                                        }
+                                        return next
+                                    })
+                                }
+                                className="flex w-full items-center justify-between rounded-lg bg-muted/50 px-4 py-3 text-left hover:bg-muted"
+                            >
+                                <span className="font-medium text-foreground">{makeGroup.name}</span>
+                                <div className="flex items-center gap-3">
+                                    <span className="text-xs text-muted-foreground">
+                                        {visibleChildrenCount} {t("choices.visibleItems", "visible")}
+                                    </span>
+                                    {isExpanded ? (
+                                        <ChevronDown className="h-5 w-5" />
+                                    ) : (
+                                        <ChevronRight className="h-5 w-5" />
+                                    )}
+                                </div>
+                            </button>
+
+                            {isExpanded && (
+                                <div className="border-t border-border px-4 py-3">
+                                    <div className="mb-3 flex justify-end">
+                                        <button
+                                            onClick={() =>
+                                                openAddModal(
+                                                    "vehicle_model",
+                                                    `${t("choices.addModelFor", "Add Model for")} ${makeGroup.name}`,
+                                                    makeGroup.id
+                                                )
+                                            }
+                                            className="inline-flex items-center gap-1 rounded-lg bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90"
+                                        >
+                                            <Plus className="h-3 w-3" />
+                                            {t("choices.addModel", "Add Model")}
+                                        </button>
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        {statusFilter !== "inactive" &&
+                                            makeGroup.filteredActive.map((model) => (
+                                                <div key={model.id} className={ACTIVE_ITEM_CLASS}>
+                                                    <span className="text-sm text-foreground">{model.name}</span>
+                                                    <button
+                                                        onClick={() => handleDeactivate("vehicle_model", model.id)}
+                                                        disabled={deactivateMutation.isPending}
+                                                        className="text-xs font-semibold text-rose-500 hover:text-rose-600 dark:text-rose-400 dark:hover:text-rose-300 disabled:opacity-50 transition-colors"
+                                                    >
+                                                        {t("choices.deactivate", "Deactivate")}
+                                                    </button>
+                                                </div>
+                                            ))}
+
+                                        {statusFilter !== "active" &&
+                                            makeGroup.filteredInactive.map((model) => (
+                                                <div key={model.id} className={INACTIVE_ITEM_CLASS}>
+                                                    <span className="text-sm text-muted-foreground line-through">{model.name}</span>
+                                                    <button
+                                                        onClick={() => handleReactivate("vehicle_model", model.id)}
+                                                        disabled={reactivateMutation.isPending}
+                                                        className="text-xs text-green-600 hover:text-green-500 disabled:opacity-50"
+                                                    >
+                                                        {t("choices.reactivate", "Reactivate")}
+                                                    </button>
+                                                </div>
+                                            ))}
+
+                                        {visibleChildrenCount === 0 && (
+                                            <p className="text-sm italic text-muted-foreground">
+                                                {normalizedSearch
+                                                    ? t("choices.noMatchingItems", "No matching items found.")
+                                                    : t("choices.noModels", "No models")}
+                                            </p>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    )
+                })
+            ) : (
+                <p className="text-sm italic text-muted-foreground">
+                    {normalizedSearch
+                        ? t("choices.noMatchingItems", "No matching items found.")
+                        : t("choices.noManufacturers", "No manufacturers found. Please add manufacturers first.")}
+                </p>
+            )}
+        </div>
+    )
+
+    const renderSubcategoriesContent = () => (
+        <div>
+            <div className="mb-4">
+                <h3 className="text-lg font-medium text-foreground">
+                    {t("choices.subcategories", "Subcategories")}
+                </h3>
+                <p className="text-sm text-muted-foreground">
+                    {t("choices.selectCategoryToManage", "Select a category to manage its subcategories")}
+                </p>
+            </div>
+
+            {filteredCategoriesWithSubcategories.length > 0 ? (
+                filteredCategoriesWithSubcategories.map((categoryGroup) => {
+                    const isExpanded = expandedCategories.has(categoryGroup.id)
+                    const visibleChildrenCount = categoryGroup.filteredActive.length + categoryGroup.filteredInactive.length
+
+                    return (
+                        <div key={categoryGroup.id} className="mb-4 rounded-lg border border-border">
+                            <button
+                                onClick={() =>
+                                    setExpandedCategories((previous) => {
+                                        const next = new Set(previous)
+                                        if (next.has(categoryGroup.id)) {
+                                            next.delete(categoryGroup.id)
+                                        } else {
+                                            next.add(categoryGroup.id)
+                                        }
+                                        return next
+                                    })
+                                }
+                                className="flex w-full items-center justify-between rounded-lg bg-muted/50 px-4 py-3 text-left hover:bg-muted"
+                            >
+                                <span className="font-medium text-foreground">{categoryGroup.name}</span>
+                                <div className="flex items-center gap-3">
+                                    <span className="text-xs text-muted-foreground">
+                                        {visibleChildrenCount} {t("choices.visibleItems", "visible")}
+                                    </span>
+                                    {isExpanded ? (
+                                        <ChevronDown className="h-5 w-5" />
+                                    ) : (
+                                        <ChevronRight className="h-5 w-5" />
+                                    )}
+                                </div>
+                            </button>
+
+                            {isExpanded && (
+                                <div className="border-t border-border px-4 py-3">
+                                    <div className="mb-3 flex justify-end">
+                                        <button
+                                            onClick={() =>
+                                                openAddModal(
+                                                    "subcategory",
+                                                    `${t("choices.addSubcategoryFor", "Add Subcategory for")} ${categoryGroup.name}`,
+                                                    categoryGroup.id
+                                                )
+                                            }
+                                            className="inline-flex items-center gap-1 rounded-lg bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90"
+                                        >
+                                            <Plus className="h-3 w-3" />
+                                            {t("choices.addSubcategory", "Add Subcategory")}
+                                        </button>
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        {statusFilter !== "inactive" &&
+                                            categoryGroup.filteredActive.map((sub) => (
+                                                <div key={sub.id} className={ACTIVE_ITEM_CLASS}>
+                                                    <span className="text-sm text-foreground">{sub.name}</span>
+                                                    <button
+                                                        onClick={() => handleDeactivate("subcategory", sub.id)}
+                                                        disabled={deactivateMutation.isPending}
+                                                        className="text-xs font-semibold text-rose-500 hover:text-rose-600 dark:text-rose-400 dark:hover:text-rose-300 disabled:opacity-50 transition-colors"
+                                                    >
+                                                        {t("choices.deactivate", "Deactivate")}
+                                                    </button>
+                                                </div>
+                                            ))}
+
+                                        {statusFilter !== "active" &&
+                                            categoryGroup.filteredInactive.map((sub) => (
+                                                <div key={sub.id} className={INACTIVE_ITEM_CLASS}>
+                                                    <span className="text-sm text-muted-foreground">{sub.name}</span>
+                                                    <button
+                                                        onClick={() => handleReactivate("subcategory", sub.id)}
+                                                        disabled={reactivateMutation.isPending}
+                                                        className="text-xs font-semibold text-emerald-600 hover:text-emerald-500 dark:text-emerald-400 dark:hover:text-emerald-300 disabled:opacity-50 transition-colors"
+                                                    >
+                                                        {t("choices.reactivate", "Reactivate")}
+                                                    </button>
+                                                </div>
+                                            ))}
+
+                                        {visibleChildrenCount === 0 && (
+                                            <p className="text-sm italic text-muted-foreground">
+                                                {normalizedSearch
+                                                    ? t("choices.noMatchingItems", "No matching items found.")
+                                                    : t("choices.noSubcategories", "No subcategories")}
+                                            </p>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    )
+                })
+            ) : (
+                <p className="text-sm italic text-muted-foreground">
+                    {normalizedSearch
+                        ? t("choices.noMatchingItems", "No matching items found.")
+                        : t("choices.noCategories", "No categories found. Please add categories first.")}
+                </p>
+            )}
+        </div>
+    )
+
+    if (isLoading) {
+        return (
+            <div className="flex h-64 items-center justify-center">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+        )
+    }
+
+    if (error || !data) {
+        return (
+            <div className="p-6">
+                <div className="rounded-lg border border-destructive bg-destructive/10 p-4 text-destructive">
+                    {t("choices.errorLoading", "Failed to load choices data")}
+                </div>
+            </div>
+        )
+    }
+
+    return (
+        <div className="mx-auto max-w-9xl p-4 md:p-6">
+            <div className="mb-6">
+                <h2 className="text-xl font-semibold text-foreground">
+                    {t("choices.title", "Manage Choices")}
+                </h2>
+                <p className="text-sm text-muted-foreground">
+                    {t("choices.subtitle", "Add, deactivate, or reactivate dropdown options for vehicles and transactions")}
+                </p>
+            </div>
+
+            <div className="rounded-2xl border border-border bg-card">
+                <div className="overflow-x-auto border-b border-border">
+                    <nav className="flex space-x-4 px-5 py-3" aria-label="Tabs">
+                        {visibleTabKeys.map((key) => (
+                            <button
+                                key={key}
+                                onClick={() => setActiveTab(key)}
+                                className={`whitespace-nowrap border-b-2 px-1 pb-2 text-sm font-medium transition-colors ${
+                                    activeTab === key
+                                        ? "border-primary text-primary"
+                                        : "border-transparent text-muted-foreground hover:border-muted-foreground/50 hover:text-foreground"
+                                }`}
+                            >
+                                {getTabDisplayName(key)}
+                            </button>
+                        ))}
+                    </nav>
+                </div>
+
+                <div className="border-b border-border px-5 py-4">
+                    <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
+                        <div className="relative flex-1">
+                            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                            <Input
+                                value={searchValue}
+                                onChange={(event) => setSearchValue(event.target.value)}
+                                placeholder={t("choices.searchPlaceholder", "Search choices in this tab...")}
+                                className="pl-10 pr-10"
+                            />
+                            {searchValue && (
+                                <button
+                                    type="button"
+                                    onClick={() => setSearchValue("")}
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                                >
+                                    <X className="h-4 w-4" />
+                                </button>
+                            )}
+                        </div>
+
+                        <div className="w-full lg:w-56">
+                            <FilterSelect
+                                options={[
+                                    { value: "active", label: t("choices.active", "Active") },
+                                    { value: "inactive", label: t("choices.inactive", "Inactive") },
+                                ]}
+                                value={statusFilter === "all" ? undefined : statusFilter}
+                                onChange={(value) => setStatusFilter((value as StatusFilterValue | undefined) ?? "all")}
+                                placeholder={t("choices.allStatuses", "All statuses")}
+                                allLabel={t("choices.allStatuses", "All statuses")}
+                                searchPlaceholder={t("choices.searchStatuses", "Search statuses...")}
+                            />
+                        </div>
+
+                        <SortMenuButton
+                            options={SORT_OPTIONS}
+                            sort={sortBy}
+                            order={sortOrder}
+                            onSortChange={(value) => setSortBy(value as SortValue)}
+                            onOrderChange={setSortOrder}
+                        />
+                    </div>
+                </div>
+
+                <div className="p-5">
+                        {activeTab === "vehicle_model"
+                            ? renderVehicleModelContent()
+                            : activeTab === "subcategory"
+                              ? renderSubcategoriesContent()
+                              : choiceTypes[activeTab]
+                                ? renderChoiceTypeContent(activeTab, choiceTypes[activeTab])
+                                : null}
+                </div>
+            </div>
+
+            {modalOpen && (
+                <div className="fixed inset-0 z-50 overflow-y-auto">
+                    <div className="flex min-h-screen items-center justify-center p-4">
+                        <div className="fixed inset-0 bg-black/50" onClick={closeModal} />
+                        <div className="relative w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-xl">
+                            <button
+                                onClick={closeModal}
+                                className="absolute right-4 top-4 text-muted-foreground hover:text-foreground"
+                            >
+                                <X className="h-5 w-5" />
+                            </button>
+
+                            <h3 className="mb-4 text-lg font-semibold text-foreground">{modalTitle}</h3>
+
+                            <form onSubmit={handleAddChoice}>
+                                <div className="mb-4">
+                                    <label className="mb-1.5 block text-sm font-medium text-muted-foreground">
+                                        {t("choices.name", "Name")}
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={modalName}
+                                        onChange={(event) => setModalName(event.target.value)}
+                                        required
+                                        className="w-full rounded-lg border border-input bg-transparent px-4 py-2.5 text-sm text-foreground focus:border-primary focus:ring-2 focus:ring-primary/20"
+                                        placeholder={t("choices.enterName", "Enter name...")}
+                                        autoFocus
+                                    />
+                                </div>
+
+                                {modalChoiceType === "tax_percentage" && (
+                                    <div className="mb-4">
+                                        <label className="mb-1.5 block text-sm font-medium text-muted-foreground">
+                                            {t("choices.taxPercentage", "Tax Percentage")}
+                                        </label>
+                                        <input
+                                            type="number"
+                                            value={modalPercentage}
+                                            onChange={(event) => setModalPercentage(event.target.value)}
+                                            step="0.01"
+                                            min="0"
+                                            max="100"
+                                            required
+                                            className="w-full rounded-lg border border-input bg-transparent px-4 py-2.5 text-sm text-foreground focus:border-primary focus:ring-2 focus:ring-primary/20"
+                                            placeholder="e.g. 19.00"
+                                        />
+                                    </div>
+                                )}
+
+                                <div className="flex justify-end gap-3">
+                                    <button
+                                        type="button"
+                                        onClick={closeModal}
+                                        className="rounded-lg border border-border px-4 py-2 text-sm font-medium text-muted-foreground hover:bg-muted"
+                                    >
+                                        {t("common.cancel", "Cancel")}
+                                    </button>
+                                    <button
+                                        type="submit"
+                                        disabled={addMutation.isPending}
+                                        className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+                                    >
+                                        {addMutation.isPending ? (
+                                            <Loader2 className="h-4 w-4 animate-spin" />
+                                        ) : (
+                                            t("choices.add", "Add")
+                                        )}
+                                    </button>
+                                </div>
+
+                                {addMutation.isError && (
+                                    <p className="mt-3 text-sm text-destructive">
+                                        {t("choices.errorAdd", "Failed to add choice. Please try again.")}
+                                    </p>
+                                )}
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            )}
+        </div>
+    )
+}

@@ -1,0 +1,2487 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-11-02 07:16+0300\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME EMAIL@ADDRESS\n"
+"Language-Team: LANGUAGE LL@li.org\n"
+"Language: en\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: .\acar\settings.py:133
+msgid "German"
+msgstr "German"
+
+#: .\acar\settings.py:134
+msgid "English"
+msgstr "English"
+
+#: .\acar\settings.py:135
+msgid "Turkish"
+msgstr ""
+
+#: .\acar\settings.py:136
+msgid "Arabic"
+msgstr ""
+
+#: .\manager\models.py:17 .\manager\models.py:34 .\manager\models.py:63
+msgid "name"
+msgstr "name"
+
+#: .\manager\models.py:19
+msgid "logo"
+msgstr "logo"
+
+#: .\manager\models.py:32 .\manager\models.py:48 .\manager\models.py:78
+#: .\manager\models.py:171 .\manager\models.py:960
+msgid "business"
+msgstr "business"
+
+#: .\manager\models.py:35
+msgid "address"
+msgstr "address"
+
+#: .\manager\models.py:36
+msgid "is active"
+msgstr "is active"
+
+#: .\manager\models.py:42
+msgid "is manager"
+msgstr "is manager"
+
+#: .\manager\models.py:50
+msgid "transactions access"
+msgstr "transactions access"
+
+#: .\manager\models.py:52
+msgid "backup email address"
+msgstr "backup email address"
+
+#: .\manager\models.py:59
+msgid "Individual"
+msgstr "Individual"
+
+#: .\manager\models.py:60
+msgid "Company"
+msgstr "Company"
+
+#: .\manager\models.py:62 .\manager\models.py:185 .\manager\models.py:965
+msgid "internal id"
+msgstr "internal id"
+
+#: .\manager\models.py:64
+msgid "email"
+msgstr "email"
+
+#: .\manager\models.py:65
+msgid "phone number"
+msgstr "phone number"
+
+#: .\manager\models.py:67
+msgid "type"
+msgstr "type"
+
+#: .\manager\models.py:80
+msgid "date created"
+msgstr "date created"
+
+#: .\manager\models.py:107 .\theme\templates\partials\sidebar.html:115
+msgid "Purchased"
+msgstr "Purchased"
+
+#: .\manager\models.py:108 .\theme\templates\vehicle_details.html:183
+msgid "Ready for Sale"
+msgstr "Ready for Sale"
+
+#: .\manager\models.py:109 .\theme\templates\partials\sidebar.html:117
+msgid "Reserved"
+msgstr "Reserved"
+
+#: .\manager\models.py:110 .\theme\templates\partials\sidebar.html:118
+#: .\theme\templates\partials\table\vehicles_table.html:314
+#: .\theme\templates\partials\table\vehicles_table.html:317
+msgid "Sold"
+msgstr "Sold"
+
+#: .\manager\models.py:111 .\manager\models.py:936
+#: .\theme\templates\partials\sidebar.html:119
+#: .\theme\templates\vehicle_details.html:199
+msgid "Inactive"
+msgstr "Inactive"
+
+#: .\manager\models.py:154 .\manager\models.py:940
+msgid "status"
+msgstr "status"
+
+#: .\manager\models.py:160
+msgid "description"
+msgstr "description"
+
+#: .\manager\models.py:163 .\manager\models.py:1223
+msgid "internal comments"
+msgstr "internal comments"
+
+#: .\manager\models.py:180
+msgid "branch"
+msgstr "branch"
+
+#: .\manager\models.py:192
+msgid "chassis number (VIN)"
+msgstr "chassis number (VIN)"
+
+#: .\manager\models.py:200
+msgid "Enter a valid 17-character VIN (excluding I, O, and Q)."
+msgstr "Enter a valid 17-character VIN (excluding I, O, and Q)."
+
+#: .\manager\models.py:208
+msgid "motor vehicle registration number"
+msgstr "motor vehicle registration number"
+
+#: .\manager\models.py:264
+msgid "official license plate"
+msgstr "official license plate"
+
+#: .\manager\models.py:285
+msgid "Accident"
+msgstr "Accident"
+
+#: .\manager\models.py:286
+msgid "Damage"
+msgstr "Damage"
+
+#: .\manager\models.py:287
+msgid "Undamaged"
+msgstr "Undamaged"
+
+#: .\manager\models.py:323
+msgid "damage type"
+msgstr "damage type"
+
+#: .\manager\models.py:329
+msgid "first registration date"
+msgstr "first registration date"
+
+#: .\manager\models.py:337
+msgid "year of construction"
+msgstr "year of construction"
+
+#: .\manager\models.py:340
+msgid "kilometer"
+msgstr "kilometer"
+
+#: .\manager\models.py:345
+msgid "buy price"
+msgstr "buy price"
+
+#: .\manager\models.py:347
+msgid "buy price taxes"
+msgstr "buy price taxes"
+
+#: .\manager\models.py:348
+msgid "buy date"
+msgstr "buy date"
+
+#: .\manager\models.py:349
+msgid "buy delivery/collection date"
+msgstr "buy delivery/collection date"
+
+#: .\manager\models.py:352 .\manager\models.py:969
+msgid "Cash"
+msgstr "Cash"
+
+#: .\manager\models.py:353
+msgid "Bank Transfer"
+msgstr "Bank Transfer"
+
+#: .\manager\models.py:354
+msgid "Credit Card"
+msgstr "Credit Card"
+
+#: .\manager\models.py:355
+msgid "Debit Card"
+msgstr "Debit Card"
+
+#: .\manager\models.py:356
+msgid "Check"
+msgstr "Check"
+
+#: .\manager\models.py:357
+msgid "Financing/Loan"
+msgstr "Financing/Loan"
+
+#: .\manager\models.py:358
+msgid "Lease"
+msgstr "Lease"
+
+#: .\manager\models.py:359
+msgid "Trade-in"
+msgstr "Trade-in"
+
+#: .\manager\models.py:360
+msgid "Cryptocurrency"
+msgstr "Cryptocurrency"
+
+#: .\manager\models.py:361
+msgid "PayPal"
+msgstr "PayPal"
+
+#: .\manager\models.py:362
+msgid "Apple Pay"
+msgstr "Apple Pay"
+
+#: .\manager\models.py:363
+msgid "Google Pay"
+msgstr "Google Pay"
+
+#: .\manager\models.py:364
+msgid "Samsung Pay"
+msgstr "Samsung Pay"
+
+#: .\manager\models.py:365
+msgid "Venmo"
+msgstr "Venmo"
+
+#: .\manager\models.py:366
+msgid "Zelle"
+msgstr "Zelle"
+
+#: .\manager\models.py:367
+msgid "Wire Transfer"
+msgstr "Wire Transfer"
+
+#: .\manager\models.py:368
+msgid "Money Order"
+msgstr "Money Order"
+
+#: .\manager\models.py:369
+msgid "Cashier's Check"
+msgstr "Cashier's Check"
+
+#: .\manager\models.py:370
+msgid "Certified Check"
+msgstr "Certified Check"
+
+#: .\manager\models.py:371
+msgid "Personal Check"
+msgstr "Personal Check"
+
+#: .\manager\models.py:372
+msgid "Business Check"
+msgstr "Business Check"
+
+#: .\manager\models.py:373
+msgid "Cash Equivalent"
+msgstr "Cash Equivalent"
+
+#: .\manager\models.py:374 .\manager\models.py:745 .\manager\models.py:761
+#: .\manager\models.py:779 .\manager\models.py:972
+msgid "Other"
+msgstr "Other"
+
+#: .\manager\models.py:378
+msgid "buy payment method"
+msgstr "buy payment method"
+
+#: .\manager\models.py:389
+msgid "seller"
+msgstr "seller"
+
+#: .\manager\models.py:397
+msgid "buyer"
+msgstr "buyer"
+
+#: .\manager\models.py:402
+msgid "sale price"
+msgstr "sale price"
+
+#: .\manager\models.py:404
+msgid "sale price taxes"
+msgstr "sale price taxes"
+
+#: .\manager\models.py:405
+msgid "sale date"
+msgstr "sale date"
+
+#: .\manager\models.py:406
+msgid "sale delivery/collection date"
+msgstr "sale delivery/collection date"
+
+#: .\manager\models.py:410
+msgid "sale payment method"
+msgstr "sale payment method"
+
+#: .\manager\models.py:415 .\manager\models.py:420
+msgid "sale invoice number"
+msgstr "sale invoice number"
+
+#: .\manager\models.py:431
+msgid "Sedan"
+msgstr "Sedan"
+
+#: .\manager\models.py:432
+msgid "SUV"
+msgstr "SUV"
+
+#: .\manager\models.py:433
+msgid "Hatchback"
+msgstr "Hatchback"
+
+#: .\manager\models.py:434
+msgid "Coupe"
+msgstr "Coupe"
+
+#: .\manager\models.py:435
+msgid "Convertible"
+msgstr "Convertible"
+
+#: .\manager\models.py:436
+msgid "Wagon"
+msgstr "Wagon"
+
+#: .\manager\models.py:437
+msgid "Pickup Truck"
+msgstr "Pickup Truck"
+
+#: .\manager\models.py:438
+msgid "Van"
+msgstr "Van"
+
+#: .\manager\models.py:439
+msgid "Truck"
+msgstr "Truck"
+
+#: .\manager\models.py:440
+msgid "Motorcycle"
+msgstr "Motorcycle"
+
+#: .\manager\models.py:441
+msgid "Bus"
+msgstr "Bus"
+
+#: .\manager\models.py:442
+msgid "Trailer"
+msgstr "Trailer"
+
+#: .\manager\models.py:443
+msgid "Heavy Truck"
+msgstr "Heavy Truck"
+
+#: .\manager\models.py:444
+msgid "Delivery Van"
+msgstr "Delivery Van"
+
+#: .\manager\models.py:445
+msgid "Taxi"
+msgstr "Taxi"
+
+#: .\manager\models.py:446
+msgid "Limousine"
+msgstr "Limousine"
+
+#: .\manager\models.py:450
+msgid "vehicle type"
+msgstr "vehicle type"
+
+#: .\manager\models.py:458
+msgid "Compact"
+msgstr "Compact"
+
+#: .\manager\models.py:459
+msgid "Mid-Size"
+msgstr "Mid-Size"
+
+#: .\manager\models.py:460
+msgid "Full-Size"
+msgstr "Full-Size"
+
+#: .\manager\models.py:461
+msgid "Subcompact"
+msgstr "Subcompact"
+
+#: .\manager\models.py:462
+msgid "Luxury"
+msgstr "Luxury"
+
+#: .\manager\models.py:463
+msgid "Sports"
+msgstr "Sports"
+
+#: .\manager\models.py:464
+msgid "Family"
+msgstr "Family"
+
+#: .\manager\models.py:465
+msgid "Commercial"
+msgstr "Commercial"
+
+#: .\manager\models.py:466
+msgid "Economy"
+msgstr "Economy"
+
+#: .\manager\models.py:467
+msgid "Premium"
+msgstr "Premium"
+
+#: .\manager\models.py:468
+msgid "Performance"
+msgstr "Performance"
+
+#: .\manager\models.py:469
+msgid "Crossover"
+msgstr "Crossover"
+
+#: .\manager\models.py:470
+msgid "Off-Road"
+msgstr "Off-Road"
+
+#: .\manager\models.py:471
+msgid "City Car"
+msgstr "City Car"
+
+#: .\manager\models.py:472
+msgid "Executive"
+msgstr "Executive"
+
+#: .\manager\models.py:476
+msgid "body type"
+msgstr "body type"
+
+#: .\manager\models.py:712
+msgid "manufacturer"
+msgstr "manufacturer"
+
+#: .\manager\models.py:720
+msgid "manufacturer model"
+msgstr "manufacturer model"
+
+#: .\manager\models.py:731
+msgid "White"
+msgstr "White"
+
+#: .\manager\models.py:732
+msgid "Black"
+msgstr "Black"
+
+#: .\manager\models.py:733
+msgid "Silver"
+msgstr "Silver"
+
+#: .\manager\models.py:734
+msgid "Gray"
+msgstr "Gray"
+
+#: .\manager\models.py:735
+msgid "Red"
+msgstr "Red"
+
+#: .\manager\models.py:736
+msgid "Blue"
+msgstr "Blue"
+
+#: .\manager\models.py:737
+msgid "Green"
+msgstr "Green"
+
+#: .\manager\models.py:738
+msgid "Yellow"
+msgstr "Yellow"
+
+#: .\manager\models.py:739
+msgid "Orange"
+msgstr "Orange"
+
+#: .\manager\models.py:740
+msgid "Brown"
+msgstr "Brown"
+
+#: .\manager\models.py:741
+msgid "Beige"
+msgstr "Beige"
+
+#: .\manager\models.py:742
+msgid "Gold"
+msgstr "Gold"
+
+#: .\manager\models.py:743
+msgid "Purple"
+msgstr "Purple"
+
+#: .\manager\models.py:744
+msgid "Pink"
+msgstr "Pink"
+
+#: .\manager\models.py:749
+msgid "color"
+msgstr "color"
+
+#: .\manager\models.py:756
+msgid "2 Doors"
+msgstr "2 Doors"
+
+#: .\manager\models.py:757
+msgid "3 Doors"
+msgstr "3 Doors"
+
+#: .\manager\models.py:758
+msgid "4 Doors"
+msgstr "4 Doors"
+
+#: .\manager\models.py:759
+msgid "5 Doors"
+msgstr "5 Doors"
+
+#: .\manager\models.py:760
+msgid "6 Doors"
+msgstr "6 Doors"
+
+#: .\manager\models.py:765
+msgid "doors"
+msgstr "doors"
+
+#: .\manager\models.py:771
+msgid "Gasoline/Petrol"
+msgstr "Gasoline/Petrol"
+
+#: .\manager\models.py:772
+msgid "Diesel"
+msgstr "Diesel"
+
+#: .\manager\models.py:773
+msgid "Hybrid"
+msgstr "Hybrid"
+
+#: .\manager\models.py:774
+msgid "Electric"
+msgstr "Electric"
+
+#: .\manager\models.py:775
+msgid "LPG (Liquid Petroleum Gas)"
+msgstr "LPG (Liquid Petroleum Gas)"
+
+#: .\manager\models.py:776
+msgid "CNG (Compressed Natural Gas)"
+msgstr "CNG (Compressed Natural Gas)"
+
+#: .\manager\models.py:777
+msgid "Ethanol"
+msgstr "Ethanol"
+
+#: .\manager\models.py:778
+msgid "Hydrogen"
+msgstr "Hydrogen"
+
+#: .\manager\models.py:783
+msgid "fuel type"
+msgstr "fuel type"
+
+#: .\manager\models.py:789
+msgid "power (kW)"
+msgstr "power (kW)"
+
+#: .\manager\models.py:792
+msgid "image"
+msgstr "image"
+
+#: .\manager\models.py:927
+msgid "Vehicle #{}"
+msgstr "Vehicle #{}"
+
+#: .\manager\models.py:934 .\theme\templates\partials\sidebar.html:162
+#: .\theme\templates\partials\table\transactions_table.html:288
+#: .\theme\templates\transaction_details.html:175
+#: .\theme\templates\transaction_details.html:700
+#: .\theme\templates\vehicle_details.html:927
+msgid "Confirmed"
+msgstr "Confirmed"
+
+#: .\manager\models.py:935 .\theme\templates\partials\sidebar.html:163
+#: .\theme\templates\partials\table\transactions_table.html:294
+#: .\theme\templates\transaction_details.html:179
+#: .\theme\templates\transaction_details.html:706
+#: .\theme\templates\vehicle_details.html:933
+msgid "Review required"
+msgstr "Review required"
+
+#: .\manager\models.py:951 .\theme\templates\add_new_transaction.html:110
+#: .\theme\templates\transaction_details.html:211
+#: .\theme\templates\transactions.html:269
+msgid "Vehicle"
+msgstr "Vehicle"
+
+#: .\manager\models.py:970
+msgid "Volksbank"
+msgstr "Volksbank"
+
+#: .\manager\models.py:971
+msgid "Sparkasse"
+msgstr "Sparkasse"
+
+#: .\manager\models.py:975
+msgid "method"
+msgstr "method"
+
+#: .\manager\models.py:980
+msgid "date"
+msgstr "date"
+
+#: .\manager\models.py:982
+msgid "information"
+msgstr "information"
+
+#: .\manager\models.py:984
+msgid "amount"
+msgstr "amount"
+
+#: .\manager\models.py:1169
+msgid "currency"
+msgstr "currency"
+
+#: .\manager\models.py:1174
+msgid "from/to"
+msgstr "from/to"
+
+#: .\manager\models.py:1179
+msgid "date time"
+msgstr "date time"
+
+#: .\manager\models.py:1183
+msgid "tax"
+msgstr "tax"
+
+#: .\manager\models.py:1186
+msgid "Car Purchase"
+msgstr "Car Purchase"
+
+#: .\manager\models.py:1187
+msgid "Advance Payment"
+msgstr "Advance Payment"
+
+#: .\manager\models.py:1188
+msgid "Legal Costs"
+msgstr "Legal Costs"
+
+#: .\manager\models.py:1189
+msgid "Car Sale"
+msgstr "Car Sale"
+
+#: .\manager\models.py:1190
+msgid "Bank"
+msgstr "Bank"
+
+#: .\manager\models.py:1191
+msgid "Contributions"
+msgstr "Contributions"
+
+#: .\manager\models.py:1192
+msgid "Entertainment"
+msgstr "Entertainment"
+
+#: .\manager\models.py:1193
+msgid "Office"
+msgstr "Office"
+
+#: .\manager\models.py:1194
+msgid "Loan"
+msgstr "Loan"
+
+#: .\manager\models.py:1195
+msgid "Deposit"
+msgstr "Deposit"
+
+#: .\manager\models.py:1196
+msgid "Withdrawal"
+msgstr "Withdrawal"
+
+#: .\manager\models.py:1197 .\theme\templates\partials\sidebar.html:83
+#: .\theme\templates\partials\sidebar.html:92
+#: .\theme\templates\partials\table\vehicles_table.html:4
+#: .\theme\templates\vehicles.html:8
+msgid "Vehicles"
+msgstr "Vehicles"
+
+#: .\manager\models.py:1198
+msgid "Financing"
+msgstr "Financing"
+
+#: .\manager\models.py:1199
+msgid "Court Costs"
+msgstr "Court Costs"
+
+#: .\manager\models.py:1200
+msgid "Price Reduction"
+msgstr "Price Reduction"
+
+#: .\manager\models.py:1201
+msgid "Deposit Bond"
+msgstr "Deposit Bond"
+
+#: .\manager\models.py:1202
+msgid "Wages Salaries"
+msgstr "Wages Salaries"
+
+#: .\manager\models.py:1203
+msgid "Rent Utilities"
+msgstr "Rent Utilities"
+
+#: .\manager\models.py:1204
+msgid "Private Transfer"
+msgstr "Private Transfer"
+
+#: .\manager\models.py:1205
+msgid "Commission"
+msgstr "Commission"
+
+#: .\manager\models.py:1206
+msgid "Invoice"
+msgstr "Invoice"
+
+#: .\manager\models.py:1207
+msgid "Donation"
+msgstr "Donation"
+
+#: .\manager\models.py:1208
+msgid "Tax Consultant"
+msgstr "Tax Consultant"
+
+#: .\manager\models.py:1209
+msgid "Taxes"
+msgstr "Taxes"
+
+#: .\manager\models.py:1210
+msgid "Phone Communication"
+msgstr "Phone Communication"
+
+#: .\manager\models.py:1211
+msgid "Insurance"
+msgstr "Insurance"
+
+#: .\manager\models.py:1212
+msgid "Advertising"
+msgstr "Advertising"
+
+#: .\manager\models.py:1213
+msgid "Other Fees"
+msgstr "Other Fees"
+
+#: .\manager\models.py:1214
+msgid "Unknown"
+msgstr "Unknown"
+
+#: .\manager\models.py:1217
+msgid "category"
+msgstr "category"
+
+#: .\manager\models.py:1220
+msgid "subcategory"
+msgstr "subcategory"
+
+#: .\manager\models.py:1353
+msgid "Transaction #{}"
+msgstr "Transaction #{}"
+
+#: .\manager\views.py:3608
+msgid "You don't have permission to change this vehicle."
+msgstr "You don't have permission to change this vehicle."
+
+#: .\manager\views.py:3620
+msgid "Invalid status value."
+msgstr "Invalid status value."
+
+#: .\manager\views.py:3626
+msgid "Complete all sale details before marking the vehicle as sold."
+msgstr "Complete all sale details before marking the vehicle as sold."
+
+#: .\manager\views.py:3633
+#, python-format
+msgid "Vehicle status updated to %(status)s"
+msgstr "Vehicle status updated to %(status)s"
+
+#: .\theme\templates\404.html:12
+msgid "404 Error Page"
+msgstr "404 Error Page"
+
+#: .\theme\templates\404.html:40
+msgid "ERROR"
+msgstr "ERROR"
+
+#: .\theme\templates\404.html:53
+msgid "We can't seem to find the page you are looking for!"
+msgstr "We can't seem to find the page you are looking for!"
+
+#: .\theme\templates\404.html:60
+msgid "Back to Vehicles Page"
+msgstr "Back to Vehicles Page"
+
+#: .\theme\templates\404.html:67
+msgid "Back to login Page"
+msgstr "Back to login Page"
+
+#: .\theme\templates\add_new_transaction.html:8
+msgid "Add new transaction"
+msgstr "Add new transaction"
+
+#: .\theme\templates\add_new_transaction.html:99
+#: .\theme\templates\partials\table\transactions_table.html:62
+#: .\theme\templates\transaction_details.html:199
+msgid "Transaction Details"
+msgstr "Transaction Details"
+
+#: .\theme\templates\add_new_transaction.html:105
+#: .\theme\templates\transaction_details.html:206
+#: .\theme\templates\transaction_details.html:566
+#: .\theme\templates\transactions.html:248
+#: .\theme\templates\vehicle_details.html:793
+msgid "Category"
+msgstr "Category"
+
+#: .\theme\templates\add_new_transaction.html:108
+#: .\theme\templates\transaction_details.html:209
+#: .\theme\templates\transaction_details.html:576
+#: .\theme\templates\transactions.html:259
+#: .\theme\templates\vehicle_details.html:803
+msgid "Subcategory"
+msgstr "Subcategory"
+
+#: .\theme\templates\add_new_transaction.html:118
+#: .\theme\templates\add_new_vehicle.html:142
+#: .\theme\templates\transaction_details.html:219
+#: .\theme\templates\vehicle_details.html:247
+msgid "Usage details"
+msgstr "Usage details"
+
+#: .\theme\templates\add_new_transaction.html:124
+#: .\theme\templates\partials\table\transactions_table.html:57
+#: .\theme\templates\partials\table\transactions_table.html:142
+#: .\theme\templates\partials\table\vehicles_table.html:51
+#: .\theme\templates\transaction_details.html:225
+#: .\theme\templates\transaction_details.html:556
+#: .\theme\templates\vehicle_details.html:783
+msgid "Date"
+msgstr "Date"
+
+#: .\theme\templates\add_new_transaction.html:126
+#: .\theme\templates\partials\table\transactions_table.html:80
+#: .\theme\templates\partials\table\transactions_table.html:172
+#: .\theme\templates\transaction_details.html:227
+#: .\theme\templates\transaction_details.html:586
+#: .\theme\templates\transactions.html:279
+#: .\theme\templates\vehicle_details.html:813
+msgid "Method"
+msgstr "Method"
+
+#: .\theme\templates\add_new_transaction.html:128
+#: .\theme\templates\transaction_details.html:229
+msgid "From/To"
+msgstr "From/To"
+
+#: .\theme\templates\add_new_transaction.html:138
+#: .\theme\templates\transaction_details.html:240
+msgid "Price Breakdown"
+msgstr "Price Breakdown"
+
+#: .\theme\templates\add_new_transaction.html:144
+#: .\theme\templates\transaction_details.html:246
+msgid "Net Price:"
+msgstr "Net Price:"
+
+#: .\theme\templates\add_new_transaction.html:150
+msgid "Gross Price:"
+msgstr "Gross Price:"
+
+#: .\theme\templates\add_new_transaction.html:156
+#: .\theme\templates\transaction_details.html:258
+msgid "Total Amount"
+msgstr "Total Amount"
+
+#: .\theme\templates\add_new_transaction.html:162
+#: .\theme\templates\add_new_vehicle.html:207
+#: .\theme\templates\transaction_details.html:264
+#: .\theme\templates\vehicle_details.html:313
+msgid "Effective Tax Rate"
+msgstr "Effective Tax Rate"
+
+#: .\theme\templates\add_new_transaction.html:170
+#: .\theme\templates\add_new_vehicle.html:216
+#: .\theme\templates\vehicle_details.html:321
+msgid "Purchase details"
+msgstr "Purchase details"
+
+#: .\theme\templates\add_new_transaction.html:176
+#: .\theme\templates\partials\table\transactions_table.html:132
+#: .\theme\templates\transaction_details.html:278
+#: .\theme\templates\transaction_details.html:546
+#: .\theme\templates\vehicle_details.html:773
+msgid "Amount"
+msgstr "Amount"
+
+#: .\theme\templates\add_new_transaction.html:179
+#: .\theme\templates\transaction_details.html:281
+msgid "Tax"
+msgstr "Tax"
+
+#: .\theme\templates\add_new_transaction.html:182
+#: .\theme\templates\transaction_details.html:284
+#: .\theme\templates\transactions.html:237
+msgid "Currency"
+msgstr "Currency"
+
+#: .\theme\templates\add_new_transaction.html:269
+#: .\theme\templates\add_new_vehicle.html:341
+#: .\theme\templates\transaction_details.html:363
+#: .\theme\templates\vehicle_details.html:669
+msgid "Additional Information"
+msgstr "Additional Information"
+
+#: .\theme\templates\add_new_transaction.html:276
+#: .\theme\templates\add_new_vehicle.html:348
+#: .\theme\templates\transaction_details.html:370
+#: .\theme\templates\vehicle_details.html:676
+msgid "Description"
+msgstr "Description"
+
+#: .\theme\templates\add_new_transaction.html:281
+#: .\theme\templates\add_new_vehicle.html:353
+#: .\theme\templates\transaction_details.html:375
+#: .\theme\templates\vehicle_details.html:681
+msgid "Internal Comments"
+msgstr "Internal Comments"
+
+#: .\theme\templates\add_new_transaction.html:292
+#: .\theme\templates\add_new_vehicle.html:364
+#: .\theme\templates\business_settings.html:684
+msgid "Add"
+msgstr "Add"
+
+#: .\theme\templates\add_new_transaction.html:441
+#: .\theme\templates\transaction_details.html:1076
+#: .\theme\templates\transactions.html:261
+msgid "All Subcategories"
+msgstr "All Subcategories"
+
+#: .\theme\templates\add_new_vehicle.html:8
+msgid "Add new vehicle"
+msgstr "Add new vehicle"
+
+#: .\theme\templates\add_new_vehicle.html:99
+#: .\theme\templates\vehicle_details.html:143
+msgid "Current information"
+msgstr "Current information"
+
+#: .\theme\templates\add_new_vehicle.html:105
+#: .\theme\templates\vehicle_details.html:149
+#: .\theme\templates\vehicles.html:279
+msgid "Branch"
+msgstr "Branch"
+
+#: .\theme\templates\add_new_vehicle.html:114
+#: .\theme\templates\partials\table\vehicles_table.html:58
+#: .\theme\templates\transactions.html:221
+#: .\theme\templates\vehicle_details.html:219
+#: .\theme\templates\vehicles.html:244
+msgid "Vehicle Details"
+msgstr "Vehicle Details"
+
+#: .\theme\templates\add_new_vehicle.html:120
+#: .\theme\templates\vehicle_details.html:225
+#: .\theme\templates\vehicles.html:290
+msgid "Vehicle Type"
+msgstr "Vehicle Type"
+
+#: .\theme\templates\add_new_vehicle.html:122
+#: .\theme\templates\vehicle_details.html:227
+#: .\theme\templates\vehicles.html:301
+msgid "Body Type"
+msgstr "Body Type"
+
+#: .\theme\templates\add_new_vehicle.html:124
+#: .\theme\templates\vehicles.html:260
+msgid "Manufacturer"
+msgstr "Manufacturer"
+
+#: .\theme\templates\add_new_vehicle.html:127
+#: .\theme\templates\vehicle_details.html:232
+#: .\theme\templates\vehicles.html:271
+msgid "Model"
+msgstr "Model"
+
+#: .\theme\templates\add_new_vehicle.html:129
+#: .\theme\templates\vehicle_details.html:234
+#: .\theme\templates\vehicles.html:334
+msgid "Color"
+msgstr "Color"
+
+#: .\theme\templates\add_new_vehicle.html:131
+#: .\theme\templates\vehicle_details.html:236
+#: .\theme\templates\vehicles.html:312
+msgid "Doors"
+msgstr "Doors"
+
+#: .\theme\templates\add_new_vehicle.html:133
+#: .\theme\templates\vehicle_details.html:238
+#: .\theme\templates\vehicles.html:323
+msgid "Fuel Type"
+msgstr "Fuel Type"
+
+#: .\theme\templates\add_new_vehicle.html:135
+#: .\theme\templates\vehicle_details.html:240
+msgid "Power (KW)"
+msgstr "Power (KW)"
+
+#: .\theme\templates\add_new_vehicle.html:150
+#: .\theme\templates\vehicle_details.html:255
+#: .\theme\templates\vehicles.html:344
+msgid "Damage Type"
+msgstr "Damage Type"
+
+#: .\theme\templates\add_new_vehicle.html:152
+#: .\theme\templates\vehicle_details.html:257
+msgid "First Registration Date"
+msgstr "First Registration Date"
+
+#: .\theme\templates\add_new_vehicle.html:154
+#: .\theme\templates\vehicle_details.html:259
+msgid "Year of Construction"
+msgstr "Year of Construction"
+
+#: .\theme\templates\add_new_vehicle.html:156
+#: .\theme\templates\vehicle_details.html:261
+msgid "Kilometer"
+msgstr "Kilometer"
+
+#: .\theme\templates\add_new_vehicle.html:163
+#: .\theme\templates\vehicle_details.html:268
+msgid "Official details"
+msgstr "Official details"
+
+#: .\theme\templates\add_new_vehicle.html:169
+#: .\theme\templates\vehicle_details.html:274
+msgid "Chassis Number (VIN)"
+msgstr "Chassis Number (VIN)"
+
+#: .\theme\templates\add_new_vehicle.html:171
+#: .\theme\templates\vehicle_details.html:276
+msgid "Motor Vehicle Registration Number"
+msgstr "Motor Vehicle Registration Number"
+
+#: .\theme\templates\add_new_vehicle.html:173
+#: .\theme\templates\vehicle_details.html:278
+msgid "Official License Plate"
+msgstr "Official License Plate"
+
+#: .\theme\templates\add_new_vehicle.html:183
+#: .\theme\templates\vehicle_details.html:289
+msgid "Price details"
+msgstr "Price details"
+
+#: .\theme\templates\add_new_vehicle.html:189
+#: .\theme\templates\vehicle_details.html:295
+msgid "Net Price"
+msgstr "Net Price"
+
+#: .\theme\templates\add_new_vehicle.html:195
+#: .\theme\templates\vehicle_details.html:301
+msgid "Tax Amount"
+msgstr "Tax Amount"
+
+#: .\theme\templates\add_new_vehicle.html:201
+#: .\theme\templates\vehicle_details.html:307
+msgid "Gross Price"
+msgstr "Gross Price"
+
+#: .\theme\templates\add_new_vehicle.html:222
+#: .\theme\templates\vehicle_details.html:327
+msgid "Purchase Price"
+msgstr "Purchase Price"
+
+#: .\theme\templates\add_new_vehicle.html:225
+msgid "Purchase Price Taxes"
+msgstr "Purchase Price Taxes"
+
+#: .\theme\templates\add_new_vehicle.html:228
+#: .\theme\templates\vehicle_details.html:333
+msgid "Purchase Date"
+msgstr "Purchase Date"
+
+#: .\theme\templates\add_new_vehicle.html:231
+#: .\theme\templates\vehicle_details.html:336
+msgid "Purchase Delivery/Collection Date"
+msgstr "Purchase Delivery/Collection Date"
+
+#: .\theme\templates\add_new_vehicle.html:234
+#: .\theme\templates\vehicle_details.html:339
+msgid "Purchase Payment Method"
+msgstr "Purchase Payment Method"
+
+#: .\theme\templates\add_new_vehicle.html:239
+#: .\theme\templates\vehicle_details.html:344
+msgid "Seller"
+msgstr "Seller"
+
+#: .\theme\templates\add_new_vehicle.html:251
+#: .\theme\templates\vehicle_details.html:356
+msgid "Select Seller"
+msgstr "Select Seller"
+
+#: .\theme\templates\add_new_vehicle.html:271
+#: .\theme\templates\vehicle_details.html:376
+msgid "Add New"
+msgstr "Add New"
+
+#: .\theme\templates\add_new_vehicle.html:316
+#: .\theme\templates\add_new_vehicle.html:328
+#: .\theme\templates\vehicle_details.html:630
+#: .\theme\templates\vehicle_details.html:649
+msgid "Image"
+msgstr "Image"
+
+#: .\theme\templates\add_new_vehicle.html:323
+#: .\theme\templates\vehicle_details.html:637
+msgid "Upload Image"
+msgstr "Upload Image"
+
+#: .\theme\templates\add_new_vehicle.html:328
+#: .\theme\templates\vehicle_details.html:649
+msgid "not uploaded because of error."
+msgstr "not uploaded because of error."
+
+#: .\theme\templates\admin_change_password.html:11
+#: .\theme\templates\admin_change_password.html:40
+msgid "Admin change user password"
+msgstr "Admin change user password"
+
+#: .\theme\templates\admin_change_password.html:43
+msgid "change the password of this user to:"
+msgstr "change the password of this user to:"
+
+#: .\theme\templates\admin_change_password.html:90
+#: .\theme\templates\employee_login.html:172
+#: .\theme\templates\manager_login.html:189
+#: .\theme\templates\new_password.html:157
+msgid "Password"
+msgstr "Password"
+
+#: .\theme\templates\admin_change_password.html:97
+#: .\theme\templates\admin_change_password.html:151
+#: .\theme\templates\new_password.html:164
+msgid "Enter your password"
+msgstr "Enter your password"
+
+#: .\theme\templates\admin_change_password.html:144
+#: .\theme\templates\new_password.html:211
+msgid "Confirm Password"
+msgstr "Confirm Password"
+
+#: .\theme\templates\admin_change_password.html:239
+msgid "Change password for this user"
+msgstr "Change password for this user"
+
+#: .\theme\templates\business_settings.html:8
+msgid "Business Settings"
+msgstr "Business Settings"
+
+#: .\theme\templates\business_settings.html:39
+msgid "Edit Business details"
+msgstr "Edit Business details"
+
+#: .\theme\templates\business_settings.html:158
+#: .\theme\templates\layout.html:12
+msgid "Business Name"
+msgstr "Business Name"
+
+#: .\theme\templates\business_settings.html:338
+msgid "Branch name field cannot be empty"
+msgstr "Branch name field cannot be empty"
+
+#: .\theme\templates\business_settings.html:421
+msgid "Active"
+msgstr "Active"
+
+#: .\theme\templates\business_settings.html:485
+msgid "Update"
+msgstr "Update"
+
+#: .\theme\templates\business_settings.html:522
+msgid "Add New Branch"
+msgstr "Add New Branch"
+
+#: .\theme\templates\business_settings.html:608
+msgid "Branch Name"
+msgstr "Branch Name"
+
+#: .\theme\templates\business_settings.html:644
+msgid "Branch Address"
+msgstr "Branch Address"
+
+#: .\theme\templates\employee_login.html:11
+#: .\theme\templates\employee_login.html:64
+msgid "Employee Log In"
+msgstr "Employee Log In"
+
+#: .\theme\templates\employee_login.html:53
+#: .\theme\templates\manager_login.html:53
+msgid "Back to user choice"
+msgstr "Back to user choice"
+
+#: .\theme\templates\employee_login.html:67
+msgid "Enter your username and password to Log In!"
+msgstr "Enter your username and password to Log In!"
+
+#: .\theme\templates\employee_login.html:157
+#: .\theme\templates\manager_login.html:159
+#: .\theme\templates\reset_email.html:157
+#: .\theme\templates\reset_password.html:157
+#: .\theme\templates\users_management.html:421
+#: .\theme\templates\users_management.html:483
+msgid "Username"
+msgstr "Username"
+
+#: .\theme\templates\employee_login.html:267
+#: .\theme\templates\manager_login.html:294
+msgid "Sign In"
+msgstr "Sign In"
+
+#: .\theme\templates\login.html:11
+msgid "Login"
+msgstr "Login"
+
+#: .\theme\templates\login.html:117
+msgid "Log In"
+msgstr "Log In"
+
+#: .\theme\templates\login.html:120
+msgid "Choose what type of user you are."
+msgstr "Choose what type of user you are."
+
+#: .\theme\templates\login.html:132
+msgid "Employee"
+msgstr "Employee"
+
+#: .\theme\templates\login.html:145
+msgid "Manager"
+msgstr "Manager"
+
+#: .\theme\templates\manager_login.html:11
+#: .\theme\templates\manager_login.html:64
+msgid "Manager Log In"
+msgstr "Manager Log In"
+
+#: .\theme\templates\manager_login.html:67
+msgid "Enter your email OR username, AND your password to Log In!"
+msgstr "Enter your email OR username, AND your password to Log In!"
+
+#: .\theme\templates\manager_login.html:174
+#: .\theme\templates\reset_password.html:172
+msgid "Email"
+msgstr "Email"
+
+#: .\theme\templates\manager_login.html:281
+msgid "Forgot password?"
+msgstr "Forgot password?"
+
+#: .\theme\templates\manager_login.html:286
+msgid "Lost access to your email?"
+msgstr "Lost access to your email?"
+
+#: .\theme\templates\new_backup_email_address.html:11
+#: .\theme\templates\new_backup_email_address.html:64
+#: .\theme\templates\new_email_address.html:11
+#: .\theme\templates\new_email_address.html:64
+msgid "Change email"
+msgstr "Change email"
+
+#: .\theme\templates\new_backup_email_address.html:53
+#: .\theme\templates\new_email_address.html:53
+#: .\theme\templates\new_password.html:53 .\theme\templates\reset_email.html:53
+#: .\theme\templates\reset_password.html:53
+msgid "Back to manager login"
+msgstr "Back to manager login"
+
+#: .\theme\templates\new_backup_email_address.html:67
+msgid ""
+"Enter your new desired backup email to change your backup email address!"
+msgstr ""
+"Enter your new desired backup email to change your backup email address!"
+
+#: .\theme\templates\new_backup_email_address.html:157
+msgid "New backup email address"
+msgstr "New backup email address"
+
+#: .\theme\templates\new_backup_email_address.html:163
+msgid "Enter your new backup email address"
+msgstr "Enter your new backup email address"
+
+#: .\theme\templates\new_backup_email_address.html:172
+#: .\theme\templates\new_email_address.html:172
+#: .\theme\templates\reset_password.html:228
+msgid "Send Verification email"
+msgstr "Send Verification email"
+
+#: .\theme\templates\new_email_address.html:67
+msgid "Enter your new desired email to change your email address!"
+msgstr "Enter your new desired email to change your email address!"
+
+#: .\theme\templates\new_email_address.html:157
+msgid "New email address"
+msgstr "New email address"
+
+#: .\theme\templates\new_email_address.html:163
+#: .\theme\templates\reset_email.html:224
+msgid "Enter your new email address"
+msgstr "Enter your new email address"
+
+#: .\theme\templates\new_password.html:11
+#: .\theme\templates\new_password.html:64
+#: .\theme\templates\reset_password.html:11
+#: .\theme\templates\reset_password.html:64
+msgid "Password Reset"
+msgstr "Password Reset"
+
+#: .\theme\templates\new_password.html:67
+msgid "Enter your new password below to reset your password."
+msgstr "Enter your new password below to reset your password."
+
+#: .\theme\templates\new_password.html:306
+msgid "Change Password"
+msgstr "Change Password"
+
+#: .\theme\templates\partials\form_field.html:19
+#, python-format
+msgid "Select %(label)s"
+msgstr "Select %(label)s"
+
+#: .\theme\templates\partials\form_field.html:54
+#: .\theme\templates\partials\form_field.html:86
+msgid "Select date"
+msgstr "Select date"
+
+#: .\theme\templates\partials\form_field.html:496
+msgid "Enter number"
+msgstr "Enter number"
+
+#: .\theme\templates\partials\header.html:701
+#: .\theme\templates\users_management.html:8
+msgid "Users Management"
+msgstr "Users Management"
+
+#: .\theme\templates\partials\header.html:724
+msgid "Business settings"
+msgstr "Business settings"
+
+#: .\theme\templates\partials\header.html:749
+msgid "Log Out"
+msgstr "Log Out"
+
+#: .\theme\templates\partials\sidebar.html:60
+msgid "MENU"
+msgstr "MENU"
+
+#: .\theme\templates\partials\sidebar.html:116
+msgid "Ready for sale"
+msgstr "Ready for sale"
+
+#: .\theme\templates\partials\sidebar.html:131
+#: .\theme\templates\partials\sidebar.html:140
+#: .\theme\templates\partials\table\transactions_table.html:10
+#: .\theme\templates\transaction_details.html:477
+#: .\theme\templates\transactions.html:8
+msgid "Transactions"
+msgstr "Transactions"
+
+#: .\theme\templates\partials\table\transactions_table.html:10
+#: .\theme\templates\partials\table\vehicles_table.html:4
+msgid "showing"
+msgstr "showing"
+
+#: .\theme\templates\partials\table\transactions_table.html:10
+#: .\theme\templates\partials\table\vehicles_table.html:4
+msgid "results"
+msgstr "results"
+
+#: .\theme\templates\partials\table\transactions_table.html:25
+#: .\theme\templates\partials\table\vehicles_table.html:16
+msgid "Sort by"
+msgstr "Sort by"
+
+#: .\theme\templates\partials\table\transactions_table.html:44
+#: .\theme\templates\partials\table\vehicles_table.html:35
+msgid "Alphabetical"
+msgstr "Alphabetical"
+
+#: .\theme\templates\partials\table\transactions_table.html:45
+msgid "Category (A-Z)"
+msgstr "Category (A-Z)"
+
+#: .\theme\templates\partials\table\transactions_table.html:46
+msgid "Category (Z-A)"
+msgstr "Category (Z-A)"
+
+#: .\theme\templates\partials\table\transactions_table.html:47
+msgid "Subcategory (A-Z)"
+msgstr "Subcategory (A-Z)"
+
+#: .\theme\templates\partials\table\transactions_table.html:48
+msgid "Subcategory (Z-A)"
+msgstr "Subcategory (Z-A)"
+
+#: .\theme\templates\partials\table\transactions_table.html:51
+#: .\theme\templates\partials\table\vehicles_table.html:42
+msgid "Numeric"
+msgstr "Numeric"
+
+#: .\theme\templates\partials\table\transactions_table.html:52
+msgid "Amount (Low-High)"
+msgstr "Amount (Low-High)"
+
+#: .\theme\templates\partials\table\transactions_table.html:53
+msgid "Amount (High-Low)"
+msgstr "Amount (High-Low)"
+
+#: .\theme\templates\partials\table\transactions_table.html:58
+msgid "Date (Oldest)"
+msgstr "Date (Oldest)"
+
+#: .\theme\templates\partials\table\transactions_table.html:59
+msgid "Date (Newest)"
+msgstr "Date (Newest)"
+
+#: .\theme\templates\partials\table\transactions_table.html:63
+msgid "Method (A-Z)"
+msgstr "Method (A-Z)"
+
+#: .\theme\templates\partials\table\transactions_table.html:64
+msgid "Method (Z-A)"
+msgstr "Method (Z-A)"
+
+#: .\theme\templates\partials\table\transactions_table.html:65
+msgid "Vehicle (A-Z)"
+msgstr "Vehicle (A-Z)"
+
+#: .\theme\templates\partials\table\transactions_table.html:66
+msgid "Vehicle (Z-A)"
+msgstr "Vehicle (Z-A)"
+
+#: .\theme\templates\partials\table\transactions_table.html:67
+#: .\theme\templates\partials\table\vehicles_table.html:80
+msgid "Internal ID (Low-High)"
+msgstr "Internal ID (Low-High)"
+
+#: .\theme\templates\partials\table\transactions_table.html:68
+#: .\theme\templates\partials\table\vehicles_table.html:81
+msgid "Internal ID (High-Low)"
+msgstr "Internal ID (High-Low)"
+
+#: .\theme\templates\partials\table\transactions_table.html:69
+#: .\theme\templates\partials\table\vehicles_table.html:82
+msgid "Status (A-Z)"
+msgstr "Status (A-Z)"
+
+#: .\theme\templates\partials\table\transactions_table.html:70
+#: .\theme\templates\partials\table\vehicles_table.html:83
+msgid "Status (Z-A)"
+msgstr "Status (Z-A)"
+
+#: .\theme\templates\partials\table\transactions_table.html:79
+msgid "Upload Transactions from StarMoney"
+msgstr "Upload Transactions from StarMoney"
+
+#: .\theme\templates\partials\table\transactions_table.html:90
+msgid "Add new (quick)"
+msgstr "Add new (quick)"
+
+#: .\theme\templates\partials\table\transactions_table.html:105
+msgid "Add new (manual)"
+msgstr "Add new (manual)"
+
+#: .\theme\templates\partials\table\transactions_table.html:122
+#: .\theme\templates\transaction_details.html:536
+#: .\theme\templates\vehicle_details.html:763
+msgid "Transaction"
+msgstr "Transaction"
+
+#: .\theme\templates\partials\table\transactions_table.html:182
+#: .\theme\templates\transaction_details.html:162
+#: .\theme\templates\transaction_details.html:168
+#: .\theme\templates\transaction_details.html:596
+#: .\theme\templates\transactions.html:226
+#: .\theme\templates\vehicle_details.html:153
+#: .\theme\templates\vehicle_details.html:823
+#: .\theme\templates\vehicles.html:249
+msgid "Status"
+msgstr "Status"
+
+#: .\theme\templates\partials\table\transactions_table.html:193
+#: .\theme\templates\transaction_details.html:607
+#: .\theme\templates\vehicle_details.html:834
+msgid "Edit"
+msgstr "Edit"
+
+#: .\theme\templates\partials\table\transactions_table.html:204
+msgid "pdf"
+msgstr "pdf"
+
+#: .\theme\templates\partials\table\transactions_table.html:215
+#: .\theme\templates\transaction_details.html:629
+#: .\theme\templates\vehicle_details.html:856
+msgid "Action"
+msgstr "Action"
+
+#: .\theme\templates\partials\table\transactions_table.html:237
+#: .\theme\templates\partials\table\vehicles_table.html:132
+#: .\theme\templates\transaction_details.html:651
+#: .\theme\templates\vehicle_details.html:878
+msgid "Internal Id:"
+msgstr "Internal Id:"
+
+#: .\theme\templates\partials\table\transactions_table.html:240
+#: .\theme\templates\transaction_details.html:653
+#: .\theme\templates\vehicle_details.html:880
+msgid "Vehicle:"
+msgstr "Vehicle:"
+
+#: .\theme\templates\partials\table\transactions_table.html:306
+#: .\theme\templates\transaction_details.html:187
+#: .\theme\templates\transaction_details.html:718
+#: .\theme\templates\vehicle_details.html:204
+#: .\theme\templates\vehicle_details.html:945
+msgid "Not specified"
+msgstr "Not specified"
+
+#: .\theme\templates\partials\table\transactions_table.html:316
+#: .\theme\templates\transaction_details.html:728
+#: .\theme\templates\vehicle_details.html:955
+msgid "Edit transaction details"
+msgstr "Edit transaction details"
+
+#: .\theme\templates\partials\table\transactions_table.html:331
+#: .\theme\templates\transaction_details.html:743
+#: .\theme\templates\vehicle_details.html:399
+#: .\theme\templates\vehicle_details.html:416
+#: .\theme\templates\vehicle_details.html:525
+#: .\theme\templates\vehicle_details.html:542
+#: .\theme\templates\vehicle_details.html:970
+msgid "Generate Contract"
+msgstr "Generate Contract"
+
+#: .\theme\templates\partials\table\transactions_table.html:339
+#: .\theme\templates\transaction_details.html:751
+#: .\theme\templates\vehicle_details.html:978
+msgid "Complete all sale details including buyer to generate contract"
+msgstr "Complete all sale details including buyer to generate contract"
+
+#: .\theme\templates\partials\table\transactions_table.html:356
+#: .\theme\templates\partials\table\transactions_table.html:386
+#: .\theme\templates\partials\table\transactions_table.html:407
+#: .\theme\templates\transaction_details.html:768
+#: .\theme\templates\transaction_details.html:798
+#: .\theme\templates\transaction_details.html:819
+#: .\theme\templates\vehicle_details.html:995
+#: .\theme\templates\vehicle_details.html:1025
+#: .\theme\templates\vehicle_details.html:1046
+msgid "Activate Transaction"
+msgstr "Activate Transaction"
+
+#: .\theme\templates\partials\table\transactions_table.html:391
+#: .\theme\templates\transaction_details.html:803
+#: .\theme\templates\vehicle_details.html:1030
+msgid "Are you sure you want to activate"
+msgstr "Are you sure you want to activate"
+
+#: .\theme\templates\partials\table\transactions_table.html:393
+#: .\theme\templates\partials\table\transactions_table.html:456
+#: .\theme\templates\transaction_details.html:805
+#: .\theme\templates\transaction_details.html:868
+#: .\theme\templates\vehicle_details.html:1032
+#: .\theme\templates\vehicle_details.html:1095
+msgid "This will make the Transaction"
+msgstr "This will make the Transaction"
+
+#: .\theme\templates\partials\table\transactions_table.html:393
+#: .\theme\templates\transaction_details.html:805
+#: .\theme\templates\vehicle_details.html:1032
+msgid "active"
+msgstr "active"
+
+#: .\theme\templates\partials\table\transactions_table.html:393
+#: .\theme\templates\transaction_details.html:805
+#: .\theme\templates\vehicle_details.html:1032
+msgid "and it will be available in the inventory."
+msgstr "and it will be available in the inventory."
+
+#: .\theme\templates\partials\table\transactions_table.html:395
+#: .\theme\templates\transaction_details.html:807
+#: .\theme\templates\vehicle_details.html:1034
+msgid "Note:"
+msgstr "Note:"
+
+#: .\theme\templates\partials\table\transactions_table.html:395
+#: .\theme\templates\transaction_details.html:807
+#: .\theme\templates\vehicle_details.html:1034
+msgid ""
+"If any of the unique identifiers (chassis number, registration number, or "
+"license plate) are already used by another active transaction, the "
+"activation will fail."
+msgstr ""
+"If any of the unique identifiers (chassis number, registration number, or "
+"license plate) are already used by another active transaction, the "
+"activation will fail."
+
+#: .\theme\templates\partials\table\transactions_table.html:403
+#: .\theme\templates\partials\table\transactions_table.html:464
+#: .\theme\templates\transaction_details.html:815
+#: .\theme\templates\transaction_details.html:876
+#: .\theme\templates\vehicle_details.html:1042
+#: .\theme\templates\vehicle_details.html:1103
+msgid "Cancel"
+msgstr "Cancel"
+
+#: .\theme\templates\partials\table\transactions_table.html:419
+#: .\theme\templates\partials\table\transactions_table.html:449
+#: .\theme\templates\partials\table\transactions_table.html:468
+#: .\theme\templates\transaction_details.html:831
+#: .\theme\templates\transaction_details.html:861
+#: .\theme\templates\transaction_details.html:880
+#: .\theme\templates\vehicle_details.html:1058
+#: .\theme\templates\vehicle_details.html:1088
+#: .\theme\templates\vehicle_details.html:1107
+msgid "Delete Transaction"
+msgstr "Delete Transaction"
+
+#: .\theme\templates\partials\table\transactions_table.html:454
+#: .\theme\templates\transaction_details.html:866
+#: .\theme\templates\vehicle_details.html:1093
+msgid "Are you sure you want to delete"
+msgstr "Are you sure you want to delete"
+
+#: .\theme\templates\partials\table\transactions_table.html:456
+#: .\theme\templates\transaction_details.html:868
+#: .\theme\templates\vehicle_details.html:1095
+msgid "inactive"
+msgstr "inactive"
+
+#: .\theme\templates\partials\table\transactions_table.html:456
+#: .\theme\templates\transaction_details.html:868
+#: .\theme\templates\vehicle_details.html:1095
+msgid "and it will no longer show in the active inventory."
+msgstr "and it will no longer show in the active inventory."
+
+#: .\theme\templates\partials\table\transactions_table.html:489
+#: .\theme\templates\partials\table\vehicles_table.html:330
+msgid "Page"
+msgstr "Page"
+
+#: .\theme\templates\partials\table\transactions_table.html:489
+#: .\theme\templates\partials\table\vehicles_table.html:330
+msgid "of"
+msgstr "of"
+
+#: .\theme\templates\partials\table\transactions_table.html:495
+#: .\theme\templates\partials\table\transactions_table.html:500
+#: .\theme\templates\partials\table\vehicles_table.html:335
+#: .\theme\templates\partials\table\vehicles_table.html:340
+msgid "Previous"
+msgstr "Previous"
+
+#: .\theme\templates\partials\table\transactions_table.html:506
+#: .\theme\templates\partials\table\transactions_table.html:511
+#: .\theme\templates\partials\table\vehicles_table.html:346
+#: .\theme\templates\partials\table\vehicles_table.html:351
+msgid "Next"
+msgstr "Next"
+
+#: .\theme\templates\partials\table\vehicles_table.html:36
+msgid "Manufacturer (A-Z)"
+msgstr "Manufacturer (A-Z)"
+
+#: .\theme\templates\partials\table\vehicles_table.html:37
+msgid "Manufacturer (Z-A)"
+msgstr "Manufacturer (Z-A)"
+
+#: .\theme\templates\partials\table\vehicles_table.html:38
+msgid "Model (A-Z)"
+msgstr "Model (A-Z)"
+
+#: .\theme\templates\partials\table\vehicles_table.html:39
+msgid "Model (Z-A)"
+msgstr "Model (Z-A)"
+
+#: .\theme\templates\partials\table\vehicles_table.html:43
+msgid "Buy Price (Low-High)"
+msgstr "Buy Price (Low-High)"
+
+#: .\theme\templates\partials\table\vehicles_table.html:44
+msgid "Buy Price (High-Low)"
+msgstr "Buy Price (High-Low)"
+
+#: .\theme\templates\partials\table\vehicles_table.html:45
+msgid "Sale Price (Low-High)"
+msgstr "Sale Price (Low-High)"
+
+#: .\theme\templates\partials\table\vehicles_table.html:46
+msgid "Sale Price (High-Low)"
+msgstr "Sale Price (High-Low)"
+
+#: .\theme\templates\partials\table\vehicles_table.html:47
+msgid "Kilometer (Low-High)"
+msgstr "Kilometer (Low-High)"
+
+#: .\theme\templates\partials\table\vehicles_table.html:48
+msgid "Kilometer (High-Low)"
+msgstr "Kilometer (High-Low)"
+
+#: .\theme\templates\partials\table\vehicles_table.html:52
+msgid "Buy Date (Oldest)"
+msgstr "Buy Date (Oldest)"
+
+#: .\theme\templates\partials\table\vehicles_table.html:53
+msgid "Buy Date (Newest)"
+msgstr "Buy Date (Newest)"
+
+#: .\theme\templates\partials\table\vehicles_table.html:54
+msgid "Sale Date (Oldest)"
+msgstr "Sale Date (Oldest)"
+
+#: .\theme\templates\partials\table\vehicles_table.html:55
+msgid "Sale Date (Newest)"
+msgstr "Sale Date (Newest)"
+
+#: .\theme\templates\partials\table\vehicles_table.html:59
+msgid "Power (Low-High)"
+msgstr "Power (Low-High)"
+
+#: .\theme\templates\partials\table\vehicles_table.html:60
+msgid "Power (High-Low)"
+msgstr "Power (High-Low)"
+
+#: .\theme\templates\partials\table\vehicles_table.html:61
+msgid "Doors (Low-High)"
+msgstr "Doors (Low-High)"
+
+#: .\theme\templates\partials\table\vehicles_table.html:62
+msgid "Doors (High-Low)"
+msgstr "Doors (High-Low)"
+
+#: .\theme\templates\partials\table\vehicles_table.html:63
+msgid "Vehicle Type (A-Z)"
+msgstr "Vehicle Type (A-Z)"
+
+#: .\theme\templates\partials\table\vehicles_table.html:64
+msgid "Vehicle Type (Z-A)"
+msgstr "Vehicle Type (Z-A)"
+
+#: .\theme\templates\partials\table\vehicles_table.html:65
+msgid "Body Type (A-Z)"
+msgstr "Body Type (A-Z)"
+
+#: .\theme\templates\partials\table\vehicles_table.html:66
+msgid "Body Type (Z-A)"
+msgstr "Body Type (Z-A)"
+
+#: .\theme\templates\partials\table\vehicles_table.html:67
+msgid "Fuel Type (A-Z)"
+msgstr "Fuel Type (A-Z)"
+
+#: .\theme\templates\partials\table\vehicles_table.html:68
+msgid "Fuel Type (Z-A)"
+msgstr "Fuel Type (Z-A)"
+
+#: .\theme\templates\partials\table\vehicles_table.html:69
+msgid "Color (A-Z)"
+msgstr "Color (A-Z)"
+
+#: .\theme\templates\partials\table\vehicles_table.html:70
+msgid "Color (Z-A)"
+msgstr "Color (Z-A)"
+
+#: .\theme\templates\partials\table\vehicles_table.html:71
+msgid "Damage type (A-Z)"
+msgstr "Damage type (A-Z)"
+
+#: .\theme\templates\partials\table\vehicles_table.html:72
+msgid "Damage type (Z-A)"
+msgstr "Damage type (Z-A)"
+
+#: .\theme\templates\partials\table\vehicles_table.html:75
+msgid "Business & Other"
+msgstr "Business & Other"
+
+#: .\theme\templates\partials\table\vehicles_table.html:76
+msgid "Branch (A-Z)"
+msgstr "Branch (A-Z)"
+
+#: .\theme\templates\partials\table\vehicles_table.html:77
+msgid "Branch (Z-A)"
+msgstr "Branch (Z-A)"
+
+#: .\theme\templates\partials\table\vehicles_table.html:84
+msgid "Year (Oldest)"
+msgstr "Year (Oldest)"
+
+#: .\theme\templates\partials\table\vehicles_table.html:85
+msgid "Year (Newest)"
+msgstr "Year (Newest)"
+
+#: .\theme\templates\partials\table\vehicles_table.html:90
+msgid "Add new"
+msgstr "Add new"
+
+#: .\theme\templates\partials\table\vehicles_table.html:132
+msgid "Branch:"
+msgstr "Branch:"
+
+#: .\theme\templates\partials\table\vehicles_table.html:147
+msgid "Active for:"
+msgstr "Active for:"
+
+#: .\theme\templates\partials\table\vehicles_table.html:156
+msgid "Buy (Gross):"
+msgstr "Buy (Gross):"
+
+#: .\theme\templates\partials\table\vehicles_table.html:159
+msgid "Buy (Net):"
+msgstr "Buy (Net):"
+
+#: .\theme\templates\partials\table\vehicles_table.html:165
+msgid "Buy date:"
+msgstr "Buy date:"
+
+#: .\theme\templates\partials\table\vehicles_table.html:169
+msgid "Sale (Gross):"
+msgstr "Sale (Gross):"
+
+#: .\theme\templates\partials\table\vehicles_table.html:172
+msgid "Sale (Net):"
+msgstr "Sale (Net):"
+
+#: .\theme\templates\partials\table\vehicles_table.html:177
+msgid "Sale date:"
+msgstr "Sale date:"
+
+#: .\theme\templates\partials\table\vehicles_table.html:184
+msgid "Chassis:"
+msgstr "Chassis:"
+
+#: .\theme\templates\partials\table\vehicles_table.html:185
+msgid "Reg:"
+msgstr "Reg:"
+
+#: .\theme\templates\partials\table\vehicles_table.html:186
+msgid "Plate:"
+msgstr "Plate:"
+
+#: .\theme\templates\partials\table\vehicles_table.html:191
+msgid "Damage:"
+msgstr "Damage:"
+
+#: .\theme\templates\partials\table\vehicles_table.html:192
+msgid "Year:"
+msgstr "Year:"
+
+#: .\theme\templates\partials\table\vehicles_table.html:193
+msgid "Kilometer:"
+msgstr "Kilometer:"
+
+#: .\theme\templates\partials\table\vehicles_table.html:198
+msgid "Type:"
+msgstr "Type:"
+
+#: .\theme\templates\partials\table\vehicles_table.html:199
+msgid "Body:"
+msgstr "Body:"
+
+#: .\theme\templates\partials\table\vehicles_table.html:200
+msgid "Color:"
+msgstr "Color:"
+
+#: .\theme\templates\partials\table\vehicles_table.html:201
+msgid "Doors:"
+msgstr "Doors:"
+
+#: .\theme\templates\partials\table\vehicles_table.html:202
+msgid "Fuel:"
+msgstr "Fuel:"
+
+#: .\theme\templates\partials\table\vehicles_table.html:203
+msgid "Power:"
+msgstr "Power:"
+
+#: .\theme\templates\partials\table\vehicles_table.html:241
+#: .\theme\templates\partials\table\vehicles_table.html:265
+msgid "Generate contract"
+msgstr "Generate contract"
+
+#: .\theme\templates\partials\table\vehicles_table.html:253
+#: .\theme\templates\partials\table\vehicles_table.html:277
+msgid "Contract not available"
+msgstr "Contract not available"
+
+#: .\theme\templates\partials\table\vehicles_table.html:292
+msgid "Activate this vehicle?"
+msgstr "Activate this vehicle?"
+
+#: .\theme\templates\partials\table\vehicles_table.html:292
+msgid "Activate"
+msgstr "Activate"
+
+#: .\theme\templates\partials\table\vehicles_table.html:294
+msgid "Delete (deactivate) this vehicle?"
+msgstr "Delete (deactivate) this vehicle?"
+
+#: .\theme\templates\partials\table\vehicles_table.html:294
+msgid "Delete"
+msgstr "Delete"
+
+#: .\theme\templates\partials\table\vehicles_table.html:304
+msgid "Ready"
+msgstr "Ready"
+
+#: .\theme\templates\partials\table\vehicles_table.html:308
+msgid "Reserve"
+msgstr "Reserve"
+
+#: .\theme\templates\reset_email.html:11 .\theme\templates\reset_email.html:64
+msgid "Email Reset"
+msgstr "Email Reset"
+
+#: .\theme\templates\reset_email.html:67
+msgid ""
+"Enter your username, current password, and new email address to reset your "
+"email!"
+msgstr ""
+"Enter your username, current password, and new email address to reset your "
+"email!"
+
+#: .\theme\templates\reset_email.html:163
+#: .\theme\templates\reset_password.html:163
+msgid "Enter your username"
+msgstr "Enter your username"
+
+#: .\theme\templates\reset_email.html:174
+msgid "Current Password"
+msgstr "Current Password"
+
+#: .\theme\templates\reset_email.html:181
+msgid "Enter your current password"
+msgstr "Enter your current password"
+
+#: .\theme\templates\reset_email.html:201
+msgid "Backup Email Address"
+msgstr "Backup Email Address"
+
+#: .\theme\templates\reset_email.html:207
+msgid "Enter your backup email address"
+msgstr "Enter your backup email address"
+
+#: .\theme\templates\reset_email.html:218
+msgid "New Email Address"
+msgstr "New Email Address"
+
+#: .\theme\templates\reset_email.html:235
+msgid "Send Verification Email"
+msgstr "Send Verification Email"
+
+#: .\theme\templates\reset_password.html:67
+msgid "Enter your username OR email to reset your password!"
+msgstr "Enter your username OR email to reset your password!"
+
+#: .\theme\templates\reset_password.html:178
+msgid "Enter your email address"
+msgstr "Enter your email address"
+
+#: .\theme\templates\transaction_details.html:8
+msgid "Edit transaction #"
+msgstr "Edit transaction #"
+
+#: .\theme\templates\transaction_details.html:252
+msgid "Tax Amount:"
+msgstr "Tax Amount:"
+
+#: .\theme\templates\transaction_details.html:272
+#: .\theme\templates\vehicle_details.html:427
+msgid "Sale details"
+msgstr "Sale details"
+
+#: .\theme\templates\transaction_details.html:386
+msgid "Confirm details"
+msgstr "Confirm details"
+
+#: .\theme\templates\transaction_details.html:394
+msgid "Next/Previous transaction"
+msgstr "Next/Previous transaction"
+
+#: .\theme\templates\transaction_details.html:399
+msgid "Previous transaction"
+msgstr "Previous transaction"
+
+#: .\theme\templates\transaction_details.html:406
+msgid "No previous transaction"
+msgstr "No previous transaction"
+
+#: .\theme\templates\transaction_details.html:418
+msgid "Next transaction"
+msgstr "Next transaction"
+
+#: .\theme\templates\transaction_details.html:425
+msgid "No next transaction"
+msgstr "No next transaction"
+
+#: .\theme\templates\transaction_details.html:435
+msgid "Next/Previous transaction (review required)"
+msgstr "Next/Previous transaction (review required)"
+
+#: .\theme\templates\transaction_details.html:439
+msgid "Previous review-required transaction"
+msgstr "Previous review-required transaction"
+
+#: .\theme\templates\transaction_details.html:445
+msgid "No previous review-required transaction"
+msgstr "No previous review-required transaction"
+
+#: .\theme\templates\transaction_details.html:455
+msgid "Next review-required transaction"
+msgstr "Next review-required transaction"
+
+#: .\theme\templates\transaction_details.html:461
+msgid "No next review-required transaction"
+msgstr "No next review-required transaction"
+
+#: .\theme\templates\transaction_details.html:487
+#: .\theme\templates\transactions.html:101
+#: .\theme\templates\vehicle_details.html:714
+#: .\theme\templates\vehicles.html:101
+msgid "Total revenue"
+msgstr "Total revenue"
+
+#: .\theme\templates\transaction_details.html:489
+#: .\theme\templates\transactions.html:103
+#: .\theme\templates\vehicle_details.html:716
+#: .\theme\templates\vehicles.html:103
+msgid "Total expenses"
+msgstr "Total expenses"
+
+#: .\theme\templates\transaction_details.html:493
+#: .\theme\templates\transaction_details.html:495
+#: .\theme\templates\transaction_details.html:497
+#: .\theme\templates\transactions.html:107
+#: .\theme\templates\transactions.html:109
+#: .\theme\templates\transactions.html:111
+#: .\theme\templates\vehicle_details.html:720
+#: .\theme\templates\vehicle_details.html:722
+#: .\theme\templates\vehicle_details.html:724
+#: .\theme\templates\vehicles.html:107 .\theme\templates\vehicles.html:109
+#: .\theme\templates\vehicles.html:111
+msgid "Net profit"
+msgstr "Net profit"
+
+#: .\theme\templates\transaction_details.html:618
+#: .\theme\templates\vehicle_details.html:845
+msgid "Contract"
+msgstr "Contract"
+
+#: .\theme\templates\transactions.html:151
+msgid "Transaction Filters"
+msgstr "Transaction Filters"
+
+#: .\theme\templates\transactions.html:175 .\theme\templates\vehicles.html:175
+msgid "Show Filters"
+msgstr "Show Filters"
+
+#: .\theme\templates\transactions.html:189 .\theme\templates\vehicles.html:189
+msgid "Clear All"
+msgstr "Clear All"
+
+#: .\theme\templates\transactions.html:203 .\theme\templates\vehicles.html:203
+msgid "Quick Search"
+msgstr "Quick Search"
+
+#: .\theme\templates\transactions.html:208
+msgid "Transaction ID"
+msgstr "Transaction ID"
+
+#: .\theme\templates\transactions.html:209 .\theme\templates\vehicles.html:209
+msgid "Search by ID"
+msgstr "Search by ID"
+
+#: .\theme\templates\transactions.html:228 .\theme\templates\vehicles.html:251
+msgid "All Statuses"
+msgstr "All Statuses"
+
+#: .\theme\templates\transactions.html:239
+msgid "All Currencies"
+msgstr "All Currencies"
+
+#: .\theme\templates\transactions.html:250
+msgid "All Categories"
+msgstr "All Categories"
+
+#: .\theme\templates\transactions.html:271
+msgid "All Vehicles"
+msgstr "All Vehicles"
+
+#: .\theme\templates\transactions.html:281
+msgid "All Methods"
+msgstr "All Methods"
+
+#: .\theme\templates\transactions.html:300 .\theme\templates\vehicles.html:370
+msgid "Price & Financial"
+msgstr "Price & Financial"
+
+#: .\theme\templates\transactions.html:305
+msgid "Min Amount"
+msgstr "Min Amount"
+
+#: .\theme\templates\transactions.html:310
+msgid "Max Amount"
+msgstr "Max Amount"
+
+#: .\theme\templates\transactions.html:323 .\theme\templates\vehicles.html:415
+msgid "Dates & Time"
+msgstr "Dates & Time"
+
+#: .\theme\templates\transactions.html:328
+msgid "Min Date"
+msgstr "Min Date"
+
+#: .\theme\templates\transactions.html:333
+msgid "Max Date"
+msgstr "Max Date"
+
+#: .\theme\templates\transactions.html:378 .\theme\templates\vehicles.html:550
+msgid "Apply Filters"
+msgstr "Apply Filters"
+
+#: .\theme\templates\users_management.html:94
+msgid "Change Manager password or email"
+msgstr "Change Manager password or email"
+
+#: .\theme\templates\users_management.html:332
+msgid "Edit Users details"
+msgstr "Edit Users details"
+
+#: .\theme\templates\users_management.html:415
+msgid "Manager(You):"
+msgstr "Manager(You):"
+
+#: .\theme\templates\users_management.html:473
+msgid "Employees:"
+msgstr "Employees:"
+
+#: .\theme\templates\users_management.html:548
+msgid "Username field cannot be empty"
+msgstr "Username field cannot be empty"
+
+#: .\theme\templates\vehicle_details.html:8
+msgid "Edit Vehicle #"
+msgstr "Edit Vehicle #"
+
+#: .\theme\templates\vehicle_details.html:229
+msgid "Make"
+msgstr "Make"
+
+#: .\theme\templates\vehicle_details.html:330
+msgid "Purchase Price Taxes %"
+msgstr "Purchase Price Taxes %"
+
+#: .\theme\templates\vehicle_details.html:389
+#: .\theme\templates\vehicle_details.html:405
+#: .\theme\templates\vehicle_details.html:515
+#: .\theme\templates\vehicle_details.html:531
+msgid "Contract Generation"
+msgstr "Contract Generation"
+
+#: .\theme\templates\vehicle_details.html:390
+#: .\theme\templates\vehicle_details.html:406
+#: .\theme\templates\vehicle_details.html:516
+#: .\theme\templates\vehicle_details.html:532
+msgid "Generate a PDF contract for this vehicle sale"
+msgstr "Generate a PDF contract for this vehicle sale"
+
+#: .\theme\templates\vehicle_details.html:411
+#: .\theme\templates\vehicle_details.html:537
+msgid "Fill all required sale fields to enable contract generation"
+msgstr "Fill all required sale fields to enable contract generation"
+
+#: .\theme\templates\vehicle_details.html:433
+msgid "Sale Price"
+msgstr "Sale Price"
+
+#: .\theme\templates\vehicle_details.html:436
+msgid "Sale Price Taxes %"
+msgstr "Sale Price Taxes %"
+
+#: .\theme\templates\vehicle_details.html:439
+msgid "Sale Date"
+msgstr "Sale Date"
+
+#: .\theme\templates\vehicle_details.html:442
+msgid "Sale Delivery/Collection Date"
+msgstr "Sale Delivery/Collection Date"
+
+#: .\theme\templates\vehicle_details.html:555
+msgid "Sale Price Breakdown"
+msgstr "Sale Price Breakdown"
+
+#: .\theme\templates\vehicle_details.html:561
+msgid "Sale Net Price"
+msgstr "Sale Net Price"
+
+#: .\theme\templates\vehicle_details.html:567
+msgid "Sale Tax Amount"
+msgstr "Sale Tax Amount"
+
+#: .\theme\templates\vehicle_details.html:573
+#: .\theme\templates\vehicle_details.html:601
+msgid "Sale Gross Price"
+msgstr "Sale Gross Price"
+
+#: .\theme\templates\vehicle_details.html:579
+msgid "Sale Tax Rate"
+msgstr "Sale Tax Rate"
+
+#: .\theme\templates\vehicle_details.html:589
+msgid "Profit Calculation"
+msgstr "Profit Calculation"
+
+#: .\theme\templates\vehicle_details.html:595
+msgid "Purchase Gross Price"
+msgstr "Purchase Gross Price"
+
+#: .\theme\templates\vehicle_details.html:607
+msgid "Estimated Profit/Loss"
+msgstr "Estimated Profit/Loss"
+
+#: .\theme\templates\vehicle_details.html:613
+msgid "Profit Margin"
+msgstr "Profit Margin"
+
+#: .\theme\templates\vehicle_details.html:619
+msgid "Return on Investment"
+msgstr "Return on Investment"
+
+#: .\theme\templates\vehicle_details.html:641
+msgid "Current image:"
+msgstr "Current image:"
+
+#: .\theme\templates\vehicle_details.html:692
+msgid "Update Vehicle"
+msgstr "Update Vehicle"
+
+#: .\theme\templates\vehicle_details.html:704
+msgid "Vehicle Transactions"
+msgstr "Vehicle Transactions"
+
+#: .\theme\templates\vehicles.html:151
+msgid "Vehicle Filters"
+msgstr "Vehicle Filters"
+
+#: .\theme\templates\vehicles.html:208
+msgid "Vehicle ID"
+msgstr "Vehicle ID"
+
+#: .\theme\templates\vehicles.html:214
+msgid "Chassis Number"
+msgstr "Chassis Number"
+
+#: .\theme\templates\vehicles.html:215
+msgid "Search by chassis"
+msgstr "Search by chassis"
+
+#: .\theme\templates\vehicles.html:220
+msgid "Registration Number"
+msgstr "Registration Number"
+
+#: .\theme\templates\vehicles.html:221
+msgid "Search by registration"
+msgstr "Search by registration"
+
+#: .\theme\templates\vehicles.html:226
+msgid "License Plate"
+msgstr "License Plate"
+
+#: .\theme\templates\vehicles.html:227
+msgid "Search by license plate"
+msgstr "Search by license plate"
+
+#: .\theme\templates\vehicles.html:232
+msgid "Invoice Number"
+msgstr "Invoice Number"
+
+#: .\theme\templates\vehicles.html:233
+msgid "Search by invoice number"
+msgstr "Search by invoice number"
+
+#: .\theme\templates\vehicles.html:262
+msgid "All Manufacturers"
+msgstr "All Manufacturers"
+
+#: .\theme\templates\vehicles.html:273
+msgid "All Models"
+msgstr "All Models"
+
+#: .\theme\templates\vehicles.html:281
+msgid "All Branches"
+msgstr "All Branches"
+
+#: .\theme\templates\vehicles.html:292
+msgid "All Types"
+msgstr "All Types"
+
+#: .\theme\templates\vehicles.html:303
+msgid "All Body Types"
+msgstr "All Body Types"
+
+#: .\theme\templates\vehicles.html:314
+msgid "All Doors"
+msgstr "All Doors"
+
+#: .\theme\templates\vehicles.html:325
+msgid "All Fuel Types"
+msgstr "All Fuel Types"
+
+#: .\theme\templates\vehicles.html:336
+msgid "All Colors"
+msgstr "All Colors"
+
+#: .\theme\templates\vehicles.html:346
+msgid "All Damage Types"
+msgstr "All Damage Types"
+
+#: .\theme\templates\vehicles.html:375
+msgid "Min Buy Price"
+msgstr "Min Buy Price"
+
+#: .\theme\templates\vehicles.html:380
+msgid "Max Buy Price"
+msgstr "Max Buy Price"
+
+#: .\theme\templates\vehicles.html:385
+msgid "Specific Buy Price"
+msgstr "Specific Buy Price"
+
+#: .\theme\templates\vehicles.html:391
+msgid "Min Sale Price"
+msgstr "Min Sale Price"
+
+#: .\theme\templates\vehicles.html:396
+msgid "Specific Sale Price"
+msgstr "Specific Sale Price"
+
+#: .\theme\templates\vehicles.html:401
+msgid "Max Sale Price"
+msgstr "Max Sale Price"
+
+#: .\theme\templates\vehicles.html:420
+msgid "Min Buy Date"
+msgstr "Min Buy Date"
+
+#: .\theme\templates\vehicles.html:425
+msgid "Max Buy Date"
+msgstr "Max Buy Date"
+
+#: .\theme\templates\vehicles.html:437
+msgid "Min Sale Date"
+msgstr "Min Sale Date"
+
+#: .\theme\templates\vehicles.html:442
+msgid "Max Sale Date"
+msgstr "Max Sale Date"
+
+#: .\theme\templates\vehicles.html:459
+msgid "Technical Specifications"
+msgstr "Technical Specifications"
+
+#: .\theme\templates\vehicles.html:464
+msgid "Min Year"
+msgstr "Min Year"
+
+#: .\theme\templates\vehicles.html:469
+msgid "Max Year"
+msgstr "Max Year"
+
+#: .\theme\templates\vehicles.html:480
+msgid "Min Kilometer"
+msgstr "Min Kilometer"
+
+#: .\theme\templates\vehicles.html:485
+msgid "Max Kilometer"
+msgstr "Max Kilometer"
+
+#: .\theme\templates\vehicles.html:496
+msgid "Min Power (KW)"
+msgstr "Min Power (KW)"
+
+#: .\theme\templates\vehicles.html:501
+msgid "Max Power (KW)"
+msgstr "Max Power (KW)"
+
+#~ msgid "Accident Vehicle"
+#~ msgstr "Accident Vehicle"
+
+#~ msgid "Has been in an accident"
+#~ msgstr "Has been in an accident"
+
+#~ msgid "Drop File Here"
+#~ msgstr "Drop File Here"
+
+#~ msgid "Drag and drop your PNG, JPG, WebP, SVG images here or browse"
+#~ msgstr "Drag and drop your PNG, JPG, WebP, SVG images here or browse"
+
+#~ msgid "Browse File"
+#~ msgstr "Browse File"
+
+#~ msgid "View All Notification"
+#~ msgstr "View All Notification"
+
+#~ msgid "Finances"
+#~ msgstr "Finances"
+
+#~ msgid "Details"
+#~ msgstr "Details"
+
+#~ msgid "Prices"
+#~ msgstr "Prices"
+
+#~ msgid "Buy and sale date"
+#~ msgstr "Buy and sale date"
+
+#~ msgid "Official Numbers"
+#~ msgstr "Official Numbers"
+
+#~ msgid "Buy price before tax:"
+#~ msgstr "Buy price before tax:"
+
+#~ msgid "Buy price after tax:"
+#~ msgstr "Buy price after tax:"
+
+#~ msgid "Sale price before tax:"
+#~ msgstr "Sale price before tax:"
+
+#~ msgid "Sale price after tax:"
+#~ msgstr "Sale price after tax:"
+
+#~ msgid "Official License Plate:"
+#~ msgstr "Official License Plate:"
+
+#~ msgid "Registration Number:"
+#~ msgstr "Registration Number:"
+
+#~ msgid "Edit Vehicle:"
+#~ msgstr "Edit Vehicle:"
+
+#~ msgid "Buyer"
+#~ msgstr "Buyer"
+
+#~ msgid "Select Buyer"
+#~ msgstr "Select Buyer"
+
+#~ msgid "Accident Vehicles"
+#~ msgstr "Accident Vehicles"

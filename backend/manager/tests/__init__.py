@@ -1,0 +1,1 @@
+# Manager app test suite

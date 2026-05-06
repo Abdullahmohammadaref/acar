@@ -1,0 +1,237 @@
+/**
+ * TypeScript types matching backend schemas.py
+ * These should mirror the Pydantic schemas from the Django API
+ */
+
+// =============================================================================
+// Vehicle Types
+// =============================================================================
+
+export interface VehicleListItem {
+    id: number
+    internal_id: number | null
+    status: string | null
+    status_display: string | null
+    make_name: string | null
+    model_name: string | null
+    body_type_name: string | null
+    color_name: string | null
+    year_of_construction: number | null
+    kilometer: number | null
+    power_kw: number | null
+    fuel_type_name: string | null
+    doors_name: string | null
+    vehicle_type_name: string | null
+    damage_type_name: string | null
+    branch_name: string | null
+    buy_price: number | null
+    buy_price_net: number | null
+    sale_price: number | null
+    sale_price_net: number | null
+    buy_date: string | null
+    sale_date: string | null
+    active_for: number
+    chassis_number: string | null
+    motor_vehicle_registration_number: string | null
+    official_license_plate: string | null
+    sale_invoice_number: string | null
+    image_url: string | null
+    internal_comments: string | null
+
+    // Contract availability flags
+    can_generate_buy_contract: boolean
+    can_generate_sale_contract: boolean
+}
+
+export interface VehicleDetail extends VehicleListItem {
+    description: string | null
+    internal_comments: string | null
+    branch_id: number | null
+    branch_name: string | null
+    motor_vehicle_registration_number: string | null
+    damage_type_id: number | null
+    damage_type_name: string | null
+    first_registration_date: string | null
+    vehicle_type_id: number | null
+    vehicle_type_name: string | null
+    body_type_id: number | null
+    make_id: number | null
+    make_name: string | null
+    model_id: number | null
+    model_name: string | null
+    color_id: number | null
+    doors_id: number | null
+    doors_name: string | null
+    fuel_type_id: number | null
+    buy_tax_id: number | null
+    buy_tax_name: string | null
+    buy_tax_percentage: number | null
+    buy_delivery_collection_date: string | null
+    buy_payment_method_id: number | null
+    buy_payment_method_name: string | null
+    seller_id: number | null
+    seller_name: string | null
+    sale_tax_id: number | null
+    sale_tax_name: string | null
+    sale_tax_percentage: number | null
+    sale_commission: number | null
+    sale_delivery_collection_date: string | null
+    sale_payment_method_id: number | null
+    sale_payment_method_name: string | null
+    buyer_id: number | null
+    buyer_name: string | null
+    buy_price_after_tax: number | null
+    sale_price_after_tax: number | null
+    total_revenue: number
+    total_expenses: number
+    net_profit: number
+    date_created: string | null
+
+    // Navigation
+    prev_vehicle_internal_id: number | null
+    next_vehicle_internal_id: number | null
+}
+
+// =============================================================================
+// Pagination & Response Types
+// =============================================================================
+
+export interface PaginatedVehicles {
+    items: VehicleListItem[]
+    total: number
+    page: number
+    per_page: number
+    pages: number
+}
+
+export interface FinancialSummary {
+    avg_days_on_stock: number
+    net_total_revenue: number
+    net_total_expenses: number
+    net_difference: number
+    tax_total_revenue: number
+    tax_total_expenses: number
+    tax_difference: number
+    gross_total_revenue: number
+    gross_total_expenses: number
+    gross_difference: number
+}
+
+// Response from vehicle API (matches Django API format)
+export interface VehiclesResponse {
+    vehicles: PaginatedVehicles
+    financial_summary: FinancialSummary
+}
+
+// =============================================================================
+// Filter Types
+// =============================================================================
+
+export interface VehicleFilters {
+    // General search
+    search?: string
+
+    // Quick search
+    vehicle_id_search?: number
+    chassis_number_search?: string
+    motor_vehicle_registration_search?: string
+    official_license_plate_search?: string
+    sale_invoice_number_search?: string
+
+    // Vehicle details
+    status?: string
+    make?: number
+    model?: number
+    branch?: number
+    vehicle_type?: number
+    body_type?: number
+    doors?: number
+    fuel_type?: number
+    color?: number
+    damage_type?: number
+
+    // Price ranges
+    min_buy_price?: number
+    max_buy_price?: number
+    specific_buy_price?: number
+    min_sale_price?: number
+    max_sale_price?: number
+    specific_sale_price?: number
+
+    // Date ranges
+    min_buy_date?: string
+    max_buy_date?: string
+    min_sale_date?: string
+    max_sale_date?: string
+
+    // Technical specs
+    min_year?: number
+    max_year?: number
+    min_kilometer?: number
+    max_kilometer?: number
+    min_power_kw?: number
+    max_power_kw?: number
+
+    // Sorting
+    sort?: string
+    order?: "asc" | "desc"
+
+    // Pagination
+    page?: number
+    per_page?: number
+}
+
+// =============================================================================
+// Choice Types (for dropdowns)
+// =============================================================================
+
+export interface Choice {
+    id: number
+    name: string
+}
+
+export interface TaxPercentage extends Choice {
+    percentage: number
+    is_no_tax: boolean
+}
+
+export interface Branch extends Choice {
+    address: string
+    is_active: boolean
+}
+
+export interface LegalEntity {
+    id: number
+    internal_id: number
+    name: string
+    type: string
+    address_street: string | null
+    address_street_number: string | null
+    address_postal_code: string | null
+    address_city: string | null
+    address_country: string | null
+    email: string | null
+    phone_number: string | null
+    tax_identification_number: string | null
+}
+
+export interface StatusChoice {
+    value: string
+    label: string
+}
+
+export interface AllChoices {
+    branches: Branch[]
+    vehicle_types: Choice[]
+    body_types: Choice[]
+    makes: Choice[]
+    colors: Choice[]
+    fuel_types: Choice[]
+    damage_types: Choice[]
+    doors: Choice[]
+    payment_methods: Choice[]
+    tax_percentages: TaxPercentage[]
+    legal_entities: LegalEntity[]
+    status_choices: StatusChoice[]
+    year_choices: number[]
+}

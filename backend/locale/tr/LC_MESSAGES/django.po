@@ -1,0 +1,2429 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-11-02 07:16+0300\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: tr\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+
+#: .\acar\settings.py:133
+msgid "German"
+msgstr "Almanca"
+
+#: .\acar\settings.py:134
+msgid "English"
+msgstr "İngilizce"
+
+#: .\acar\settings.py:135
+msgid "Turkish"
+msgstr "Türkçe"
+
+#: .\acar\settings.py:136
+msgid "Arabic"
+msgstr ""
+
+#: .\manager\models.py:17 .\manager\models.py:34 .\manager\models.py:63
+msgid "name"
+msgstr "isim"
+
+#: .\manager\models.py:19
+msgid "logo"
+msgstr "logo"
+
+#: .\manager\models.py:32 .\manager\models.py:48 .\manager\models.py:78
+#: .\manager\models.py:171 .\manager\models.py:960
+msgid "business"
+msgstr "işletme"
+
+#: .\manager\models.py:35
+msgid "address"
+msgstr "adres"
+
+#: .\manager\models.py:36
+msgid "is active"
+msgstr "aktif"
+
+#: .\manager\models.py:42
+msgid "is manager"
+msgstr "yönetici"
+
+#: .\manager\models.py:50
+msgid "transactions access"
+msgstr "işlem erişimi"
+
+#: .\manager\models.py:52
+msgid "backup email address"
+msgstr "yedek e-posta adresi"
+
+#: .\manager\models.py:59
+msgid "Individual"
+msgstr "Bireysel"
+
+#: .\manager\models.py:60
+msgid "Company"
+msgstr "Şirket"
+
+#: .\manager\models.py:62 .\manager\models.py:185 .\manager\models.py:965
+msgid "internal id"
+msgstr "dahili kimlik"
+
+#: .\manager\models.py:64
+msgid "email"
+msgstr "e-posta"
+
+#: .\manager\models.py:65
+msgid "phone number"
+msgstr "telefon numarası"
+
+#: .\manager\models.py:67
+msgid "type"
+msgstr "tip"
+
+#: .\manager\models.py:80
+msgid "date created"
+msgstr "oluşturulma tarihi"
+
+#: .\manager\models.py:107 .\theme\templates\partials\sidebar.html:115
+msgid "Purchased"
+msgstr "Satın Alındı"
+
+#: .\manager\models.py:108 .\theme\templates\vehicle_details.html:183
+msgid "Ready for Sale"
+msgstr "Satışa Hazır"
+
+#: .\manager\models.py:109 .\theme\templates\partials\sidebar.html:117
+msgid "Reserved"
+msgstr "Rezerve Edildi"
+
+#: .\manager\models.py:110 .\theme\templates\partials\sidebar.html:118
+#: .\theme\templates\partials\table\vehicles_table.html:314
+#: .\theme\templates\partials\table\vehicles_table.html:317
+msgid "Sold"
+msgstr "Satıldı"
+
+#: .\manager\models.py:111 .\manager\models.py:936
+#: .\theme\templates\partials\sidebar.html:119
+#: .\theme\templates\vehicle_details.html:199
+msgid "Inactive"
+msgstr "Etkin Değil"
+
+#: .\manager\models.py:154 .\manager\models.py:940
+msgid "status"
+msgstr "durum"
+
+#: .\manager\models.py:160
+msgid "description"
+msgstr "açıklama"
+
+#: .\manager\models.py:163 .\manager\models.py:1223
+msgid "internal comments"
+msgstr "dahili yorumlar"
+
+#: .\manager\models.py:180
+msgid "branch"
+msgstr "şube"
+
+#: .\manager\models.py:192
+msgid "chassis number (VIN)"
+msgstr "şasi numarası (VIN)"
+
+#: .\manager\models.py:200
+msgid "Enter a valid 17-character VIN (excluding I, O, and Q)."
+msgstr "Geçerli bir 17 karakterli VIN girin (I, O ve Q hariç)."
+
+#: .\manager\models.py:208
+msgid "motor vehicle registration number"
+msgstr "motorlu taşıt tescil numarası"
+
+#: .\manager\models.py:264
+msgid "official license plate"
+msgstr "resmi plaka"
+
+#: .\manager\models.py:285
+msgid "Accident"
+msgstr "Kaza"
+
+#: .\manager\models.py:286
+msgid "Damage"
+msgstr "Hasar"
+
+#: .\manager\models.py:287
+msgid "Undamaged"
+msgstr "Hasarsız"
+
+#: .\manager\models.py:323
+msgid "damage type"
+msgstr "hasar türü"
+
+#: .\manager\models.py:329
+msgid "first registration date"
+msgstr "ilk tescil tarihi"
+
+#: .\manager\models.py:337
+msgid "year of construction"
+msgstr "üretim yılı"
+
+#: .\manager\models.py:340
+msgid "kilometer"
+msgstr "kilometre"
+
+#: .\manager\models.py:345
+msgid "buy price"
+msgstr "alış fiyatı"
+
+#: .\manager\models.py:347
+msgid "buy price taxes"
+msgstr "alış fiyatı vergileri"
+
+#: .\manager\models.py:348
+msgid "buy date"
+msgstr "alış tarihi"
+
+#: .\manager\models.py:349
+msgid "buy delivery/collection date"
+msgstr "alış teslimat/toplama tarihi"
+
+#: .\manager\models.py:352 .\manager\models.py:969
+msgid "Cash"
+msgstr "Nakit"
+
+#: .\manager\models.py:353
+msgid "Bank Transfer"
+msgstr "Banka Havalesi"
+
+#: .\manager\models.py:354
+msgid "Credit Card"
+msgstr "Kredi Kartı"
+
+#: .\manager\models.py:355
+msgid "Debit Card"
+msgstr "Banka Kartı"
+
+#: .\manager\models.py:356
+msgid "Check"
+msgstr "Çek"
+
+#: .\manager\models.py:357
+msgid "Financing/Loan"
+msgstr "Finansman/Kredi"
+
+#: .\manager\models.py:358
+msgid "Lease"
+msgstr "Kiralama"
+
+#: .\manager\models.py:359
+msgid "Trade-in"
+msgstr "Takas"
+
+#: .\manager\models.py:360
+msgid "Cryptocurrency"
+msgstr "Kripto Para"
+
+#: .\manager\models.py:361
+msgid "PayPal"
+msgstr "PayPal"
+
+#: .\manager\models.py:362
+msgid "Apple Pay"
+msgstr "Apple Pay"
+
+#: .\manager\models.py:363
+msgid "Google Pay"
+msgstr "Google Pay"
+
+#: .\manager\models.py:364
+msgid "Samsung Pay"
+msgstr "Samsung Pay"
+
+#: .\manager\models.py:365
+msgid "Venmo"
+msgstr "Venmo"
+
+#: .\manager\models.py:366
+msgid "Zelle"
+msgstr "Zelle"
+
+#: .\manager\models.py:367
+msgid "Wire Transfer"
+msgstr "Eft"
+
+#: .\manager\models.py:368
+msgid "Money Order"
+msgstr "Para Havalesi"
+
+#: .\manager\models.py:369
+msgid "Cashier's Check"
+msgstr "Kasiyer Çeki"
+
+#: .\manager\models.py:370
+msgid "Certified Check"
+msgstr "Onaylı Çek"
+
+#: .\manager\models.py:371
+msgid "Personal Check"
+msgstr "Kişisel Çek"
+
+#: .\manager\models.py:372
+msgid "Business Check"
+msgstr "İş Çeki"
+
+#: .\manager\models.py:373
+msgid "Cash Equivalent"
+msgstr "Nakit Karşılığı"
+
+#: .\manager\models.py:374 .\manager\models.py:745 .\manager\models.py:761
+#: .\manager\models.py:779 .\manager\models.py:972
+msgid "Other"
+msgstr "Diğer"
+
+#: .\manager\models.py:378
+msgid "buy payment method"
+msgstr "alış ödeme yöntemi"
+
+#: .\manager\models.py:389
+msgid "seller"
+msgstr "satıcı"
+
+#: .\manager\models.py:397
+msgid "buyer"
+msgstr "alıcı"
+
+#: .\manager\models.py:402
+msgid "sale price"
+msgstr "satış fiyatı"
+
+#: .\manager\models.py:404
+msgid "sale price taxes"
+msgstr "satış fiyatı vergileri"
+
+#: .\manager\models.py:405
+msgid "sale date"
+msgstr "satış tarihi"
+
+#: .\manager\models.py:406
+msgid "sale delivery/collection date"
+msgstr "satış teslimat/toplama tarihi"
+
+#: .\manager\models.py:410
+msgid "sale payment method"
+msgstr "satış ödeme yöntemi"
+
+#: .\manager\models.py:415 .\manager\models.py:420
+msgid "sale invoice number"
+msgstr "satış fatura numarası"
+
+#: .\manager\models.py:431
+msgid "Sedan"
+msgstr "Sedan"
+
+#: .\manager\models.py:432
+msgid "SUV"
+msgstr "SUV"
+
+#: .\manager\models.py:433
+msgid "Hatchback"
+msgstr "Hatchback"
+
+#: .\manager\models.py:434
+msgid "Coupe"
+msgstr "Coupe"
+
+#: .\manager\models.py:435
+msgid "Convertible"
+msgstr "Cabrio"
+
+#: .\manager\models.py:436
+msgid "Wagon"
+msgstr "Station Wagon"
+
+#: .\manager\models.py:437
+msgid "Pickup Truck"
+msgstr "Pickup"
+
+#: .\manager\models.py:438
+msgid "Van"
+msgstr "Van"
+
+#: .\manager\models.py:439
+msgid "Truck"
+msgstr "Kamyon"
+
+#: .\manager\models.py:440
+msgid "Motorcycle"
+msgstr "Motosiklet"
+
+#: .\manager\models.py:441
+msgid "Bus"
+msgstr "Otobüs"
+
+#: .\manager\models.py:442
+msgid "Trailer"
+msgstr "Römork"
+
+#: .\manager\models.py:443
+msgid "Heavy Truck"
+msgstr "Ağır Kamyon"
+
+#: .\manager\models.py:444
+msgid "Delivery Van"
+msgstr "Kargo Minibüsü"
+
+#: .\manager\models.py:445
+msgid "Taxi"
+msgstr "Taksi"
+
+#: .\manager\models.py:446
+msgid "Limousine"
+msgstr "Limuzin"
+
+#: .\manager\models.py:450
+msgid "vehicle type"
+msgstr "araç tipi"
+
+#: .\manager\models.py:458
+msgid "Compact"
+msgstr "Kompakt"
+
+#: .\manager\models.py:459
+msgid "Mid-Size"
+msgstr "Orta Boy"
+
+#: .\manager\models.py:460
+msgid "Full-Size"
+msgstr "Geniş Boy"
+
+#: .\manager\models.py:461
+msgid "Subcompact"
+msgstr "Küçük"
+
+#: .\manager\models.py:462
+msgid "Luxury"
+msgstr "Lüks"
+
+#: .\manager\models.py:463
+msgid "Sports"
+msgstr "Spor"
+
+#: .\manager\models.py:464
+msgid "Family"
+msgstr "Aile"
+
+#: .\manager\models.py:465
+msgid "Commercial"
+msgstr "Ticari"
+
+#: .\manager\models.py:466
+msgid "Economy"
+msgstr "Ekonomik"
+
+#: .\manager\models.py:467
+msgid "Premium"
+msgstr "Premium"
+
+#: .\manager\models.py:468
+msgid "Performance"
+msgstr "Performans"
+
+#: .\manager\models.py:469
+msgid "Crossover"
+msgstr "Crossover"
+
+#: .\manager\models.py:470
+msgid "Off-Road"
+msgstr "Arazi"
+
+#: .\manager\models.py:471
+msgid "City Car"
+msgstr "Şehir Arabası"
+
+#: .\manager\models.py:472
+msgid "Executive"
+msgstr "Executive"
+
+#: .\manager\models.py:476
+msgid "body type"
+msgstr "karoser tipi"
+
+#: .\manager\models.py:712
+msgid "manufacturer"
+msgstr "üretici"
+
+#: .\manager\models.py:720
+msgid "manufacturer model"
+msgstr "üretici modeli"
+
+#: .\manager\models.py:731
+msgid "White"
+msgstr "Beyaz"
+
+#: .\manager\models.py:732
+msgid "Black"
+msgstr "Siyah"
+
+#: .\manager\models.py:733
+msgid "Silver"
+msgstr "Gümüş"
+
+#: .\manager\models.py:734
+msgid "Gray"
+msgstr "Gri"
+
+#: .\manager\models.py:735
+msgid "Red"
+msgstr "Kırmızı"
+
+#: .\manager\models.py:736
+msgid "Blue"
+msgstr "Mavi"
+
+#: .\manager\models.py:737
+msgid "Green"
+msgstr "Yeşil"
+
+#: .\manager\models.py:738
+msgid "Yellow"
+msgstr "Sarı"
+
+#: .\manager\models.py:739
+msgid "Orange"
+msgstr "Turuncu"
+
+#: .\manager\models.py:740
+msgid "Brown"
+msgstr "Kahverengi"
+
+#: .\manager\models.py:741
+msgid "Beige"
+msgstr "Bej"
+
+#: .\manager\models.py:742
+msgid "Gold"
+msgstr "Altın"
+
+#: .\manager\models.py:743
+msgid "Purple"
+msgstr "Mor"
+
+#: .\manager\models.py:744
+msgid "Pink"
+msgstr "Pembe"
+
+#: .\manager\models.py:749
+msgid "color"
+msgstr "renk"
+
+#: .\manager\models.py:756
+msgid "2 Doors"
+msgstr "2 Kapı"
+
+#: .\manager\models.py:757
+msgid "3 Doors"
+msgstr "3 Kapı"
+
+#: .\manager\models.py:758
+msgid "4 Doors"
+msgstr "4 Kapı"
+
+#: .\manager\models.py:759
+msgid "5 Doors"
+msgstr "5 Kapı"
+
+#: .\manager\models.py:760
+msgid "6 Doors"
+msgstr "6 Kapı"
+
+#: .\manager\models.py:765
+msgid "doors"
+msgstr "kapılar"
+
+#: .\manager\models.py:771
+msgid "Gasoline/Petrol"
+msgstr "Benzin"
+
+#: .\manager\models.py:772
+msgid "Diesel"
+msgstr "Dizel"
+
+#: .\manager\models.py:773
+msgid "Hybrid"
+msgstr "Hibrit"
+
+#: .\manager\models.py:774
+msgid "Electric"
+msgstr "Elektrik"
+
+#: .\manager\models.py:775
+msgid "LPG (Liquid Petroleum Gas)"
+msgstr "LPG"
+
+#: .\manager\models.py:776
+msgid "CNG (Compressed Natural Gas)"
+msgstr "CNG"
+
+#: .\manager\models.py:777
+msgid "Ethanol"
+msgstr "Etanol"
+
+#: .\manager\models.py:778
+msgid "Hydrogen"
+msgstr "Hidrojen"
+
+#: .\manager\models.py:783
+msgid "fuel type"
+msgstr "yakıt türü"
+
+#: .\manager\models.py:789
+msgid "power (kW)"
+msgstr "güç (kW)"
+
+#: .\manager\models.py:792
+msgid "image"
+msgstr "resim"
+
+#: .\manager\models.py:927
+msgid "Vehicle #{}"
+msgstr "Araç #{}"
+
+#: .\manager\models.py:934 .\theme\templates\partials\sidebar.html:162
+#: .\theme\templates\partials\table\transactions_table.html:288
+#: .\theme\templates\transaction_details.html:175
+#: .\theme\templates\transaction_details.html:700
+#: .\theme\templates\vehicle_details.html:927
+msgid "Confirmed"
+msgstr "Onaylandı"
+
+#: .\manager\models.py:935 .\theme\templates\partials\sidebar.html:163
+#: .\theme\templates\partials\table\transactions_table.html:294
+#: .\theme\templates\transaction_details.html:179
+#: .\theme\templates\transaction_details.html:706
+#: .\theme\templates\vehicle_details.html:933
+msgid "Review required"
+msgstr "İnceleme gerekli"
+
+#: .\manager\models.py:951 .\theme\templates\add_new_transaction.html:110
+#: .\theme\templates\transaction_details.html:211
+#: .\theme\templates\transactions.html:269
+msgid "Vehicle"
+msgstr "Araç"
+
+#: .\manager\models.py:970
+msgid "Volksbank"
+msgstr "Volksbank"
+
+#: .\manager\models.py:971
+msgid "Sparkasse"
+msgstr "Sparkasse"
+
+#: .\manager\models.py:975
+msgid "method"
+msgstr "yöntem"
+
+#: .\manager\models.py:980
+msgid "date"
+msgstr "tarih"
+
+#: .\manager\models.py:982
+msgid "information"
+msgstr "bilgi"
+
+#: .\manager\models.py:984
+msgid "amount"
+msgstr "tutar"
+
+#: .\manager\models.py:1169
+msgid "currency"
+msgstr "para birimi"
+
+#: .\manager\models.py:1174
+msgid "from/to"
+msgstr "kimden/kime"
+
+#: .\manager\models.py:1179
+msgid "date time"
+msgstr "tarih saat"
+
+#: .\manager\models.py:1183
+msgid "tax"
+msgstr "vergi"
+
+#: .\manager\models.py:1186
+msgid "Car Purchase"
+msgstr "Araç Alımı"
+
+#: .\manager\models.py:1187
+msgid "Advance Payment"
+msgstr "Avans Ödemesi"
+
+#: .\manager\models.py:1188
+msgid "Legal Costs"
+msgstr "Yasal Masraflar"
+
+#: .\manager\models.py:1189
+msgid "Car Sale"
+msgstr "Araç Satışı"
+
+#: .\manager\models.py:1190
+msgid "Bank"
+msgstr "Banka"
+
+#: .\manager\models.py:1191
+msgid "Contributions"
+msgstr "Katkılar"
+
+#: .\manager\models.py:1192
+msgid "Entertainment"
+msgstr "Eğlence"
+
+#: .\manager\models.py:1193
+msgid "Office"
+msgstr "Ofis"
+
+#: .\manager\models.py:1194
+msgid "Loan"
+msgstr "Kredi"
+
+#: .\manager\models.py:1195
+msgid "Deposit"
+msgstr "Depozito"
+
+#: .\manager\models.py:1196
+msgid "Withdrawal"
+msgstr "Para Çekme"
+
+#: .\manager\models.py:1197 .\theme\templates\partials\sidebar.html:83
+#: .\theme\templates\partials\sidebar.html:92
+#: .\theme\templates\partials\table\vehicles_table.html:4
+#: .\theme\templates\vehicles.html:8
+msgid "Vehicles"
+msgstr "Araçlar"
+
+#: .\manager\models.py:1198
+msgid "Financing"
+msgstr "Finansman"
+
+#: .\manager\models.py:1199
+msgid "Court Costs"
+msgstr "Mahkeme Masrafları"
+
+#: .\manager\models.py:1200
+msgid "Price Reduction"
+msgstr "Fiyat İndirimi"
+
+#: .\manager\models.py:1201
+msgid "Deposit Bond"
+msgstr "Depozito Teminatı"
+
+#: .\manager\models.py:1202
+msgid "Wages Salaries"
+msgstr "Maaşlar Ücretler"
+
+#: .\manager\models.py:1203
+msgid "Rent Utilities"
+msgstr "Kira Yardımcı Masraflar"
+
+#: .\manager\models.py:1204
+msgid "Private Transfer"
+msgstr "Özel Transfer"
+
+#: .\manager\models.py:1205
+msgid "Commission"
+msgstr "Komisyon"
+
+#: .\manager\models.py:1206
+msgid "Invoice"
+msgstr "Fatura"
+
+#: .\manager\models.py:1207
+msgid "Donation"
+msgstr "Bağış"
+
+#: .\manager\models.py:1208
+msgid "Tax Consultant"
+msgstr "Vergi Danışmanı"
+
+#: .\manager\models.py:1209
+msgid "Taxes"
+msgstr "Vergiler"
+
+#: .\manager\models.py:1210
+msgid "Phone Communication"
+msgstr "Telefon İletişimi"
+
+#: .\manager\models.py:1211
+msgid "Insurance"
+msgstr "Sigorta"
+
+#: .\manager\models.py:1212
+msgid "Advertising"
+msgstr "Reklam"
+
+#: .\manager\models.py:1213
+msgid "Other Fees"
+msgstr "Diğer Ücretler"
+
+#: .\manager\models.py:1214
+msgid "Unknown"
+msgstr "Bilinmeyen"
+
+#: .\manager\models.py:1217
+msgid "category"
+msgstr "kategori"
+
+#: .\manager\models.py:1220
+msgid "subcategory"
+msgstr "alt kategori"
+
+#: .\manager\models.py:1353
+msgid "Transaction #{}"
+msgstr "İşlem #{}"
+
+#: .\manager\views.py:3608
+msgid "You don't have permission to change this vehicle."
+msgstr "Bu aracı değiştirme izniniz yok."
+
+#: .\manager\views.py:3620
+msgid "Invalid status value."
+msgstr "Geçersiz durum değeri."
+
+#: .\manager\views.py:3626
+msgid "Complete all sale details before marking the vehicle as sold."
+msgstr ""
+"Aracı satıldı olarak işaretlemeden önce tüm satış detaylarını tamamlayın."
+
+#: .\manager\views.py:3633
+#, python-format
+msgid "Vehicle status updated to %(status)s"
+msgstr "Araç durumu %(status)s olarak güncellendi"
+
+#: .\theme\templates\404.html:12
+msgid "404 Error Page"
+msgstr "404 Hata Sayfası"
+
+#: .\theme\templates\404.html:40
+msgid "ERROR"
+msgstr "HATA"
+
+#: .\theme\templates\404.html:53
+msgid "We can't seem to find the page you are looking for!"
+msgstr "Aradığınız sayfayı bulamıyoruz!"
+
+#: .\theme\templates\404.html:60
+msgid "Back to Vehicles Page"
+msgstr "Araçlar Sayfasına Dön"
+
+#: .\theme\templates\404.html:67
+msgid "Back to login Page"
+msgstr "Giriş Sayfasına Dön"
+
+#: .\theme\templates\add_new_transaction.html:8
+msgid "Add new transaction"
+msgstr "Yeni işlem ekle"
+
+#: .\theme\templates\add_new_transaction.html:99
+#: .\theme\templates\partials\table\transactions_table.html:62
+#: .\theme\templates\transaction_details.html:199
+msgid "Transaction Details"
+msgstr "İşlem Detayları"
+
+#: .\theme\templates\add_new_transaction.html:105
+#: .\theme\templates\transaction_details.html:206
+#: .\theme\templates\transaction_details.html:566
+#: .\theme\templates\transactions.html:248
+#: .\theme\templates\vehicle_details.html:793
+msgid "Category"
+msgstr "Kategori"
+
+#: .\theme\templates\add_new_transaction.html:108
+#: .\theme\templates\transaction_details.html:209
+#: .\theme\templates\transaction_details.html:576
+#: .\theme\templates\transactions.html:259
+#: .\theme\templates\vehicle_details.html:803
+msgid "Subcategory"
+msgstr "Alt Kategori"
+
+#: .\theme\templates\add_new_transaction.html:118
+#: .\theme\templates\add_new_vehicle.html:142
+#: .\theme\templates\transaction_details.html:219
+#: .\theme\templates\vehicle_details.html:247
+msgid "Usage details"
+msgstr "Kullanım detayları"
+
+#: .\theme\templates\add_new_transaction.html:124
+#: .\theme\templates\partials\table\transactions_table.html:57
+#: .\theme\templates\partials\table\transactions_table.html:142
+#: .\theme\templates\partials\table\vehicles_table.html:51
+#: .\theme\templates\transaction_details.html:225
+#: .\theme\templates\transaction_details.html:556
+#: .\theme\templates\vehicle_details.html:783
+msgid "Date"
+msgstr "Tarih"
+
+#: .\theme\templates\add_new_transaction.html:126
+#: .\theme\templates\partials\table\transactions_table.html:80
+#: .\theme\templates\partials\table\transactions_table.html:172
+#: .\theme\templates\transaction_details.html:227
+#: .\theme\templates\transaction_details.html:586
+#: .\theme\templates\transactions.html:279
+#: .\theme\templates\vehicle_details.html:813
+msgid "Method"
+msgstr "Yöntem"
+
+#: .\theme\templates\add_new_transaction.html:128
+#: .\theme\templates\transaction_details.html:229
+msgid "From/To"
+msgstr "Kimden/Kime"
+
+#: .\theme\templates\add_new_transaction.html:138
+#: .\theme\templates\transaction_details.html:240
+msgid "Price Breakdown"
+msgstr "Fiyat Dağılımı"
+
+#: .\theme\templates\add_new_transaction.html:144
+#: .\theme\templates\transaction_details.html:246
+msgid "Net Price:"
+msgstr "Net Fiyat:"
+
+#: .\theme\templates\add_new_transaction.html:150
+msgid "Gross Price:"
+msgstr "Brüt Fiyat:"
+
+#: .\theme\templates\add_new_transaction.html:156
+#: .\theme\templates\transaction_details.html:258
+msgid "Total Amount"
+msgstr "Toplam Tutar"
+
+#: .\theme\templates\add_new_transaction.html:162
+#: .\theme\templates\add_new_vehicle.html:207
+#: .\theme\templates\transaction_details.html:264
+#: .\theme\templates\vehicle_details.html:313
+msgid "Effective Tax Rate"
+msgstr "Etkin Vergi Oranı"
+
+#: .\theme\templates\add_new_transaction.html:170
+#: .\theme\templates\add_new_vehicle.html:216
+#: .\theme\templates\vehicle_details.html:321
+msgid "Purchase details"
+msgstr "Satın alma detayları"
+
+#: .\theme\templates\add_new_transaction.html:176
+#: .\theme\templates\partials\table\transactions_table.html:132
+#: .\theme\templates\transaction_details.html:278
+#: .\theme\templates\transaction_details.html:546
+#: .\theme\templates\vehicle_details.html:773
+msgid "Amount"
+msgstr "Tutar"
+
+#: .\theme\templates\add_new_transaction.html:179
+#: .\theme\templates\transaction_details.html:281
+msgid "Tax"
+msgstr "Vergi"
+
+#: .\theme\templates\add_new_transaction.html:182
+#: .\theme\templates\transaction_details.html:284
+#: .\theme\templates\transactions.html:237
+msgid "Currency"
+msgstr "Para Birimi"
+
+#: .\theme\templates\add_new_transaction.html:269
+#: .\theme\templates\add_new_vehicle.html:341
+#: .\theme\templates\transaction_details.html:363
+#: .\theme\templates\vehicle_details.html:669
+msgid "Additional Information"
+msgstr "Ek Bilgiler"
+
+#: .\theme\templates\add_new_transaction.html:276
+#: .\theme\templates\add_new_vehicle.html:348
+#: .\theme\templates\transaction_details.html:370
+#: .\theme\templates\vehicle_details.html:676
+msgid "Description"
+msgstr "Açıklama"
+
+#: .\theme\templates\add_new_transaction.html:281
+#: .\theme\templates\add_new_vehicle.html:353
+#: .\theme\templates\transaction_details.html:375
+#: .\theme\templates\vehicle_details.html:681
+msgid "Internal Comments"
+msgstr "Dahili Yorumlar"
+
+#: .\theme\templates\add_new_transaction.html:292
+#: .\theme\templates\add_new_vehicle.html:364
+#: .\theme\templates\business_settings.html:684
+msgid "Add"
+msgstr "Ekle"
+
+#: .\theme\templates\add_new_transaction.html:441
+#: .\theme\templates\transaction_details.html:1076
+#: .\theme\templates\transactions.html:261
+msgid "All Subcategories"
+msgstr "Tüm Alt Kategoriler"
+
+#: .\theme\templates\add_new_vehicle.html:8
+msgid "Add new vehicle"
+msgstr "Yeni araç ekle"
+
+#: .\theme\templates\add_new_vehicle.html:99
+#: .\theme\templates\vehicle_details.html:143
+msgid "Current information"
+msgstr "Mevcut bilgiler"
+
+#: .\theme\templates\add_new_vehicle.html:105
+#: .\theme\templates\vehicle_details.html:149
+#: .\theme\templates\vehicles.html:279
+msgid "Branch"
+msgstr "Şube"
+
+#: .\theme\templates\add_new_vehicle.html:114
+#: .\theme\templates\partials\table\vehicles_table.html:58
+#: .\theme\templates\transactions.html:221
+#: .\theme\templates\vehicle_details.html:219
+#: .\theme\templates\vehicles.html:244
+msgid "Vehicle Details"
+msgstr "Araç Detayları"
+
+#: .\theme\templates\add_new_vehicle.html:120
+#: .\theme\templates\vehicle_details.html:225
+#: .\theme\templates\vehicles.html:290
+msgid "Vehicle Type"
+msgstr "Araç Tipi"
+
+#: .\theme\templates\add_new_vehicle.html:122
+#: .\theme\templates\vehicle_details.html:227
+#: .\theme\templates\vehicles.html:301
+msgid "Body Type"
+msgstr "Karoser Tipi"
+
+#: .\theme\templates\add_new_vehicle.html:124
+#: .\theme\templates\vehicles.html:260
+msgid "Manufacturer"
+msgstr "Üretici"
+
+#: .\theme\templates\add_new_vehicle.html:127
+#: .\theme\templates\vehicle_details.html:232
+#: .\theme\templates\vehicles.html:271
+msgid "Model"
+msgstr "Model"
+
+#: .\theme\templates\add_new_vehicle.html:129
+#: .\theme\templates\vehicle_details.html:234
+#: .\theme\templates\vehicles.html:334
+msgid "Color"
+msgstr "Renk"
+
+#: .\theme\templates\add_new_vehicle.html:131
+#: .\theme\templates\vehicle_details.html:236
+#: .\theme\templates\vehicles.html:312
+msgid "Doors"
+msgstr "Kapılar"
+
+#: .\theme\templates\add_new_vehicle.html:133
+#: .\theme\templates\vehicle_details.html:238
+#: .\theme\templates\vehicles.html:323
+msgid "Fuel Type"
+msgstr "Yakıt Türü"
+
+#: .\theme\templates\add_new_vehicle.html:135
+#: .\theme\templates\vehicle_details.html:240
+msgid "Power (KW)"
+msgstr "Güç (KW)"
+
+#: .\theme\templates\add_new_vehicle.html:150
+#: .\theme\templates\vehicle_details.html:255
+#: .\theme\templates\vehicles.html:344
+msgid "Damage Type"
+msgstr "Hasar Türü"
+
+#: .\theme\templates\add_new_vehicle.html:152
+#: .\theme\templates\vehicle_details.html:257
+msgid "First Registration Date"
+msgstr "İlk Tescil Tarihi"
+
+#: .\theme\templates\add_new_vehicle.html:154
+#: .\theme\templates\vehicle_details.html:259
+msgid "Year of Construction"
+msgstr "Üretim Yılı"
+
+#: .\theme\templates\add_new_vehicle.html:156
+#: .\theme\templates\vehicle_details.html:261
+msgid "Kilometer"
+msgstr "Kilometre"
+
+#: .\theme\templates\add_new_vehicle.html:163
+#: .\theme\templates\vehicle_details.html:268
+msgid "Official details"
+msgstr "Resmi detaylar"
+
+#: .\theme\templates\add_new_vehicle.html:169
+#: .\theme\templates\vehicle_details.html:274
+msgid "Chassis Number (VIN)"
+msgstr "Şasi Numarası (VIN)"
+
+#: .\theme\templates\add_new_vehicle.html:171
+#: .\theme\templates\vehicle_details.html:276
+msgid "Motor Vehicle Registration Number"
+msgstr "Motorlu Taşıt Tescil Numarası"
+
+#: .\theme\templates\add_new_vehicle.html:173
+#: .\theme\templates\vehicle_details.html:278
+msgid "Official License Plate"
+msgstr "Resmi Plaka"
+
+#: .\theme\templates\add_new_vehicle.html:183
+#: .\theme\templates\vehicle_details.html:289
+msgid "Price details"
+msgstr "Fiyat detayları"
+
+#: .\theme\templates\add_new_vehicle.html:189
+#: .\theme\templates\vehicle_details.html:295
+msgid "Net Price"
+msgstr "Net Fiyat"
+
+#: .\theme\templates\add_new_vehicle.html:195
+#: .\theme\templates\vehicle_details.html:301
+msgid "Tax Amount"
+msgstr "Vergi Tutarı"
+
+#: .\theme\templates\add_new_vehicle.html:201
+#: .\theme\templates\vehicle_details.html:307
+msgid "Gross Price"
+msgstr "Brüt Fiyat"
+
+#: .\theme\templates\add_new_vehicle.html:222
+#: .\theme\templates\vehicle_details.html:327
+msgid "Purchase Price"
+msgstr "Satın Alma Fiyatı"
+
+#: .\theme\templates\add_new_vehicle.html:225
+msgid "Purchase Price Taxes"
+msgstr "Satın Alma Fiyatı Vergileri"
+
+#: .\theme\templates\add_new_vehicle.html:228
+#: .\theme\templates\vehicle_details.html:333
+msgid "Purchase Date"
+msgstr "Satın Alma Tarihi"
+
+#: .\theme\templates\add_new_vehicle.html:231
+#: .\theme\templates\vehicle_details.html:336
+msgid "Purchase Delivery/Collection Date"
+msgstr "Satın Alma Teslimat/Toplama Tarihi"
+
+#: .\theme\templates\add_new_vehicle.html:234
+#: .\theme\templates\vehicle_details.html:339
+msgid "Purchase Payment Method"
+msgstr "Satın Alma Ödeme Yöntemi"
+
+#: .\theme\templates\add_new_vehicle.html:239
+#: .\theme\templates\vehicle_details.html:344
+msgid "Seller"
+msgstr "Satıcı"
+
+#: .\theme\templates\add_new_vehicle.html:251
+#: .\theme\templates\vehicle_details.html:356
+msgid "Select Seller"
+msgstr "Satıcı Seç"
+
+#: .\theme\templates\add_new_vehicle.html:271
+#: .\theme\templates\vehicle_details.html:376
+msgid "Add New"
+msgstr "Yeni Ekle"
+
+#: .\theme\templates\add_new_vehicle.html:316
+#: .\theme\templates\add_new_vehicle.html:328
+#: .\theme\templates\vehicle_details.html:630
+#: .\theme\templates\vehicle_details.html:649
+msgid "Image"
+msgstr "Resim"
+
+#: .\theme\templates\add_new_vehicle.html:323
+#: .\theme\templates\vehicle_details.html:637
+msgid "Upload Image"
+msgstr "Resim Yükle"
+
+#: .\theme\templates\add_new_vehicle.html:328
+#: .\theme\templates\vehicle_details.html:649
+msgid "not uploaded because of error."
+msgstr "hata nedeniyle yüklenemedi."
+
+#: .\theme\templates\admin_change_password.html:11
+#: .\theme\templates\admin_change_password.html:40
+msgid "Admin change user password"
+msgstr "Yönetici kullanıcı şifresini değiştir"
+
+#: .\theme\templates\admin_change_password.html:43
+msgid "change the password of this user to:"
+msgstr "bu kullanıcının şifresini şu olarak değiştir:"
+
+#: .\theme\templates\admin_change_password.html:90
+#: .\theme\templates\employee_login.html:172
+#: .\theme\templates\manager_login.html:189
+#: .\theme\templates\new_password.html:157
+msgid "Password"
+msgstr "Şifre"
+
+#: .\theme\templates\admin_change_password.html:97
+#: .\theme\templates\admin_change_password.html:151
+#: .\theme\templates\new_password.html:164
+msgid "Enter your password"
+msgstr "Şifrenizi girin"
+
+#: .\theme\templates\admin_change_password.html:144
+#: .\theme\templates\new_password.html:211
+msgid "Confirm Password"
+msgstr "Şifreyi Onayla"
+
+#: .\theme\templates\admin_change_password.html:239
+msgid "Change password for this user"
+msgstr "Bu kullanıcının şifresini değiştir"
+
+#: .\theme\templates\business_settings.html:8
+msgid "Business Settings"
+msgstr "İşletme Ayarları"
+
+#: .\theme\templates\business_settings.html:39
+msgid "Edit Business details"
+msgstr "İşletme detaylarını düzenle"
+
+#: .\theme\templates\business_settings.html:158
+#: .\theme\templates\layout.html:12
+msgid "Business Name"
+msgstr "İşletme Adı"
+
+#: .\theme\templates\business_settings.html:338
+msgid "Branch name field cannot be empty"
+msgstr "Şube adı alanı boş olamaz"
+
+#: .\theme\templates\business_settings.html:421
+msgid "Active"
+msgstr "Aktif"
+
+#: .\theme\templates\business_settings.html:485
+msgid "Update"
+msgstr "Güncelle"
+
+#: .\theme\templates\business_settings.html:522
+msgid "Add New Branch"
+msgstr "Yeni Şube Ekle"
+
+#: .\theme\templates\business_settings.html:608
+msgid "Branch Name"
+msgstr "Şube Adı"
+
+#: .\theme\templates\business_settings.html:644
+msgid "Branch Address"
+msgstr "Şube Adresi"
+
+#: .\theme\templates\employee_login.html:11
+#: .\theme\templates\employee_login.html:64
+msgid "Employee Log In"
+msgstr "Çalışan Girişi"
+
+#: .\theme\templates\employee_login.html:53
+#: .\theme\templates\manager_login.html:53
+msgid "Back to user choice"
+msgstr "Kullanıcı seçimine dön"
+
+#: .\theme\templates\employee_login.html:67
+msgid "Enter your username and password to Log In!"
+msgstr "Giriş yapmak için kullanıcı adınızı ve şifrenizi girin!"
+
+#: .\theme\templates\employee_login.html:157
+#: .\theme\templates\manager_login.html:159
+#: .\theme\templates\reset_email.html:157
+#: .\theme\templates\reset_password.html:157
+#: .\theme\templates\users_management.html:421
+#: .\theme\templates\users_management.html:483
+msgid "Username"
+msgstr "Kullanıcı Adı"
+
+#: .\theme\templates\employee_login.html:267
+#: .\theme\templates\manager_login.html:294
+msgid "Sign In"
+msgstr "Giriş Yap"
+
+#: .\theme\templates\login.html:11
+msgid "Login"
+msgstr "Giriş"
+
+#: .\theme\templates\login.html:117
+msgid "Log In"
+msgstr "Giriş Yap"
+
+#: .\theme\templates\login.html:120
+msgid "Choose what type of user you are."
+msgstr "Hangi tür kullanıcı olduğunuzu seçin."
+
+#: .\theme\templates\login.html:132
+msgid "Employee"
+msgstr "Çalışan"
+
+#: .\theme\templates\login.html:145
+msgid "Manager"
+msgstr "Yönetici"
+
+#: .\theme\templates\manager_login.html:11
+#: .\theme\templates\manager_login.html:64
+msgid "Manager Log In"
+msgstr "Yönetici Girişi"
+
+#: .\theme\templates\manager_login.html:67
+msgid "Enter your email OR username, AND your password to Log In!"
+msgstr "Giriş yapmak için e-posta VEYA kullanıcı adınızı VE şifrenizi girin!"
+
+#: .\theme\templates\manager_login.html:174
+#: .\theme\templates\reset_password.html:172
+msgid "Email"
+msgstr "E-posta"
+
+#: .\theme\templates\manager_login.html:281
+msgid "Forgot password?"
+msgstr "Şifrenizi mi unuttunuz?"
+
+#: .\theme\templates\manager_login.html:286
+msgid "Lost access to your email?"
+msgstr "E-posta erişiminizi mi kaybettiniz?"
+
+#: .\theme\templates\new_backup_email_address.html:11
+#: .\theme\templates\new_backup_email_address.html:64
+#: .\theme\templates\new_email_address.html:11
+#: .\theme\templates\new_email_address.html:64
+msgid "Change email"
+msgstr "E-posta değiştir"
+
+#: .\theme\templates\new_backup_email_address.html:53
+#: .\theme\templates\new_email_address.html:53
+#: .\theme\templates\new_password.html:53 .\theme\templates\reset_email.html:53
+#: .\theme\templates\reset_password.html:53
+msgid "Back to manager login"
+msgstr "Yönetici girişine dön"
+
+#: .\theme\templates\new_backup_email_address.html:67
+msgid ""
+"Enter your new desired backup email to change your backup email address!"
+msgstr ""
+"Yedek e-posta adresinizi değiştirmek için yeni yedek e-posta adresinizi "
+"girin!"
+
+#: .\theme\templates\new_backup_email_address.html:157
+msgid "New backup email address"
+msgstr "Yeni yedek e-posta adresi"
+
+#: .\theme\templates\new_backup_email_address.html:163
+msgid "Enter your new backup email address"
+msgstr "Yeni yedek e-posta adresinizi girin"
+
+#: .\theme\templates\new_backup_email_address.html:172
+#: .\theme\templates\new_email_address.html:172
+#: .\theme\templates\reset_password.html:228
+msgid "Send Verification email"
+msgstr "Doğrulama e-postası gönder"
+
+#: .\theme\templates\new_email_address.html:67
+msgid "Enter your new desired email to change your email address!"
+msgstr "E-posta adresinizi değiştirmek için yeni e-posta adresinizi girin!"
+
+#: .\theme\templates\new_email_address.html:157
+msgid "New email address"
+msgstr "Yeni e-posta adresi"
+
+#: .\theme\templates\new_email_address.html:163
+#: .\theme\templates\reset_email.html:224
+msgid "Enter your new email address"
+msgstr "Yeni e-posta adresinizi girin"
+
+#: .\theme\templates\new_password.html:11
+#: .\theme\templates\new_password.html:64
+#: .\theme\templates\reset_password.html:11
+#: .\theme\templates\reset_password.html:64
+msgid "Password Reset"
+msgstr "Şifre Sıfırlama"
+
+#: .\theme\templates\new_password.html:67
+msgid "Enter your new password below to reset your password."
+msgstr "Şifrenizi sıfırlamak için yeni şifrenizi aşağıya girin."
+
+#: .\theme\templates\new_password.html:306
+msgid "Change Password"
+msgstr "Şifreyi Değiştir"
+
+#: .\theme\templates\partials\form_field.html:19
+#, python-format
+msgid "Select %(label)s"
+msgstr "%(label)s seçin"
+
+#: .\theme\templates\partials\form_field.html:54
+#: .\theme\templates\partials\form_field.html:86
+msgid "Select date"
+msgstr "Tarih seçin"
+
+#: .\theme\templates\partials\form_field.html:496
+msgid "Enter number"
+msgstr "Numara girin"
+
+#: .\theme\templates\partials\header.html:701
+#: .\theme\templates\users_management.html:8
+msgid "Users Management"
+msgstr "Kullanıcı Yönetimi"
+
+#: .\theme\templates\partials\header.html:724
+msgid "Business settings"
+msgstr "İşletme ayarları"
+
+#: .\theme\templates\partials\header.html:749
+msgid "Log Out"
+msgstr "Çıkış Yap"
+
+#: .\theme\templates\partials\sidebar.html:60
+msgid "MENU"
+msgstr "MENÜ"
+
+#: .\theme\templates\partials\sidebar.html:116
+msgid "Ready for sale"
+msgstr "Satışa hazır"
+
+#: .\theme\templates\partials\sidebar.html:131
+#: .\theme\templates\partials\sidebar.html:140
+#: .\theme\templates\partials\table\transactions_table.html:10
+#: .\theme\templates\transaction_details.html:477
+#: .\theme\templates\transactions.html:8
+msgid "Transactions"
+msgstr "İşlemler"
+
+#: .\theme\templates\partials\table\transactions_table.html:10
+#: .\theme\templates\partials\table\vehicles_table.html:4
+msgid "showing"
+msgstr "gösteriliyor"
+
+#: .\theme\templates\partials\table\transactions_table.html:10
+#: .\theme\templates\partials\table\vehicles_table.html:4
+msgid "results"
+msgstr "sonuç"
+
+#: .\theme\templates\partials\table\transactions_table.html:25
+#: .\theme\templates\partials\table\vehicles_table.html:16
+msgid "Sort by"
+msgstr "Sırala"
+
+#: .\theme\templates\partials\table\transactions_table.html:44
+#: .\theme\templates\partials\table\vehicles_table.html:35
+msgid "Alphabetical"
+msgstr "Alfabetik"
+
+#: .\theme\templates\partials\table\transactions_table.html:45
+msgid "Category (A-Z)"
+msgstr "Kategori (A-Z)"
+
+#: .\theme\templates\partials\table\transactions_table.html:46
+msgid "Category (Z-A)"
+msgstr "Kategori (Z-A)"
+
+#: .\theme\templates\partials\table\transactions_table.html:47
+msgid "Subcategory (A-Z)"
+msgstr "Alt Kategori (A-Z)"
+
+#: .\theme\templates\partials\table\transactions_table.html:48
+msgid "Subcategory (Z-A)"
+msgstr "Alt Kategori (Z-A)"
+
+#: .\theme\templates\partials\table\transactions_table.html:51
+#: .\theme\templates\partials\table\vehicles_table.html:42
+msgid "Numeric"
+msgstr "Sayısal"
+
+#: .\theme\templates\partials\table\transactions_table.html:52
+msgid "Amount (Low-High)"
+msgstr "Tutar (Düşük-Yüksek)"
+
+#: .\theme\templates\partials\table\transactions_table.html:53
+msgid "Amount (High-Low)"
+msgstr "Tutar (Yüksek-Düşük)"
+
+#: .\theme\templates\partials\table\transactions_table.html:58
+msgid "Date (Oldest)"
+msgstr "Tarih (Eskiden)"
+
+#: .\theme\templates\partials\table\transactions_table.html:59
+msgid "Date (Newest)"
+msgstr "Tarih (Yeniden)"
+
+#: .\theme\templates\partials\table\transactions_table.html:63
+msgid "Method (A-Z)"
+msgstr "Yöntem (A-Z)"
+
+#: .\theme\templates\partials\table\transactions_table.html:64
+msgid "Method (Z-A)"
+msgstr "Yöntem (Z-A)"
+
+#: .\theme\templates\partials\table\transactions_table.html:65
+msgid "Vehicle (A-Z)"
+msgstr "Araç (A-Z)"
+
+#: .\theme\templates\partials\table\transactions_table.html:66
+msgid "Vehicle (Z-A)"
+msgstr "Araç (Z-A)"
+
+#: .\theme\templates\partials\table\transactions_table.html:67
+#: .\theme\templates\partials\table\vehicles_table.html:80
+msgid "Internal ID (Low-High)"
+msgstr "Dahili Kimlik (Düşük-Yüksek)"
+
+#: .\theme\templates\partials\table\transactions_table.html:68
+#: .\theme\templates\partials\table\vehicles_table.html:81
+msgid "Internal ID (High-Low)"
+msgstr "Dahili Kimlik (Yüksek-Düşük)"
+
+#: .\theme\templates\partials\table\transactions_table.html:69
+#: .\theme\templates\partials\table\vehicles_table.html:82
+msgid "Status (A-Z)"
+msgstr "Durum (A-Z)"
+
+#: .\theme\templates\partials\table\transactions_table.html:70
+#: .\theme\templates\partials\table\vehicles_table.html:83
+msgid "Status (Z-A)"
+msgstr "Durum (Z-A)"
+
+#: .\theme\templates\partials\table\transactions_table.html:79
+msgid "Upload Transactions from StarMoney"
+msgstr "StarMoney'den İşlem Yükle"
+
+#: .\theme\templates\partials\table\transactions_table.html:90
+msgid "Add new (quick)"
+msgstr "Yeni ekle (hızlı)"
+
+#: .\theme\templates\partials\table\transactions_table.html:105
+msgid "Add new (manual)"
+msgstr "Yeni ekle (manuel)"
+
+#: .\theme\templates\partials\table\transactions_table.html:122
+#: .\theme\templates\transaction_details.html:536
+#: .\theme\templates\vehicle_details.html:763
+msgid "Transaction"
+msgstr "İşlem"
+
+#: .\theme\templates\partials\table\transactions_table.html:182
+#: .\theme\templates\transaction_details.html:162
+#: .\theme\templates\transaction_details.html:168
+#: .\theme\templates\transaction_details.html:596
+#: .\theme\templates\transactions.html:226
+#: .\theme\templates\vehicle_details.html:153
+#: .\theme\templates\vehicle_details.html:823
+#: .\theme\templates\vehicles.html:249
+msgid "Status"
+msgstr "Durum"
+
+#: .\theme\templates\partials\table\transactions_table.html:193
+#: .\theme\templates\transaction_details.html:607
+#: .\theme\templates\vehicle_details.html:834
+msgid "Edit"
+msgstr "Düzenle"
+
+#: .\theme\templates\partials\table\transactions_table.html:204
+msgid "pdf"
+msgstr "pdf"
+
+#: .\theme\templates\partials\table\transactions_table.html:215
+#: .\theme\templates\transaction_details.html:629
+#: .\theme\templates\vehicle_details.html:856
+msgid "Action"
+msgstr "Eylem"
+
+#: .\theme\templates\partials\table\transactions_table.html:237
+#: .\theme\templates\partials\table\vehicles_table.html:132
+#: .\theme\templates\transaction_details.html:651
+#: .\theme\templates\vehicle_details.html:878
+msgid "Internal Id:"
+msgstr "Dahili Kimlik:"
+
+#: .\theme\templates\partials\table\transactions_table.html:240
+#: .\theme\templates\transaction_details.html:653
+#: .\theme\templates\vehicle_details.html:880
+msgid "Vehicle:"
+msgstr "Araç:"
+
+#: .\theme\templates\partials\table\transactions_table.html:306
+#: .\theme\templates\transaction_details.html:187
+#: .\theme\templates\transaction_details.html:718
+#: .\theme\templates\vehicle_details.html:204
+#: .\theme\templates\vehicle_details.html:945
+msgid "Not specified"
+msgstr "Belirtilmemiş"
+
+#: .\theme\templates\partials\table\transactions_table.html:316
+#: .\theme\templates\transaction_details.html:728
+#: .\theme\templates\vehicle_details.html:955
+msgid "Edit transaction details"
+msgstr "İşlem detaylarını düzenle"
+
+#: .\theme\templates\partials\table\transactions_table.html:331
+#: .\theme\templates\transaction_details.html:743
+#: .\theme\templates\vehicle_details.html:399
+#: .\theme\templates\vehicle_details.html:416
+#: .\theme\templates\vehicle_details.html:525
+#: .\theme\templates\vehicle_details.html:542
+#: .\theme\templates\vehicle_details.html:970
+msgid "Generate Contract"
+msgstr "Sözleşme Oluştur"
+
+#: .\theme\templates\partials\table\transactions_table.html:339
+#: .\theme\templates\transaction_details.html:751
+#: .\theme\templates\vehicle_details.html:978
+msgid "Complete all sale details including buyer to generate contract"
+msgstr "Sözleşme oluşturmak için alıcı dahil tüm satış detaylarını tamamlayın"
+
+#: .\theme\templates\partials\table\transactions_table.html:356
+#: .\theme\templates\partials\table\transactions_table.html:386
+#: .\theme\templates\partials\table\transactions_table.html:407
+#: .\theme\templates\transaction_details.html:768
+#: .\theme\templates\transaction_details.html:798
+#: .\theme\templates\transaction_details.html:819
+#: .\theme\templates\vehicle_details.html:995
+#: .\theme\templates\vehicle_details.html:1025
+#: .\theme\templates\vehicle_details.html:1046
+msgid "Activate Transaction"
+msgstr "İşlemi Etkinleştir"
+
+#: .\theme\templates\partials\table\transactions_table.html:391
+#: .\theme\templates\transaction_details.html:803
+#: .\theme\templates\vehicle_details.html:1030
+msgid "Are you sure you want to activate"
+msgstr "Etkinleştirmek istediğinizden emin misiniz"
+
+#: .\theme\templates\partials\table\transactions_table.html:393
+#: .\theme\templates\partials\table\transactions_table.html:456
+#: .\theme\templates\transaction_details.html:805
+#: .\theme\templates\transaction_details.html:868
+#: .\theme\templates\vehicle_details.html:1032
+#: .\theme\templates\vehicle_details.html:1095
+msgid "This will make the Transaction"
+msgstr "Bu, İşlemi"
+
+#: .\theme\templates\partials\table\transactions_table.html:393
+#: .\theme\templates\transaction_details.html:805
+#: .\theme\templates\vehicle_details.html:1032
+msgid "active"
+msgstr "aktif"
+
+#: .\theme\templates\partials\table\transactions_table.html:393
+#: .\theme\templates\transaction_details.html:805
+#: .\theme\templates\vehicle_details.html:1032
+msgid "and it will be available in the inventory."
+msgstr "yapacak ve envanterde kullanılabilir olacak."
+
+#: .\theme\templates\partials\table\transactions_table.html:395
+#: .\theme\templates\transaction_details.html:807
+#: .\theme\templates\vehicle_details.html:1034
+msgid "Note:"
+msgstr "Not:"
+
+#: .\theme\templates\partials\table\transactions_table.html:395
+#: .\theme\templates\transaction_details.html:807
+#: .\theme\templates\vehicle_details.html:1034
+msgid ""
+"If any of the unique identifiers (chassis number, registration number, or "
+"license plate) are already used by another active transaction, the "
+"activation will fail."
+msgstr ""
+"Benzersiz tanımlayıcılardan (şasi numarası, tescil numarası veya plaka) "
+"herhangi biri başka bir aktif işlem tarafından kullanılıyorsa, etkinleştirme "
+"başarısız olacaktır."
+
+#: .\theme\templates\partials\table\transactions_table.html:403
+#: .\theme\templates\partials\table\transactions_table.html:464
+#: .\theme\templates\transaction_details.html:815
+#: .\theme\templates\transaction_details.html:876
+#: .\theme\templates\vehicle_details.html:1042
+#: .\theme\templates\vehicle_details.html:1103
+msgid "Cancel"
+msgstr "İptal"
+
+#: .\theme\templates\partials\table\transactions_table.html:419
+#: .\theme\templates\partials\table\transactions_table.html:449
+#: .\theme\templates\partials\table\transactions_table.html:468
+#: .\theme\templates\transaction_details.html:831
+#: .\theme\templates\transaction_details.html:861
+#: .\theme\templates\transaction_details.html:880
+#: .\theme\templates\vehicle_details.html:1058
+#: .\theme\templates\vehicle_details.html:1088
+#: .\theme\templates\vehicle_details.html:1107
+msgid "Delete Transaction"
+msgstr "İşlemi Sil"
+
+#: .\theme\templates\partials\table\transactions_table.html:454
+#: .\theme\templates\transaction_details.html:866
+#: .\theme\templates\vehicle_details.html:1093
+msgid "Are you sure you want to delete"
+msgstr "Silmek istediğinizden emin misiniz"
+
+#: .\theme\templates\partials\table\transactions_table.html:456
+#: .\theme\templates\transaction_details.html:868
+#: .\theme\templates\vehicle_details.html:1095
+msgid "inactive"
+msgstr "etkin değil"
+
+#: .\theme\templates\partials\table\transactions_table.html:456
+#: .\theme\templates\transaction_details.html:868
+#: .\theme\templates\vehicle_details.html:1095
+msgid "and it will no longer show in the active inventory."
+msgstr "yapacak ve artık aktif envanterde görünmeyecek."
+
+#: .\theme\templates\partials\table\transactions_table.html:489
+#: .\theme\templates\partials\table\vehicles_table.html:330
+msgid "Page"
+msgstr "Sayfa"
+
+#: .\theme\templates\partials\table\transactions_table.html:489
+#: .\theme\templates\partials\table\vehicles_table.html:330
+msgid "of"
+msgstr "/"
+
+#: .\theme\templates\partials\table\transactions_table.html:495
+#: .\theme\templates\partials\table\transactions_table.html:500
+#: .\theme\templates\partials\table\vehicles_table.html:335
+#: .\theme\templates\partials\table\vehicles_table.html:340
+msgid "Previous"
+msgstr "Önceki"
+
+#: .\theme\templates\partials\table\transactions_table.html:506
+#: .\theme\templates\partials\table\transactions_table.html:511
+#: .\theme\templates\partials\table\vehicles_table.html:346
+#: .\theme\templates\partials\table\vehicles_table.html:351
+msgid "Next"
+msgstr "Sonraki"
+
+#: .\theme\templates\partials\table\vehicles_table.html:36
+msgid "Manufacturer (A-Z)"
+msgstr "Üretici (A-Z)"
+
+#: .\theme\templates\partials\table\vehicles_table.html:37
+msgid "Manufacturer (Z-A)"
+msgstr "Üretici (Z-A)"
+
+#: .\theme\templates\partials\table\vehicles_table.html:38
+msgid "Model (A-Z)"
+msgstr "Model (A-Z)"
+
+#: .\theme\templates\partials\table\vehicles_table.html:39
+msgid "Model (Z-A)"
+msgstr "Model (Z-A)"
+
+#: .\theme\templates\partials\table\vehicles_table.html:43
+msgid "Buy Price (Low-High)"
+msgstr "Alış Fiyatı (Düşük-Yüksek)"
+
+#: .\theme\templates\partials\table\vehicles_table.html:44
+msgid "Buy Price (High-Low)"
+msgstr "Alış Fiyatı (Yüksek-Düşük)"
+
+#: .\theme\templates\partials\table\vehicles_table.html:45
+msgid "Sale Price (Low-High)"
+msgstr "Satış Fiyatı (Düşük-Yüksek)"
+
+#: .\theme\templates\partials\table\vehicles_table.html:46
+msgid "Sale Price (High-Low)"
+msgstr "Satış Fiyatı (Yüksek-Düşük)"
+
+#: .\theme\templates\partials\table\vehicles_table.html:47
+msgid "Kilometer (Low-High)"
+msgstr "Kilometre (Düşük-Yüksek)"
+
+#: .\theme\templates\partials\table\vehicles_table.html:48
+msgid "Kilometer (High-Low)"
+msgstr "Kilometre (Yüksek-Düşük)"
+
+#: .\theme\templates\partials\table\vehicles_table.html:52
+msgid "Buy Date (Oldest)"
+msgstr "Alış Tarihi (Eskiden)"
+
+#: .\theme\templates\partials\table\vehicles_table.html:53
+msgid "Buy Date (Newest)"
+msgstr "Alış Tarihi (Yeniden)"
+
+#: .\theme\templates\partials\table\vehicles_table.html:54
+msgid "Sale Date (Oldest)"
+msgstr "Satış Tarihi (Eskiden)"
+
+#: .\theme\templates\partials\table\vehicles_table.html:55
+msgid "Sale Date (Newest)"
+msgstr "Satış Tarihi (Yeniden)"
+
+#: .\theme\templates\partials\table\vehicles_table.html:59
+msgid "Power (Low-High)"
+msgstr "Güç (Düşük-Yüksek)"
+
+#: .\theme\templates\partials\table\vehicles_table.html:60
+msgid "Power (High-Low)"
+msgstr "Güç (Yüksek-Düşük)"
+
+#: .\theme\templates\partials\table\vehicles_table.html:61
+msgid "Doors (Low-High)"
+msgstr "Kapılar (Düşük-Yüksek)"
+
+#: .\theme\templates\partials\table\vehicles_table.html:62
+msgid "Doors (High-Low)"
+msgstr "Kapılar (Yüksek-Düşük)"
+
+#: .\theme\templates\partials\table\vehicles_table.html:63
+msgid "Vehicle Type (A-Z)"
+msgstr "Araç Tipi (A-Z)"
+
+#: .\theme\templates\partials\table\vehicles_table.html:64
+msgid "Vehicle Type (Z-A)"
+msgstr "Araç Tipi (Z-A)"
+
+#: .\theme\templates\partials\table\vehicles_table.html:65
+msgid "Body Type (A-Z)"
+msgstr "Karoser Tipi (A-Z)"
+
+#: .\theme\templates\partials\table\vehicles_table.html:66
+msgid "Body Type (Z-A)"
+msgstr "Karoser Tipi (Z-A)"
+
+#: .\theme\templates\partials\table\vehicles_table.html:67
+msgid "Fuel Type (A-Z)"
+msgstr "Yakıt Türü (A-Z)"
+
+#: .\theme\templates\partials\table\vehicles_table.html:68
+msgid "Fuel Type (Z-A)"
+msgstr "Yakıt Türü (Z-A)"
+
+#: .\theme\templates\partials\table\vehicles_table.html:69
+msgid "Color (A-Z)"
+msgstr "Renk (A-Z)"
+
+#: .\theme\templates\partials\table\vehicles_table.html:70
+msgid "Color (Z-A)"
+msgstr "Renk (Z-A)"
+
+#: .\theme\templates\partials\table\vehicles_table.html:71
+msgid "Damage type (A-Z)"
+msgstr "Hasar türü (A-Z)"
+
+#: .\theme\templates\partials\table\vehicles_table.html:72
+msgid "Damage type (Z-A)"
+msgstr "Hasar türü (Z-A)"
+
+#: .\theme\templates\partials\table\vehicles_table.html:75
+msgid "Business & Other"
+msgstr "İş & Diğer"
+
+#: .\theme\templates\partials\table\vehicles_table.html:76
+msgid "Branch (A-Z)"
+msgstr "Şube (A-Z)"
+
+#: .\theme\templates\partials\table\vehicles_table.html:77
+msgid "Branch (Z-A)"
+msgstr "Şube (Z-A)"
+
+#: .\theme\templates\partials\table\vehicles_table.html:84
+msgid "Year (Oldest)"
+msgstr "Yıl (Eskiden)"
+
+#: .\theme\templates\partials\table\vehicles_table.html:85
+msgid "Year (Newest)"
+msgstr "Yıl (Yeniden)"
+
+#: .\theme\templates\partials\table\vehicles_table.html:90
+msgid "Add new"
+msgstr "Yeni ekle"
+
+#: .\theme\templates\partials\table\vehicles_table.html:132
+msgid "Branch:"
+msgstr "Şube:"
+
+#: .\theme\templates\partials\table\vehicles_table.html:147
+msgid "Active for:"
+msgstr "Aktif süre:"
+
+#: .\theme\templates\partials\table\vehicles_table.html:156
+msgid "Buy (Gross):"
+msgstr "Alış (Brüt):"
+
+#: .\theme\templates\partials\table\vehicles_table.html:159
+msgid "Buy (Net):"
+msgstr "Alış (Net):"
+
+#: .\theme\templates\partials\table\vehicles_table.html:165
+msgid "Buy date:"
+msgstr "Alış tarihi:"
+
+#: .\theme\templates\partials\table\vehicles_table.html:169
+msgid "Sale (Gross):"
+msgstr "Satış (Brüt):"
+
+#: .\theme\templates\partials\table\vehicles_table.html:172
+msgid "Sale (Net):"
+msgstr "Satış (Net):"
+
+#: .\theme\templates\partials\table\vehicles_table.html:177
+msgid "Sale date:"
+msgstr "Satış tarihi:"
+
+#: .\theme\templates\partials\table\vehicles_table.html:184
+msgid "Chassis:"
+msgstr "Şasi:"
+
+#: .\theme\templates\partials\table\vehicles_table.html:185
+msgid "Reg:"
+msgstr "Tescil:"
+
+#: .\theme\templates\partials\table\vehicles_table.html:186
+msgid "Plate:"
+msgstr "Plaka:"
+
+#: .\theme\templates\partials\table\vehicles_table.html:191
+msgid "Damage:"
+msgstr "Hasar:"
+
+#: .\theme\templates\partials\table\vehicles_table.html:192
+msgid "Year:"
+msgstr "Yıl:"
+
+#: .\theme\templates\partials\table\vehicles_table.html:193
+msgid "Kilometer:"
+msgstr "Kilometre:"
+
+#: .\theme\templates\partials\table\vehicles_table.html:198
+msgid "Type:"
+msgstr "Tip:"
+
+#: .\theme\templates\partials\table\vehicles_table.html:199
+msgid "Body:"
+msgstr "Karoser:"
+
+#: .\theme\templates\partials\table\vehicles_table.html:200
+msgid "Color:"
+msgstr "Renk:"
+
+#: .\theme\templates\partials\table\vehicles_table.html:201
+msgid "Doors:"
+msgstr "Kapılar:"
+
+#: .\theme\templates\partials\table\vehicles_table.html:202
+msgid "Fuel:"
+msgstr "Yakıt:"
+
+#: .\theme\templates\partials\table\vehicles_table.html:203
+msgid "Power:"
+msgstr "Güç:"
+
+#: .\theme\templates\partials\table\vehicles_table.html:241
+#: .\theme\templates\partials\table\vehicles_table.html:265
+msgid "Generate contract"
+msgstr "Sözleşme oluştur"
+
+#: .\theme\templates\partials\table\vehicles_table.html:253
+#: .\theme\templates\partials\table\vehicles_table.html:277
+msgid "Contract not available"
+msgstr "Sözleşme mevcut değil"
+
+#: .\theme\templates\partials\table\vehicles_table.html:292
+msgid "Activate this vehicle?"
+msgstr "Bu aracı etkinleştirmek istiyor musunuz?"
+
+#: .\theme\templates\partials\table\vehicles_table.html:292
+msgid "Activate"
+msgstr "Etkinleştir"
+
+#: .\theme\templates\partials\table\vehicles_table.html:294
+msgid "Delete (deactivate) this vehicle?"
+msgstr "Bu aracı silmek (devre dışı bırakmak) istiyor musunuz?"
+
+#: .\theme\templates\partials\table\vehicles_table.html:294
+msgid "Delete"
+msgstr "Sil"
+
+#: .\theme\templates\partials\table\vehicles_table.html:304
+msgid "Ready"
+msgstr "Hazır"
+
+#: .\theme\templates\partials\table\vehicles_table.html:308
+msgid "Reserve"
+msgstr "Rezerve"
+
+#: .\theme\templates\reset_email.html:11 .\theme\templates\reset_email.html:64
+msgid "Email Reset"
+msgstr "E-posta Sıfırlama"
+
+#: .\theme\templates\reset_email.html:67
+msgid ""
+"Enter your username, current password, and new email address to reset your "
+"email!"
+msgstr ""
+"E-posta adresinizi sıfırlamak için kullanıcı adınızı, mevcut şifrenizi ve "
+"yeni e-posta adresinizi girin!"
+
+#: .\theme\templates\reset_email.html:163
+#: .\theme\templates\reset_password.html:163
+msgid "Enter your username"
+msgstr "Kullanıcı adınızı girin"
+
+#: .\theme\templates\reset_email.html:174
+msgid "Current Password"
+msgstr "Mevcut Şifre"
+
+#: .\theme\templates\reset_email.html:181
+msgid "Enter your current password"
+msgstr "Mevcut şifrenizi girin"
+
+#: .\theme\templates\reset_email.html:201
+msgid "Backup Email Address"
+msgstr "Yedek E-posta Adresi"
+
+#: .\theme\templates\reset_email.html:207
+msgid "Enter your backup email address"
+msgstr "Yedek e-posta adresinizi girin"
+
+#: .\theme\templates\reset_email.html:218
+msgid "New Email Address"
+msgstr "Yeni E-posta Adresi"
+
+#: .\theme\templates\reset_email.html:235
+msgid "Send Verification Email"
+msgstr "Doğrulama E-postası Gönder"
+
+#: .\theme\templates\reset_password.html:67
+msgid "Enter your username OR email to reset your password!"
+msgstr ""
+"Şifrenizi sıfırlamak için kullanıcı adınızı VEYA e-posta adresinizi girin!"
+
+#: .\theme\templates\reset_password.html:178
+msgid "Enter your email address"
+msgstr "E-posta adresinizi girin"
+
+#: .\theme\templates\transaction_details.html:8
+msgid "Edit transaction #"
+msgstr "İşlem düzenle #"
+
+#: .\theme\templates\transaction_details.html:252
+msgid "Tax Amount:"
+msgstr "Vergi Tutarı:"
+
+#: .\theme\templates\transaction_details.html:272
+#: .\theme\templates\vehicle_details.html:427
+msgid "Sale details"
+msgstr "Satış detayları"
+
+#: .\theme\templates\transaction_details.html:386
+msgid "Confirm details"
+msgstr "Detayları onayla"
+
+#: .\theme\templates\transaction_details.html:394
+msgid "Next/Previous transaction"
+msgstr "Sonraki/Önceki işlem"
+
+#: .\theme\templates\transaction_details.html:399
+msgid "Previous transaction"
+msgstr "Önceki işlem"
+
+#: .\theme\templates\transaction_details.html:406
+msgid "No previous transaction"
+msgstr "Önceki işlem yok"
+
+#: .\theme\templates\transaction_details.html:418
+msgid "Next transaction"
+msgstr "Sonraki işlem"
+
+#: .\theme\templates\transaction_details.html:425
+msgid "No next transaction"
+msgstr "Sonraki işlem yok"
+
+#: .\theme\templates\transaction_details.html:435
+msgid "Next/Previous transaction (review required)"
+msgstr "Sonraki/Önceki işlem (inceleme gerekli)"
+
+#: .\theme\templates\transaction_details.html:439
+msgid "Previous review-required transaction"
+msgstr "Önceki inceleme gerekli işlem"
+
+#: .\theme\templates\transaction_details.html:445
+msgid "No previous review-required transaction"
+msgstr "Önceki inceleme gerekli işlem yok"
+
+#: .\theme\templates\transaction_details.html:455
+msgid "Next review-required transaction"
+msgstr "Sonraki inceleme gerekli işlem"
+
+#: .\theme\templates\transaction_details.html:461
+msgid "No next review-required transaction"
+msgstr "Sonraki inceleme gerekli işlem yok"
+
+#: .\theme\templates\transaction_details.html:487
+#: .\theme\templates\transactions.html:101
+#: .\theme\templates\vehicle_details.html:714
+#: .\theme\templates\vehicles.html:101
+msgid "Total revenue"
+msgstr "Toplam gelir"
+
+#: .\theme\templates\transaction_details.html:489
+#: .\theme\templates\transactions.html:103
+#: .\theme\templates\vehicle_details.html:716
+#: .\theme\templates\vehicles.html:103
+msgid "Total expenses"
+msgstr "Toplam gider"
+
+#: .\theme\templates\transaction_details.html:493
+#: .\theme\templates\transaction_details.html:495
+#: .\theme\templates\transaction_details.html:497
+#: .\theme\templates\transactions.html:107
+#: .\theme\templates\transactions.html:109
+#: .\theme\templates\transactions.html:111
+#: .\theme\templates\vehicle_details.html:720
+#: .\theme\templates\vehicle_details.html:722
+#: .\theme\templates\vehicle_details.html:724
+#: .\theme\templates\vehicles.html:107 .\theme\templates\vehicles.html:109
+#: .\theme\templates\vehicles.html:111
+msgid "Net profit"
+msgstr "Net kar"
+
+#: .\theme\templates\transaction_details.html:618
+#: .\theme\templates\vehicle_details.html:845
+msgid "Contract"
+msgstr "Sözleşme"
+
+#: .\theme\templates\transactions.html:151
+msgid "Transaction Filters"
+msgstr "İşlem Filtreleri"
+
+#: .\theme\templates\transactions.html:175 .\theme\templates\vehicles.html:175
+msgid "Show Filters"
+msgstr "Filtreleri Göster"
+
+#: .\theme\templates\transactions.html:189 .\theme\templates\vehicles.html:189
+msgid "Clear All"
+msgstr "Tümünü Temizle"
+
+#: .\theme\templates\transactions.html:203 .\theme\templates\vehicles.html:203
+msgid "Quick Search"
+msgstr "Hızlı Arama"
+
+#: .\theme\templates\transactions.html:208
+msgid "Transaction ID"
+msgstr "İşlem Kimliği"
+
+#: .\theme\templates\transactions.html:209 .\theme\templates\vehicles.html:209
+msgid "Search by ID"
+msgstr "Kimliğe Göre Ara"
+
+#: .\theme\templates\transactions.html:228 .\theme\templates\vehicles.html:251
+msgid "All Statuses"
+msgstr "Tüm Durumlar"
+
+#: .\theme\templates\transactions.html:239
+msgid "All Currencies"
+msgstr "Tüm Para Birimleri"
+
+#: .\theme\templates\transactions.html:250
+msgid "All Categories"
+msgstr "Tüm Kategoriler"
+
+#: .\theme\templates\transactions.html:271
+msgid "All Vehicles"
+msgstr "Tüm Araçlar"
+
+#: .\theme\templates\transactions.html:281
+msgid "All Methods"
+msgstr "Tüm Yöntemler"
+
+#: .\theme\templates\transactions.html:300 .\theme\templates\vehicles.html:370
+msgid "Price & Financial"
+msgstr "Fiyat & Finansal"
+
+#: .\theme\templates\transactions.html:305
+msgid "Min Amount"
+msgstr "Min Tutar"
+
+#: .\theme\templates\transactions.html:310
+msgid "Max Amount"
+msgstr "Maks Tutar"
+
+#: .\theme\templates\transactions.html:323 .\theme\templates\vehicles.html:415
+msgid "Dates & Time"
+msgstr "Tarihler & Zaman"
+
+#: .\theme\templates\transactions.html:328
+msgid "Min Date"
+msgstr "Min Tarih"
+
+#: .\theme\templates\transactions.html:333
+msgid "Max Date"
+msgstr "Maks Tarih"
+
+#: .\theme\templates\transactions.html:378 .\theme\templates\vehicles.html:550
+msgid "Apply Filters"
+msgstr "Filtreleri Uygula"
+
+#: .\theme\templates\users_management.html:94
+msgid "Change Manager password or email"
+msgstr "Yönetici şifresini veya e-postasını değiştir"
+
+#: .\theme\templates\users_management.html:332
+msgid "Edit Users details"
+msgstr "Kullanıcı detaylarını düzenle"
+
+#: .\theme\templates\users_management.html:415
+msgid "Manager(You):"
+msgstr "Yönetici(Siz):"
+
+#: .\theme\templates\users_management.html:473
+msgid "Employees:"
+msgstr "Çalışanlar:"
+
+#: .\theme\templates\users_management.html:548
+msgid "Username field cannot be empty"
+msgstr "Kullanıcı adı alanı boş olamaz"
+
+#: .\theme\templates\vehicle_details.html:8
+msgid "Edit Vehicle #"
+msgstr "Araç Düzenle #"
+
+#: .\theme\templates\vehicle_details.html:229
+msgid "Make"
+msgstr "Marka"
+
+#: .\theme\templates\vehicle_details.html:330
+msgid "Purchase Price Taxes %"
+msgstr "Satın Alma Fiyatı Vergileri %"
+
+#: .\theme\templates\vehicle_details.html:389
+#: .\theme\templates\vehicle_details.html:405
+#: .\theme\templates\vehicle_details.html:515
+#: .\theme\templates\vehicle_details.html:531
+msgid "Contract Generation"
+msgstr "Sözleşme Oluşturma"
+
+#: .\theme\templates\vehicle_details.html:390
+#: .\theme\templates\vehicle_details.html:406
+#: .\theme\templates\vehicle_details.html:516
+#: .\theme\templates\vehicle_details.html:532
+msgid "Generate a PDF contract for this vehicle sale"
+msgstr "Bu araç satışı için PDF sözleşme oluştur"
+
+#: .\theme\templates\vehicle_details.html:411
+#: .\theme\templates\vehicle_details.html:537
+msgid "Fill all required sale fields to enable contract generation"
+msgstr ""
+"Sözleşme oluşturmayı etkinleştirmek için tüm gerekli satış alanlarını "
+"doldurun"
+
+#: .\theme\templates\vehicle_details.html:433
+msgid "Sale Price"
+msgstr "Satış Fiyatı"
+
+#: .\theme\templates\vehicle_details.html:436
+msgid "Sale Price Taxes %"
+msgstr "Satış Fiyatı Vergileri %"
+
+#: .\theme\templates\vehicle_details.html:439
+msgid "Sale Date"
+msgstr "Satış Tarihi"
+
+#: .\theme\templates\vehicle_details.html:442
+msgid "Sale Delivery/Collection Date"
+msgstr "Satış Teslimat/Toplama Tarihi"
+
+#: .\theme\templates\vehicle_details.html:555
+msgid "Sale Price Breakdown"
+msgstr "Satış Fiyatı Dağılımı"
+
+#: .\theme\templates\vehicle_details.html:561
+msgid "Sale Net Price"
+msgstr "Satış Net Fiyatı"
+
+#: .\theme\templates\vehicle_details.html:567
+msgid "Sale Tax Amount"
+msgstr "Satış Vergi Tutarı"
+
+#: .\theme\templates\vehicle_details.html:573
+#: .\theme\templates\vehicle_details.html:601
+msgid "Sale Gross Price"
+msgstr "Satış Brüt Fiyatı"
+
+#: .\theme\templates\vehicle_details.html:579
+msgid "Sale Tax Rate"
+msgstr "Satış Vergi Oranı"
+
+#: .\theme\templates\vehicle_details.html:589
+msgid "Profit Calculation"
+msgstr "Kar Hesaplama"
+
+#: .\theme\templates\vehicle_details.html:595
+msgid "Purchase Gross Price"
+msgstr "Satın Alma Brüt Fiyatı"
+
+#: .\theme\templates\vehicle_details.html:607
+msgid "Estimated Profit/Loss"
+msgstr "Tahmini Kar/Zarar"
+
+#: .\theme\templates\vehicle_details.html:613
+msgid "Profit Margin"
+msgstr "Kar Marjı"
+
+#: .\theme\templates\vehicle_details.html:619
+msgid "Return on Investment"
+msgstr "Yatırım Getirisi"
+
+#: .\theme\templates\vehicle_details.html:641
+msgid "Current image:"
+msgstr "Mevcut resim:"
+
+#: .\theme\templates\vehicle_details.html:692
+msgid "Update Vehicle"
+msgstr "Aracı Güncelle"
+
+#: .\theme\templates\vehicle_details.html:704
+msgid "Vehicle Transactions"
+msgstr "Araç İşlemleri"
+
+#: .\theme\templates\vehicles.html:151
+msgid "Vehicle Filters"
+msgstr "Araç Filtreleri"
+
+#: .\theme\templates\vehicles.html:208
+msgid "Vehicle ID"
+msgstr "Araç Kimliği"
+
+#: .\theme\templates\vehicles.html:214
+msgid "Chassis Number"
+msgstr "Şasi Numarası"
+
+#: .\theme\templates\vehicles.html:215
+msgid "Search by chassis"
+msgstr "Şasiye göre ara"
+
+#: .\theme\templates\vehicles.html:220
+msgid "Registration Number"
+msgstr "Tescil Numarası"
+
+#: .\theme\templates\vehicles.html:221
+msgid "Search by registration"
+msgstr "Tescile göre ara"
+
+#: .\theme\templates\vehicles.html:226
+msgid "License Plate"
+msgstr "Plaka"
+
+#: .\theme\templates\vehicles.html:227
+msgid "Search by license plate"
+msgstr "Plakaya göre ara"
+
+#: .\theme\templates\vehicles.html:232
+msgid "Invoice Number"
+msgstr "Fatura Numarası"
+
+#: .\theme\templates\vehicles.html:233
+msgid "Search by invoice number"
+msgstr "Fatura numarasına göre ara"
+
+#: .\theme\templates\vehicles.html:262
+msgid "All Manufacturers"
+msgstr "Tüm Üreticiler"
+
+#: .\theme\templates\vehicles.html:273
+msgid "All Models"
+msgstr "Tüm Modeller"
+
+#: .\theme\templates\vehicles.html:281
+msgid "All Branches"
+msgstr "Tüm Şubeler"
+
+#: .\theme\templates\vehicles.html:292
+msgid "All Types"
+msgstr "Tüm Tipler"
+
+#: .\theme\templates\vehicles.html:303
+msgid "All Body Types"
+msgstr "Tüm Karoser Tipleri"
+
+#: .\theme\templates\vehicles.html:314
+msgid "All Doors"
+msgstr "Tüm Kapılar"
+
+#: .\theme\templates\vehicles.html:325
+msgid "All Fuel Types"
+msgstr "Tüm Yakıt Türleri"
+
+#: .\theme\templates\vehicles.html:336
+msgid "All Colors"
+msgstr "Tüm Renkler"
+
+#: .\theme\templates\vehicles.html:346
+msgid "All Damage Types"
+msgstr "Tüm Hasar Türleri"
+
+#: .\theme\templates\vehicles.html:375
+msgid "Min Buy Price"
+msgstr "Min Alış Fiyatı"
+
+#: .\theme\templates\vehicles.html:380
+msgid "Max Buy Price"
+msgstr "Maks Alış Fiyatı"
+
+#: .\theme\templates\vehicles.html:385
+msgid "Specific Buy Price"
+msgstr "Belirli Alış Fiyatı"
+
+#: .\theme\templates\vehicles.html:391
+msgid "Min Sale Price"
+msgstr "Min Satış Fiyatı"
+
+#: .\theme\templates\vehicles.html:396
+msgid "Specific Sale Price"
+msgstr "Belirli Satış Fiyatı"
+
+#: .\theme\templates\vehicles.html:401
+msgid "Max Sale Price"
+msgstr "Maks Satış Fiyatı"
+
+#: .\theme\templates\vehicles.html:420
+msgid "Min Buy Date"
+msgstr "Min Alış Tarihi"
+
+#: .\theme\templates\vehicles.html:425
+msgid "Max Buy Date"
+msgstr "Maks Alış Tarihi"
+
+#: .\theme\templates\vehicles.html:437
+msgid "Min Sale Date"
+msgstr "Min Satış Tarihi"
+
+#: .\theme\templates\vehicles.html:442
+msgid "Max Sale Date"
+msgstr "Maks Satış Tarihi"
+
+#: .\theme\templates\vehicles.html:459
+msgid "Technical Specifications"
+msgstr "Teknik Özellikler"
+
+#: .\theme\templates\vehicles.html:464
+msgid "Min Year"
+msgstr "Min Yıl"
+
+#: .\theme\templates\vehicles.html:469
+msgid "Max Year"
+msgstr "Maks Yıl"
+
+#: .\theme\templates\vehicles.html:480
+msgid "Min Kilometer"
+msgstr "Min Kilometre"
+
+#: .\theme\templates\vehicles.html:485
+msgid "Max Kilometer"
+msgstr "Maks Kilometre"
+
+#: .\theme\templates\vehicles.html:496
+msgid "Min Power (KW)"
+msgstr "Min Güç (KW)"
+
+#: .\theme\templates\vehicles.html:501
+msgid "Max Power (KW)"
+msgstr "Maks Güç (KW)"

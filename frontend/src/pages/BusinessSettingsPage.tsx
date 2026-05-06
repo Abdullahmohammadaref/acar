@@ -1,0 +1,613 @@
+import { useState, useEffect } from "react"
+import { useNavigate } from "react-router-dom"
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
+import { Building, Save, Plus, ArrowLeft, Eye, EyeOff } from "lucide-react"
+import api from "@/lib/api"
+import { StickyFooter } from "@/components/StickyFooter"
+import { VehicleImageUpload } from "@/components/vehicles/VehicleImageUpload"
+
+interface Branch {
+    id: number
+    name: string
+    address: string
+    is_active: boolean
+}
+
+interface Employee {
+    id: number
+    username: string
+    is_active: boolean
+    transactions_access: boolean
+    legal_entities_access: boolean
+}
+
+interface BusinessData {
+    id: number
+    name: string
+    logo_url: string | null
+    address_country: string | null
+    address_city: string | null
+    address_street: string | null
+    address_street_number: string | null
+    address_postal_code: string | null
+    telephone_number: string | null
+    fax_number: string | null
+    email: string | null
+    bank_name: string | null
+    bank_bic_swift: string | null
+    bank_iban: string | null
+    managing_director: string | null
+    tax_id: string | null
+    eori_number: string | null
+    ust_id_nr: string | null
+    headquarters_city: string | null
+    court_registration_number: string | null
+    target_annual_return: number
+    target_days_on_stock: number
+    branches: Branch[]
+}
+
+export default function BusinessSettingsPage() {
+    const queryClient = useQueryClient()
+    const navigate = useNavigate()
+
+    // Form state
+    const [formData, setFormData] = useState<Partial<BusinessData>>({})
+
+    // Editable branches state
+    const [editableBranches, setEditableBranches] = useState<Branch[]>([])
+
+    // New branch state
+    const [newBranch, setNewBranch] = useState({ name: "", address: "" })
+
+    // Users state
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const [editingEmployee, setEditingEmployee] = useState<Record<number, Partial<Employee & { password: string }>>>({})
+    const [showPasswords, setShowPasswords] = useState<Record<number, boolean>>({})
+    const [newEmployee, setNewEmployee] = useState({ username: "", password: "" })
+    const [showNewPassword, setShowNewPassword] = useState(false)
+
+    // Logo upload state
+    const [logoFile, setLogoFile] = useState<File | null>(null)
+
+    // Fetch business data
+    const { data: business, isLoading, error } = useQuery<BusinessData>({
+        queryKey: ["business-settings"],
+        queryFn: async () => {
+            const response = await api.get("/settings/business")
+            return response.data
+        },
+    })
+
+    // Fetch employees
+    const { data: employees = [], isLoading: isLoadingUsers } = useQuery<Employee[]>({
+        queryKey: ["employees"],
+        queryFn: async () => {
+            const response = await api.get("/settings/users")
+            return response.data
+        },
+    })
+
+    // Initialize form data and branches when business data is loaded
+    useEffect(() => {
+        if (business) {
+            setFormData(business)
+            setEditableBranches(business.branches)
+        }
+    }, [business])
+
+    // Update business mutation
+    const updateMutation = useMutation({
+        mutationFn: async (data: Partial<BusinessData>) => {
+            const response = await api.put("/settings/business", data)
+            return response.data
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["business-settings"] })
+        },
+    })
+
+    // Create branch mutation
+    const createBranchMutation = useMutation({
+        mutationFn: async (data: { name: string; address: string }) => {
+            const response = await api.post("/settings/branches", data)
+            return response.data
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["business-settings"] })
+            setNewBranch({ name: "", address: "" })
+        },
+    })
+
+    // Logo upload mutation
+    const logoUploadMutation = useMutation({
+        mutationFn: async (file: File) => {
+            const formData = new FormData()
+            formData.append("logo", file)
+            const response = await api.post("/settings/business/logo", formData, {
+                headers: {
+                    "Content-Type": "multipart/form-data",
+                },
+            })
+            return response.data
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["business-settings"] })
+            queryClient.invalidateQueries({ queryKey: ["auth"] })
+        },
+    })
+
+    // Employee mutations
+    const createEmployeeMutation = useMutation({
+        mutationFn: async (data: { username: string; password: string }) => {
+            const response = await api.post("/settings/users", data)
+            return response.data
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["employees"] })
+            setNewEmployee({ username: "", password: "" })
+        },
+    })
+
+    const handleFieldChange = (field: string, value: string) => {
+        setFormData((prev) => ({ ...prev, [field]: value }))
+    }
+
+    const handleSave = () => {
+        // Here we just trigger business info update. Later, the logic will be enhanced as per user.
+        updateMutation.mutate(formData)
+        if (logoFile) {
+            logoUploadMutation.mutate(logoFile)
+        }
+    }
+
+    const handleCreateBranch = () => {
+        if (newBranch.name.trim()) {
+            createBranchMutation.mutate(newBranch)
+        }
+    }
+
+    // Handle editable branch field changes
+    const handleBranchFieldChange = (branchId: number, field: keyof Branch, value: string | boolean) => {
+        setEditableBranches((prev) =>
+            prev.map((branch) =>
+                branch.id === branchId ? { ...branch, [field]: value } : branch
+            )
+        )
+    }
+
+    // Handle employee changes
+    const handleEmployeeFieldChange = (employeeId: number, field: string, value: string | boolean) => {
+        setEditingEmployee((prev) => ({
+            ...prev,
+            [employeeId]: {
+                ...prev[employeeId],
+                [field]: value,
+            },
+        }))
+    }
+
+    const handleCreateEmployee = () => {
+        if (newEmployee.username.trim() && newEmployee.password.trim()) {
+            createEmployeeMutation.mutate(newEmployee)
+        }
+    }
+
+    if (isLoading || isLoadingUsers) {
+        return (
+            <div className="flex items-center justify-center min-h-[400px]">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+            </div>
+        )
+    }
+
+    if (error || !business) {
+        return (
+            <div className="rounded-xl border border-destructive/50 bg-destructive/10 p-4">
+                <p className="text-sm text-destructive">Failed to load business settings. Please try again.</p>
+            </div>
+        )
+    }
+
+    const inputClass = "w-full rounded-lg border border-border bg-background px-4 py-2.5 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+
+    return (
+        <div className="space-y-6 pb-24">
+            {/* Page Header */}
+            <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+                    <Building className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                    <h1 className="text-2xl font-semibold text-foreground">Business Settings</h1>
+                    <p className="text-sm text-muted-foreground">Manage your business information, branches, and users</p>
+                </div>
+            </div>
+
+            {/* Business Details Form */}
+            <div className="rounded-xl border border-border bg-card">
+
+                <div className="p-6 space-y-6">
+                    {/* Business Logo & Name Section */}
+                    <div className="flex flex-col md:flex-row items-center gap-6">
+                        <VehicleImageUpload
+                            label="Business Logo"
+                            imageUrl={business.logo_url}
+                            selectedFile={logoFile}
+                            onFileChange={(file) => setLogoFile(file)}
+                            className="shrink-0 w-full sm:w-auto"
+                        />
+                        <div className="w-full md:w-1/2">
+                            <label className="block text-sm font-medium text-foreground mb-1.5">
+                                Business Name <span className="text-destructive">*</span>
+                            </label>
+                            <input
+                                type="text"
+                                value={formData.name || ""}
+                                onChange={(e) => handleFieldChange("name", e.target.value)}
+                                className={inputClass}
+                            />
+                        </div>
+                    </div>
+
+                    {/* Address Section */}
+                    <div className="border-t border-border pt-6">
+                        <h3 className="text-sm font-medium text-muted-foreground mb-4">Address</h3>
+                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-5">
+                            <div>
+                                <label className="block text-sm font-medium text-foreground mb-1.5">Country</label>
+                                <input type="text" value={formData.address_country || ""} onChange={(e) => handleFieldChange("address_country", e.target.value)} className={inputClass} />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-foreground mb-1.5">City</label>
+                                <input type="text" value={formData.address_city || ""} onChange={(e) => handleFieldChange("address_city", e.target.value)} className={inputClass} />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-foreground mb-1.5">Street</label>
+                                <input type="text" value={formData.address_street || ""} onChange={(e) => handleFieldChange("address_street", e.target.value)} className={inputClass} />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-foreground mb-1.5">Street Number</label>
+                                <input type="text" value={formData.address_street_number || ""} onChange={(e) => handleFieldChange("address_street_number", e.target.value)} className={inputClass} />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-foreground mb-1.5">Postal Code</label>
+                                <input type="text" value={formData.address_postal_code || ""} onChange={(e) => handleFieldChange("address_postal_code", e.target.value)} className={inputClass} />
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Preferences Section */}
+                    <div className="border-t border-border pt-6">
+                        <h3 className="text-sm font-medium text-muted-foreground mb-4">Financial Preferences</h3>
+                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                            <div>
+                                <label className="block text-sm font-medium text-foreground mb-1.5">Target Annual Return (%)</label>
+                                <input
+                                    type="number"
+                                    step="0.01"
+                                    value={formData.target_annual_return ?? 10.00}
+                                    onChange={(e) => handleFieldChange("target_annual_return", e.target.value)}
+                                    className={inputClass}
+                                />
+                                <p className="mt-1 text-xs text-muted-foreground">Used to calculate holding costs</p>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-foreground mb-1.5">Target Days on Stock</label>
+                                <input
+                                    type="number"
+                                    step="1"
+                                    value={formData.target_days_on_stock ?? 45}
+                                    onChange={(e) => handleFieldChange("target_days_on_stock", e.target.value)}
+                                    className={inputClass}
+                                />
+                                <p className="mt-1 text-xs text-muted-foreground">Threshold for urgency indicators</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Contact & Bank Details Side-by-Side Section */}
+                    <div className="border-t border-border pt-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
+                        <div>
+                            <h3 className="text-sm font-medium text-muted-foreground mb-4">Contact</h3>
+                            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                                <div>
+                                    <label className="block text-sm font-medium text-foreground mb-1.5">Telephone No</label>
+                                    <input type="text" value={formData.telephone_number || ""} onChange={(e) => handleFieldChange("telephone_number", e.target.value)} className={inputClass} />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-foreground mb-1.5">Fax Number</label>
+                                    <input type="text" value={formData.fax_number || ""} onChange={(e) => handleFieldChange("fax_number", e.target.value)} className={inputClass} />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-foreground mb-1.5">Email</label>
+                                    <input type="email" value={formData.email || ""} onChange={(e) => handleFieldChange("email", e.target.value)} className={inputClass} />
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <h3 className="text-sm font-medium text-muted-foreground mb-4">Bank Details</h3>
+                            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                                <div>
+                                    <label className="block text-sm font-medium text-foreground mb-1.5">Bank Name</label>
+                                    <input type="text" value={formData.bank_name || ""} onChange={(e) => handleFieldChange("bank_name", e.target.value)} className={inputClass} />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-foreground mb-1.5">BIC/SWIFT</label>
+                                    <input type="text" value={formData.bank_bic_swift || ""} onChange={(e) => handleFieldChange("bank_bic_swift", e.target.value)} className={inputClass} />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-foreground mb-1.5">IBAN</label>
+                                    <input type="text" value={formData.bank_iban || ""} onChange={(e) => handleFieldChange("bank_iban", e.target.value)} className={inputClass} />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Company Registration Section */}
+                    <div className="border-t border-border pt-6">
+                        <h3 className="text-sm font-medium text-muted-foreground mb-4">Company Registration</h3>
+                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-7">
+                            <div>
+                                <label className="block text-sm font-medium text-foreground mb-1.5">Managing Director</label>
+                                <input type="text" value={formData.managing_director || ""} onChange={(e) => handleFieldChange("managing_director", e.target.value)} className={inputClass} />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-foreground mb-1.5">Tax ID</label>
+                                <input type="text" value={formData.tax_id || ""} onChange={(e) => handleFieldChange("tax_id", e.target.value)} className={inputClass} />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-foreground mb-1.5">EORI Number</label>
+                                <input type="text" value={formData.eori_number || ""} onChange={(e) => handleFieldChange("eori_number", e.target.value)} className={inputClass} />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-foreground mb-1.5">USt-IdNr</label>
+                                <input type="text" value={formData.ust_id_nr || ""} onChange={(e) => handleFieldChange("ust_id_nr", e.target.value)} className={inputClass} />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-foreground mb-1.5">Headquarters City</label>
+                                <input type="text" value={formData.headquarters_city || ""} onChange={(e) => handleFieldChange("headquarters_city", e.target.value)} className={inputClass} />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-foreground mb-1.5">Court Reg Number</label>
+                                <input type="text" value={formData.court_registration_number || ""} onChange={(e) => handleFieldChange("court_registration_number", e.target.value)} className={inputClass} />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* Branches and Users Side-by-Side Layout */}
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 items-start">
+                {/* Branches Section */}
+                <div className="rounded-xl border border-border bg-card">
+                    <div className="px-6 py-4 border-b border-border flex items-center justify-between">
+                        <h2 className="text-lg font-medium text-foreground">Branches</h2>
+                    </div>
+                    <div className="p-6 overflow-x-auto">
+                        <table className="w-full">
+                            <thead>
+                                <tr className="border-b border-border bg-muted/50">
+                                    <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Branch Name</th>
+                                    <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Address</th>
+                                    <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-border">
+                                {editableBranches.map((branch) => (
+                                    <tr key={branch.id} className="hover:bg-muted/30">
+                                        <td className="px-4 py-3">
+                                            <input
+                                                type="text"
+                                                value={branch.name}
+                                                onChange={(e) => handleBranchFieldChange(branch.id, "name", e.target.value)}
+                                                className={inputClass}
+                                            />
+                                        </td>
+                                        <td className="px-4 py-3">
+                                            <input
+                                                type="text"
+                                                value={branch.address}
+                                                onChange={(e) => handleBranchFieldChange(branch.id, "address", e.target.value)}
+                                                className={inputClass}
+                                            />
+                                        </td>
+                                        <td className="px-4 py-3">
+                                            <label className="flex items-center gap-2 cursor-pointer">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={branch.is_active}
+                                                    onChange={(e) => handleBranchFieldChange(branch.id, "is_active", e.target.checked)}
+                                                    className="h-4 w-4 rounded border-border text-primary focus:ring-primary"
+                                                />
+                                                <span className="text-sm text-muted-foreground">Active</span>
+                                            </label>
+                                        </td>
+                                    </tr>
+                                ))}
+                                {editableBranches.length === 0 && (
+                                    <tr>
+                                        <td colSpan={3} className="px-4 py-6 text-center text-sm text-muted-foreground">
+                                            No branches found.
+                                        </td>
+                                    </tr>
+                                )}
+                            </tbody>
+                        </table>
+                        
+                        <div className="mt-4 pt-4 border-t border-border">
+                            <h3 className="text-sm font-medium text-foreground mb-3">Add New Branch</h3>
+                            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                                <input
+                                    type="text"
+                                    value={newBranch.name}
+                                    onChange={(e) => setNewBranch((prev) => ({ ...prev, name: e.target.value }))}
+                                    placeholder="Branch Name *"
+                                    className={inputClass}
+                                />
+                                <input
+                                    type="text"
+                                    value={newBranch.address}
+                                    onChange={(e) => setNewBranch((prev) => ({ ...prev, address: e.target.value }))}
+                                    placeholder="Branch Address"
+                                    className={inputClass}
+                                />
+                            </div>
+                            <button
+                                onClick={handleCreateBranch}
+                                disabled={!newBranch.name.trim() || createBranchMutation.isPending}
+                                className="mt-3 inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+                            >
+                                <Plus className="h-4 w-4" /> Add Branch
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Users Section */}
+                <div className="rounded-xl border border-border bg-card">
+                    <div className="px-6 py-4 border-b border-border flex items-center justify-between">
+                        <h2 className="text-lg font-medium text-foreground">Users</h2>
+                    </div>
+                    <div className="p-6 overflow-x-auto">
+                        <table className="w-full">
+                            <thead>
+                                <tr className="border-b border-border bg-muted/50">
+                                    <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Username</th>
+                                    <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Password</th>
+                                    <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Access</th>
+                                    <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-border">
+                                {employees.map((employee) => (
+                                    <tr key={employee.id} className="hover:bg-muted/30">
+                                        <td className="px-4 py-3">
+                                            <input
+                                                type="text"
+                                                defaultValue={employee.username}
+                                                onChange={(e) => handleEmployeeFieldChange(employee.id, "username", e.target.value)}
+                                                className={inputClass}
+                                            />
+                                        </td>
+                                        <td className="px-4 py-3">
+                                            <div className="relative">
+                                                <input
+                                                    type={showPasswords[employee.id] ? "text" : "password"}
+                                                    placeholder="New Password"
+                                                    onChange={(e) => handleEmployeeFieldChange(employee.id, "password", e.target.value)}
+                                                    className={`${inputClass} pr-9`}
+                                                />
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setShowPasswords((prev) => ({ ...prev, [employee.id]: !prev[employee.id] }))}
+                                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                                                >
+                                                    {showPasswords[employee.id] ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                                </button>
+                                            </div>
+                                        </td>
+                                        <td className="px-4 py-3">
+                                            <label className="flex items-center gap-2 cursor-pointer">
+                                                <input
+                                                    type="checkbox"
+                                                    defaultChecked={employee.transactions_access}
+                                                    onChange={(e) => handleEmployeeFieldChange(employee.id, "transactions_access", e.target.checked)}
+                                                    className="h-4 w-4 rounded border-border text-primary focus:ring-primary"
+                                                />
+                                                <span className="text-sm text-muted-foreground">Transactions</span>
+                                            </label>
+                                        </td>
+                                        <td className="px-4 py-3">
+                                            <label className="flex items-center gap-2 cursor-pointer">
+                                                <input
+                                                    type="checkbox"
+                                                    defaultChecked={employee.is_active}
+                                                    onChange={(e) => handleEmployeeFieldChange(employee.id, "is_active", e.target.checked)}
+                                                    className="h-4 w-4 rounded border-border text-primary focus:ring-primary"
+                                                />
+                                                <span className="text-sm text-muted-foreground">Active</span>
+                                            </label>
+                                        </td>
+                                    </tr>
+                                ))}
+                                {employees.length === 0 && (
+                                    <tr>
+                                        <td colSpan={4} className="px-4 py-6 text-center text-sm text-muted-foreground">
+                                            No users found.
+                                        </td>
+                                    </tr>
+                                )}
+                            </tbody>
+                        </table>
+                        
+                        <div className="mt-4 pt-4 border-t border-border">
+                            <h3 className="text-sm font-medium text-foreground mb-3">Add New User</h3>
+                            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                                <input
+                                    type="text"
+                                    value={newEmployee.username}
+                                    onChange={(e) => setNewEmployee((prev) => ({ ...prev, username: e.target.value }))}
+                                    placeholder="Username *"
+                                    className={inputClass}
+                                />
+                                <div className="relative">
+                                    <input
+                                        type={showNewPassword ? "text" : "password"}
+                                        value={newEmployee.password}
+                                        onChange={(e) => setNewEmployee((prev) => ({ ...prev, password: e.target.value }))}
+                                        placeholder="Password *"
+                                        className={`${inputClass} pr-9`}
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowNewPassword(!showNewPassword)}
+                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                                    >
+                                        {showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                    </button>
+                                </div>
+                            </div>
+                            <button
+                                onClick={handleCreateEmployee}
+                                disabled={!newEmployee.username.trim() || !newEmployee.password.trim() || createEmployeeMutation.isPending}
+                                className="mt-3 inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+                            >
+                                <Plus className="h-4 w-4" /> Add User
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* Form Actions - Sticky Footer */}
+            <StickyFooter>
+                <div className="flex w-full items-center justify-between">
+                    <button
+                        type="button"
+                        onClick={() => navigate(-1)}
+                        className="inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-border bg-background px-4 text-sm font-medium text-foreground transition-colors hover:bg-muted"
+                    >
+                        <ArrowLeft className="h-4 w-4" />
+                        Back
+                    </button>
+
+                    <button
+                        type="button"
+                        onClick={handleSave}
+                        disabled={updateMutation.isPending || logoUploadMutation.isPending}
+                        className="inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-primary px-6 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50"
+                    >
+                        {updateMutation.isPending || logoUploadMutation.isPending ? (
+                            <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary-foreground border-r-transparent" />
+                        ) : (
+                            <Save className="h-4 w-4" />
+                        )}
+                        Save Changes
+                    </button>
+                </div>
+            </StickyFooter>
+        </div>
+    )
+}

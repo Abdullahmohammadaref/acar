@@ -1,0 +1,168 @@
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
+import api from "@/lib/api"
+import type {
+    VehiclesResponse,
+    VehicleDetail,
+    VehicleFilters,
+    AllChoices,
+} from "@/types/vehicle"
+
+/**
+ * Query keys for TanStack Query
+ */
+export const vehicleKeys = {
+    all: ["vehicles"] as const,
+    lists: () => [...vehicleKeys.all, "list"] as const,
+    list: (filters: VehicleFilters) => [...vehicleKeys.lists(), filters] as const,
+    details: () => [...vehicleKeys.all, "detail"] as const,
+    detail: (id: number) => [...vehicleKeys.details(), id] as const,
+    choices: () => ["choices"] as const,
+    models: (makeId: number) => ["models", makeId] as const,
+    nextId: () => [...vehicleKeys.all, "next-id"] as const,
+}
+
+/**
+ * Response type for next vehicle ID
+ */
+interface NextVehicleIdResponse {
+    next_id: number
+}
+
+/**
+ * Fetch the projected next internal ID for a new vehicle
+ */
+export function useNextVehicleId(enabled: boolean = true) {
+    return useQuery({
+        queryKey: vehicleKeys.nextId(),
+        queryFn: async (): Promise<number> => {
+            const response = await api.get<NextVehicleIdResponse>("/vehicles/next-id")
+            return response.data.next_id
+        },
+        enabled,
+        staleTime: 1000 * 30, // 30 seconds - may change if another user adds a vehicle
+    })
+}
+
+
+/**
+ * Fetch paginated vehicles with filters
+ */
+export function useVehicles(filters: VehicleFilters = {}) {
+    return useQuery({
+        queryKey: vehicleKeys.list(filters),
+        queryFn: async (): Promise<VehiclesResponse> => {
+            // Build query params, excluding undefined values
+            const params = new URLSearchParams()
+
+            Object.entries(filters).forEach(([key, value]) => {
+                if (value !== undefined && value !== null && value !== "") {
+                    params.append(key, String(value))
+                }
+            })
+
+            const response = await api.get<VehiclesResponse>(`/vehicles?${params}`)
+            return response.data
+        },
+    })
+}
+
+/**
+ * Fetch single vehicle details
+ */
+export function useVehicle(internalId: number | undefined) {
+    return useQuery({
+        queryKey: vehicleKeys.detail(internalId!),
+        queryFn: async (): Promise<VehicleDetail> => {
+            const response = await api.get<VehicleDetail>(`/vehicles/${internalId}`)
+            return response.data
+        },
+        enabled: !!internalId,
+    })
+}
+
+/**
+ * Fetch all choices for form dropdowns
+ */
+export function useChoices() {
+    return useQuery({
+        queryKey: vehicleKeys.choices(),
+        queryFn: async (): Promise<AllChoices> => {
+            const response = await api.get<AllChoices>("/choices")
+            return response.data
+        },
+        staleTime: 1000 * 60 * 10, // 10 minutes - choices don't change often
+    })
+}
+
+/**
+ * Model response type from API
+ */
+export interface VehicleModelChoice {
+    id: number
+    name: string
+    make_id: number
+    make_name: string
+}
+
+/**
+ * Fetch models for a specific make (dependent dropdown)
+ */
+export function useModels(makeId: number | undefined) {
+    return useQuery({
+        queryKey: vehicleKeys.models(makeId!),
+        queryFn: async (): Promise<VehicleModelChoice[]> => {
+            const response = await api.get<VehicleModelChoice[]>(`/choices/models/${makeId}`)
+            return response.data
+        },
+        enabled: !!makeId,
+        staleTime: 1000 * 60 * 10, // 10 minutes
+    })
+}
+
+/**
+ * Delete (soft) a vehicle
+ */
+export function useDeleteVehicle() {
+    const queryClient = useQueryClient()
+
+    return useMutation({
+        mutationFn: async (internalId: number) => {
+            await api.delete(`/vehicles/${internalId}`)
+        },
+        onSuccess: () => {
+            // Invalidate vehicle list to refetch
+            queryClient.invalidateQueries({ queryKey: vehicleKeys.lists() })
+        },
+    })
+}
+
+/**
+ * Change vehicle status
+ */
+export function useChangeVehicleStatus() {
+    const queryClient = useQueryClient()
+
+    return useMutation({
+        mutationFn: async ({
+            internalId,
+            status,
+        }: {
+            internalId: number
+            status: string
+        }) => {
+            const formData = new FormData()
+            formData.append("status", status)
+            const response = await api.post(
+                `/vehicles/${internalId}/change-status`,
+                formData,
+                {
+                    headers: { "Content-Type": "multipart/form-data" },
+                }
+            )
+            return response.data
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: vehicleKeys.lists() })
+        },
+    })
+}
