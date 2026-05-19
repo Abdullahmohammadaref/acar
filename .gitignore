@@ -82,3 +82,6 @@ backups/
 
 # deploy script output
 scripts/*.log
+
+# deployment on oracle server instructions
+instructions.md
