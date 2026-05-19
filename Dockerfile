@@ -1,4 +1,4 @@
-FROM python:3.11-slim
+FROM python:3.12-slim
 
 WORKDIR /app
 
@@ -24,7 +24,7 @@ RUN python manage.py collectstatic --noinput --settings=acar.settings_prod || tr
 EXPOSE 8000
 
 CMD ["gunicorn", "acar.wsgi:application", \
-     "--bind", "0.0.0.0:8000", \
-     "--workers", "2", \
-     "--timeout", "120", \
-     "--access-logfile", "-"]
+    "--bind", "0.0.0.0:8000", \
+    "--workers", "2", \
+    "--timeout", "120", \
+    "--access-logfile", "-"]
