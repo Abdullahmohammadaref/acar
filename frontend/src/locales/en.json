@@ -21,7 +21,15 @@
         "makes": "Makes",
         "models": "Models",
         "all_transactions": "All Transactions",
-        "all_entities": "All Legal Entities"
+        "all_entities": "All Legal Entities",
+        "inactive_entities": "Inactive"
+    },
+    "vehicles": {
+        "editTitle": "Edit"
+    },
+    "ui": {
+        "splitView": "Split View",
+        "stackView": "Stack View"
     },
     "user": {
         "logout": "Logout",
@@ -154,7 +162,13 @@
         "noCategories": "No categories found. Please add categories first.",
         "confirmDeactivate": "Are you sure you want to deactivate this option?",
         "errorLoading": "Failed to load choices data",
-        "errorAdd": "Failed to add choice. Please try again."
+        "errorAdd": "Failed to add choice. Please try again.",
+        "keyNumbers": "Key Numbers",
+        "addKeyNumber": "Add Key Number",
+        "manageKeyNumbers": "Add and manage vehicle key numbers. Assigned vehicles are shown next to the number.",
+        "deactivateError": "Failed to deactivate. This item may be in use by an active vehicle or transaction.",
+        "reactivateError": "Failed to reactivate. Please try again.",
+        "updateError": "Failed to update choice. It may be a duplicate or in use."
     },
     "legalEntities": {
         "title": "Legal Entities",

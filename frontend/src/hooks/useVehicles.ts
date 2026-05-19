@@ -16,7 +16,7 @@ export const vehicleKeys = {
     list: (filters: VehicleFilters) => [...vehicleKeys.lists(), filters] as const,
     details: () => [...vehicleKeys.all, "detail"] as const,
     detail: (id: number) => [...vehicleKeys.details(), id] as const,
-    choices: () => ["choices"] as const,
+    choices: (vehicleId?: number) => ["choices", vehicleId] as const,
     models: (makeId: number) => ["models", makeId] as const,
     nextId: () => [...vehicleKeys.all, "next-id"] as const,
 }
@@ -81,16 +81,35 @@ export function useVehicle(internalId: number | undefined) {
 }
 
 /**
- * Fetch all choices for form dropdowns
+ * Fetch all choices for form dropdowns.
+ * vehicleId is optional to include the current assigned key when editing.
  */
-export function useChoices() {
+export function useChoices(vehicleId?: number) {
     return useQuery({
-        queryKey: vehicleKeys.choices(),
+        queryKey: vehicleKeys.choices(vehicleId),
         queryFn: async (): Promise<AllChoices> => {
-            const response = await api.get<AllChoices>("/choices")
+            const params = new URLSearchParams()
+            if (vehicleId) params.append("vehicle_id", String(vehicleId))
+            const url = `/choices${params.toString() ? `?${params.toString()}` : ""}`
+            const response = await api.get<AllChoices>(url)
             return response.data
         },
         staleTime: 1000 * 60 * 10, // 10 minutes - choices don't change often
+    })
+}
+
+/**
+ * Fetch and/or create the next available key number
+ */
+export function useNextAvailableKey(enabled: boolean = false) {
+    return useQuery({
+        queryKey: ["choices", "key-numbers", "next-available"],
+        queryFn: async () => {
+            const response = await api.get<{ id: number, number: number, name: string }>("/choices/key-numbers/next-available")
+            return response.data
+        },
+        enabled,
+        staleTime: 0,
     })
 }
 

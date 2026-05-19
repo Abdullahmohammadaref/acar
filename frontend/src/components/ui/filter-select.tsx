@@ -77,7 +77,9 @@ export function FilterSelect({
                     className={cn("w-full justify-between text-foreground", className)}
                     disabled={disabled}
                 >
-                    {selectedOption ? selectedOption.label : placeholder}
+                    <span className="truncate text-left font-normal">
+                        {selectedOption ? selectedOption.label : placeholder}
+                    </span>
                     <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                 </Button>
             </PopoverTrigger>

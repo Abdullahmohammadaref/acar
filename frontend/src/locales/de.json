@@ -21,7 +21,15 @@
         "makes": "Marken",
         "models": "Modelle",
         "all_transactions": "Alle Transaktionen",
-        "all_entities": "Alle Rechtsträger"
+        "all_entities": "Alle Rechtsträger",
+        "inactive_entities": "Inaktiv"
+    },
+    "vehicles": {
+        "editTitle": "Bearbeiten"
+    },
+    "ui": {
+        "splitView": "Geteilte Ansicht",
+        "stackView": "Gestapelte Ansicht"
     },
     "user": {
         "logout": "Abmelden",
@@ -154,7 +162,13 @@
         "noCategories": "Keine Kategorien gefunden. Bitte fügen Sie zuerst Kategorien hinzu.",
         "confirmDeactivate": "Sind Sie sicher, dass Sie diese Option deaktivieren möchten?",
         "errorLoading": "Fehler beim Laden der Auswahloptionen",
-        "errorAdd": "Hinzufügen fehlgeschlagen. Bitte versuchen Sie es erneut."
+        "errorAdd": "Hinzufügen fehlgeschlagen. Bitte versuchen Sie es erneut.",
+        "keyNumbers": "Schlüsselnummern",
+        "addKeyNumber": "Schlüsselnummer hinzufügen",
+        "manageKeyNumbers": "Fahrzeug-Schlüsselnummern hinzufügen und verwalten. Zugewiesene Fahrzeuge werden neben der Nummer angezeigt.",
+        "deactivateError": "Deaktivierung fehlgeschlagen. Dieser Eintrag wird möglicherweise von einem aktiven Fahrzeug oder einer Transaktion verwendet.",
+        "reactivateError": "Reaktivierung fehlgeschlagen. Bitte versuchen Sie es erneut.",
+        "updateError": "Aktualisierung fehlgeschlagen. Möglicherweise ein Duplikat oder der Eintrag wird verwendet."
     },
     "legalEntities": {
         "title": "Rechtliche Entitäten",

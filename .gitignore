@@ -70,3 +70,15 @@ test_output.txt
 
 /start_gitnexus.bat
 /backend/acar/__init__.py
+
+# Production env template is committed, actual .env.production is not
+backend/.env.production
+
+# Docker volumes
+certbot/
+
+# Server backups (never in git)
+backups/
+
+# deploy script output
+scripts/*.log

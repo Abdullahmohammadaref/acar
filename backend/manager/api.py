@@ -29,7 +29,7 @@ from .models import (
     VehicleType, BodyType, Make, VehicleModel,
     Color, FuelType, DamageType, DoorsChoice,
     PaymentMethod, TaxPercentage, Currency, Category, Subcategory,
-    ActivityLog
+    ActivityLog, KeyNumber
 )
 from .schemas import (
     VehicleListOut, VehicleDetailOut, VehicleCreate, VehicleUpdate,
@@ -38,7 +38,8 @@ from .schemas import (
     TaxPercentageOut, TaxPercentageCreate, VehicleModelOut,
     VehicleModelCreate, LegalEntityOut, LegalEntityCreate,
     LegalEntityListOut, LegalEntityUpdate, LegalEntityFilters, LegalEntitiesListResponse,
-    BranchOut, ErrorResponse, SuccessResponse
+    BranchOut, ErrorResponse, SuccessResponse,
+    ChoiceUpdatePayload, KeyNumberOut
 )
 from .image_processing import process_vehicle_image
 
@@ -270,6 +271,10 @@ def serialize_vehicle_detail(vehicle: Vehicle) -> dict:
         
         # Metadata
         "date_created": vehicle.date_created,
+
+        # Key Number (reverse OneToOne)
+        "key_number_id": vehicle.key_number.id if hasattr(vehicle, 'key_number') and vehicle.key_number else None,
+        "key_number_value": vehicle.key_number.number if hasattr(vehicle, 'key_number') and vehicle.key_number else None,
     })
     
     return data
@@ -626,6 +631,8 @@ def create_vehicle(
     buy_tax = None
     if payload.buy_tax_id:
         buy_tax = get_object_or_404(TaxPercentage, id=payload.buy_tax_id, business=business)
+    else:
+        buy_tax = TaxPercentage.objects.filter(business=business, is_no_tax=True, is_active=True).first()
     
     # Get model if provided
     vehicle_model = None
@@ -663,6 +670,13 @@ def create_vehicle(
     )
     
     vehicle.save()
+
+    # Handle key number assignment if provided
+    if payload.key_number_id:
+        key_number = get_object_or_404(KeyNumber, id=payload.key_number_id, business=business)
+        # Clear any previous vehicle this key might have been assigned to (safety check)
+        key_number.vehicle = vehicle
+        key_number.save()
     
     # Log the create action
     vehicle_name = f"{vehicle.make.name if vehicle.make else ''} {vehicle.model.name if vehicle.model else ''}".strip() or f"Vehicle #{vehicle.internal_id}"
@@ -724,9 +738,23 @@ def update_vehicle(
     for field, value in update_data.items():
         if field == 'chassis_number' and value:
             value = value.upper()
+        if field == 'key_number_id':
+            continue  # handled below
         setattr(vehicle, field, value)
     
     vehicle.save()
+
+    # Handle key_number assignment (reverse OneToOne, not a direct FK on Vehicle)
+    if 'key_number_id' in payload.dict(exclude_unset=True):
+        key_number_id = payload.key_number_id
+        # Clear any existing key assigned to this vehicle
+        KeyNumber.objects.filter(vehicle=vehicle).update(vehicle=None)
+        
+        if key_number_id is not None:
+            key = get_object_or_404(KeyNumber, id=key_number_id, business=business, is_active=True)
+            # Clear previous vehicle from this key (if any)
+            key.vehicle = vehicle
+            key.save()
     
     # Reload with related objects
     vehicle = Vehicle.objects.select_related(*VEHICLE_DETAIL_RELATIONS).get(id=vehicle.id)
@@ -894,6 +922,10 @@ def get_all_choices(request):
             'address_city', 'address_country', 'email', 'phone_number',
             'tax_identification_number'
         )),
+        "categories": list(Category.objects.filter(business=business, is_active=True).values('id', 'name')),
+        "subcategories": list(Subcategory.objects.filter(business=business, is_active=True).values('id', 'name', 'category_id')),
+        "currencies": list(Currency.objects.filter(business=business, is_active=True).values('id', 'name', 'code')),
+        "key_numbers": [{"id": k.id, "name": str(k.number)} for k in KeyNumber.objects.filter(business=business, is_active=True)],
         "status_choices": [
             {"value": "purchased", "label": "Purchased"},
             {"value": "ready_for_sale", "label": "Ready for Sale"},
@@ -988,8 +1020,8 @@ def get_choices_for_management(request):
         'tax_percentage': {
             'name': 'Tax Percentages',
             'displayName': 'Steuersätze',
-            'active': [{'id': t.id, 'name': str(t), 'is_protected': t.is_no_tax} for t in TaxPercentage.objects.filter(business=business, is_active=True)],
-            'inactive': [{'id': t.id, 'name': str(t), 'is_protected': t.is_no_tax} for t in TaxPercentage.objects.filter(business=business, is_active=False)],
+            'active': [{'id': t.id, 'name': str(t), 'percentage': float(t.percentage) if t.percentage else 0, 'is_protected': t.is_no_tax} for t in TaxPercentage.objects.filter(business=business, is_active=True)],
+            'inactive': [{'id': t.id, 'name': str(t), 'percentage': float(t.percentage) if t.percentage else 0, 'is_protected': t.is_no_tax} for t in TaxPercentage.objects.filter(business=business, is_active=False)],
         },
         'currency': {
             'name': 'Currencies',
@@ -1002,6 +1034,12 @@ def get_choices_for_management(request):
             'displayName': 'Kategorien',
             'active': list(Category.objects.filter(business=business, is_active=True).values('id', 'name')),
             'inactive': list(Category.objects.filter(business=business, is_active=False).values('id', 'name')),
+        },
+        'key_number': {
+            'name': 'Key Numbers',
+            'displayName': 'Schlüsselnummern',
+            'active': [{'id': k.id, 'name': str(k.number), 'vehicle_id': k.vehicle_id, 'vehicle_name': f"{k.vehicle.make.name if k.vehicle and k.vehicle.make else ''} {k.vehicle.model.name if k.vehicle and k.vehicle.model else ''} (#{k.vehicle.internal_id})" if k.vehicle else None} for k in KeyNumber.objects.filter(business=business, is_active=True).select_related('vehicle', 'vehicle__make', 'vehicle__model')],
+            'inactive': [{'id': k.id, 'name': str(k.number)} for k in KeyNumber.objects.filter(business=business, is_active=False)],
         },
     }
     
@@ -1173,6 +1211,30 @@ def create_choice(
             "message": f"'{name}' created successfully"
         }
     
+    elif choice_type == 'key_number':
+        # Key numbers use `name` as the numeric value
+        try:
+            key_num = int(name)
+            if key_num <= 0:
+                return 400, {"detail": "Key number must be a positive integer without zero."}
+        except ValueError:
+            return 400, {"detail": "Key number must be a valid integer."}
+        
+        if KeyNumber.objects.filter(business=business, number=key_num).exists():
+            return 400, {"detail": f"Key number {key_num} already exists"}
+        
+        obj = KeyNumber.objects.create(
+            business=business,
+            number=key_num,
+            is_active=True
+        )
+        return 201, {
+            "success": True,
+            "id": obj.id,
+            "name": str(obj.number),
+            "message": f"Key number {key_num} created successfully"
+        }
+    
     else:
         return 400, {"detail": f"Unknown choice type: {choice_type}"}
 
@@ -1200,6 +1262,7 @@ def deactivate_choice(request, choice_type: str, choice_id: int):
         'category': Category,
         'subcategory': Subcategory,
         'currency': Currency,
+        'key_number': KeyNumber,
     }
     
     model_class = model_map.get(choice_type)
@@ -1212,6 +1275,10 @@ def deactivate_choice(request, choice_type: str, choice_id: int):
         # Prevent deactivation of protected No Tax option
         if choice_type == 'tax_percentage' and hasattr(choice, 'is_no_tax') and choice.is_no_tax:
             return 400, {"detail": "Cannot deactivate the No Tax option"}
+        
+        # Unassign vehicle when deactivating a key number
+        if choice_type == 'key_number' and hasattr(choice, 'vehicle') and choice.vehicle:
+            choice.vehicle = None
         
         choice.is_active = False
         choice.save()
@@ -1244,6 +1311,7 @@ def reactivate_choice(request, choice_type: str, choice_id: int):
         'category': Category,
         'subcategory': Subcategory,
         'currency': Currency,
+        'key_number': KeyNumber,
     }
     
     model_class = model_map.get(choice_type)
@@ -1256,6 +1324,120 @@ def reactivate_choice(request, choice_type: str, choice_id: int):
         choice.save()
         
         return {"success": True, "message": f"Choice reactivated successfully"}
+    except model_class.DoesNotExist:
+        return 404, {"detail": "Choice not found"}
+
+
+@router.patch("/choices/{choice_type}/{choice_id}", response={200: SuccessResponse, 400: ErrorResponse, 403: ErrorResponse, 404: ErrorResponse})
+def update_choice(request, choice_type: str, choice_id: int, payload: ChoiceUpdatePayload):
+    """Update a choice name or percentage (managers only)."""
+    if not request.user.is_manager:
+        return 403, {"detail": "Only managers can update choices."}
+    
+    business = get_user_business(request)
+    
+    # Map choice_type to model class
+    model_map = {
+        'payment_method': PaymentMethod,
+        'vehicle_type': VehicleType,
+        'body_type': BodyType,
+        'make': Make,
+        'vehicle_model': VehicleModel,
+        'color': Color,
+        'fuel_type': FuelType,
+        'damage_type': DamageType,
+        'doors': DoorsChoice,
+        'tax_percentage': TaxPercentage,
+        'category': Category,
+        'subcategory': Subcategory,
+        'currency': Currency,
+        'key_number': KeyNumber,
+    }
+    
+    model_class = model_map.get(choice_type)
+    if not model_class:
+        return 400, {"detail": f"Invalid choice type: {choice_type}"}
+    
+    new_name = payload.name.strip()
+    if not new_name:
+        return 400, {"detail": "Name is required."}
+
+    # Special handling for key_number — name IS the number
+    if choice_type == 'key_number':
+        try:
+            new_number = int(new_name)
+            if new_number <= 0:
+                return 400, {"detail": "Key number must be a positive integer without zero."}
+        except ValueError:
+            return 400, {"detail": "Key number must be a valid integer."}
+        
+        # Check uniqueness
+        if KeyNumber.objects.filter(business=business, number=new_number).exclude(id=choice_id).exists():
+            return 400, {"detail": f"Key number {new_number} already exists."}
+        
+        try:
+            key = KeyNumber.objects.get(id=choice_id, business=business)
+        except KeyNumber.DoesNotExist:
+            return 404, {"detail": "Choice not found"}
+        
+        key.number = new_number
+        
+        # Handle optional vehicle re-assignment
+        if payload.vehicle_id is not None:
+            vehicle = get_object_or_404(Vehicle, id=payload.vehicle_id, business=business)
+            # Only assign to active-status vehicles
+            if vehicle.status not in ('purchased', 'ready_for_sale', 'reserved'):
+                return 400, {"detail": "Can only assign key to a vehicle that is Purchased, Ready for Sale, or Reserved."}
+            # Clear any other key that was assigned to this vehicle
+            KeyNumber.objects.filter(vehicle=vehicle).exclude(id=choice_id).update(vehicle=None)
+            key.vehicle = vehicle
+        elif payload.vehicle_id is None and hasattr(payload, 'vehicle_id'):
+            # Explicitly check if vehicle_id was sent as null (to unassign)
+            import json
+            raw_body = request.body.decode('utf-8', errors='ignore')
+            try:
+                body_data = json.loads(raw_body)
+                if 'vehicle_id' in body_data and body_data['vehicle_id'] is None:
+                    key.vehicle = None
+            except (json.JSONDecodeError, KeyError):
+                pass
+        
+        key.save()
+        log_activity(request, action='update', entity_type='key_number', entity_id=choice_id, entity_name=str(new_number))
+        return {"success": True, "message": "Key number updated successfully"}
+
+    try:
+        choice = model_class.objects.get(id=choice_id, business=business)
+        
+        # Check for duplicate name (excluding self)
+        if choice_type == 'vehicle_model':
+            if VehicleModel.objects.filter(make=choice.make, name=new_name).exclude(id=choice_id).exists():
+                return 400, {"detail": f"Model '{new_name}' already exists for this manufacturer."}
+        elif choice_type == 'subcategory':
+            if Subcategory.objects.filter(category=choice.category, name=new_name).exclude(id=choice_id).exists():
+                return 400, {"detail": f"Subcategory '{new_name}' already exists for this category."}
+        else:
+            if model_class.objects.filter(business=business, name=new_name).exclude(id=choice_id).exists():
+                return 400, {"detail": f"'{new_name}' already exists."}
+
+        choice.name = new_name
+        
+        # Handle tax percentage
+        if choice_type == 'tax_percentage' and payload.percentage is not None:
+            choice.percentage = payload.percentage
+        
+        choice.save()
+        
+        # Log the update action
+        log_activity(
+            request,
+            action='update',
+            entity_type=choice_type,
+            entity_id=choice_id,
+            entity_name=new_name
+        )
+        
+        return {"success": True, "message": f"Choice updated successfully"}
     except model_class.DoesNotExist:
         return 404, {"detail": "Choice not found"}
 
@@ -1333,6 +1515,9 @@ def list_legal_entities(request, filters: LegalEntityFilters = Query(...)):
     else:
         # By default, exclude inactive unless specifically requested
         qs = qs.exclude(status='inactive')
+        
+    if filters.city:
+        qs = qs.filter(address_city__icontains=filters.city)
     
     if filters.search:
         search_term = filters.search
@@ -1637,6 +1822,66 @@ def get_recent_activity_logs(request):
     }
 
 
+
+@router.get("/activity-logs")
+def list_activity_logs(
+    request,
+    page: int = 1,
+    per_page: int = 20,
+    action: Optional[str] = None,
+    entity_type: Optional[str] = None,
+    sort: str = "timestamp",
+    order: str = "desc",
+):
+    """
+    List activity logs with pagination and filtering.
+    For the Activity Logs page.
+    """
+    business = get_user_business(request)
+    
+    qs = ActivityLog.objects.filter(business=business).select_related('user')
+    
+    # Apply filters
+    if action:
+        qs = qs.filter(action=action)
+    
+    if entity_type:
+        qs = qs.filter(entity_type=entity_type)
+    
+    # Apply sorting
+    sort_field = sort if sort in ["timestamp", "action", "entity_type", "user__username"] else "timestamp"
+    if order == "desc":
+        sort_field = f"-{sort_field}"
+    qs = qs.order_by(sort_field)
+    
+    # Pagination
+    total = qs.count()
+    pages = (total + per_page - 1) // per_page if total > 0 else 1
+    offset = (page - 1) * per_page
+    logs = qs[offset:offset + per_page]
+    
+    return {
+        "items": [
+            {
+                "id": log.id,
+                "user_name": log.user.username if log.user else "System",
+                "user_id": log.user.id if log.user else None,
+                "action": log.action,
+                "action_display": str(dict(ActivityLog.ACTION_CHOICES).get(log.action, log.action)),
+                "entity_type": log.entity_type,
+                "entity_type_display": str(dict(ActivityLog.ENTITY_CHOICES).get(log.entity_type, log.entity_type)),
+                "entity_id": log.entity_id,
+                "entity_name": log.entity_name,
+                "details": log.details,
+                "timestamp": log.timestamp.isoformat(),
+            }
+            for log in logs
+        ],
+        "total": total,
+        "page": page,
+        "per_page": per_page,
+        "pages": pages,
+    }
 
 @router.get("/activity-logs")
 def list_activity_logs(

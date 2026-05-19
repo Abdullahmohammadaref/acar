@@ -16,10 +16,17 @@
         "in_review": "İnceleniyor",
         "private": "Özel",
         "companies": "Şirketler",
+        "inactive_entities": "İnaktif",
         "choices_management": "Seçim Yönetimi",
         "colors": "Renkler",
-        "makes": "Markalar",
         "models": "Modeller"
+    },
+    "vehicles": {
+        "editTitle": "Düzenle"
+    },
+    "ui": {
+        "splitView": "Bölünmüş Görünüm",
+        "stackView": "Yığın Görünüm"
     },
     "user": {
         "logout": "Çıkış",

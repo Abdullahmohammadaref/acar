@@ -19,7 +19,7 @@ export function Header({ sidebarCollapsed }: HeaderProps) {
     const { business_slug, locale } = useParams<{ business_slug: string; locale?: string }>()
     const [darkMode, setDarkMode] = useState(false)
     const [userMenuOpen, setUserMenuOpen] = useState(false)
-    const [uiScale, setUiScale] = useState<number>(1)
+    const [uiScale, setUiScale] = useState<number>(0.7)
 
     // Determine current locale
     const currentLocale = (locale && SUPPORTED_LOCALES.includes(locale as SupportedLocale))
@@ -44,12 +44,10 @@ export function Header({ sidebarCollapsed }: HeaderProps) {
 
         // Initialize UI scale
         const storedScale = localStorage.getItem("ui-scale")
-        if (storedScale) {
-            const scale = parseFloat(storedScale)
-            setUiScale(scale)
-            ;(document.documentElement.style as any).zoom = ""
-            document.documentElement.style.fontSize = `${16 * scale}px`
-        }
+        const scale = storedScale ? parseFloat(storedScale) : 0.7
+        setUiScale(scale)
+        ;(document.documentElement.style as any).zoom = ""
+        document.documentElement.style.fontSize = `${16 * scale}px`
     }, [])
 
     const handleZoomIn = () => {

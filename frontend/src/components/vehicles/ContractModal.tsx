@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { FileText, Globe, ArrowLeft, Receipt, ClipboardList, FileSignature } from "lucide-react"
+import { FileText, Globe, ArrowLeft, Receipt, ClipboardList, FileSignature, AlertCircle } from "lucide-react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import type { VehicleListItem } from "@/types/vehicle"
@@ -10,7 +10,12 @@ interface ContractModalProps {
     vehicle: VehicleListItem | null
 }
 
-type ModalStep = "choose-type" | "sale-region" | "sale-documents"
+interface PdfEntry {
+    label: string        // e.g. "Sales Agreement", "Identity Check"
+    url: string          // full API URL, e.g. /api/vehicles/5/pdf/sale-agreement
+}
+
+type ModalStep = "choose-type" | "sale-region" | "sale-documents" | "download-ready"
 type SaleRegion = "eu" | "non-eu"
 
 /**
@@ -21,8 +26,9 @@ type SaleRegion = "eu" | "non-eu"
  * PDFs are generated via backend API endpoints at /api/vehicles/{id}/pdf/{type}
  * and opened directly in a new browser tab.
  *
- * NOTE: Multi-document options open two separate tabs. The user may need to
- * "Allow popups from this site" in their browser on first use.
+ * After the user picks a document option, a "download-ready" step renders individual
+ * download buttons for each PDF as a guaranteed fallback against popup blockers.
+ * The modal also attempts to open tabs programmatically (best-effort).
  */
 export function ContractModal({
     open,
@@ -31,12 +37,45 @@ export function ContractModal({
 }: ContractModalProps) {
     const [step, setStep] = useState<ModalStep>("choose-type")
     const [saleRegion, setSaleRegion] = useState<SaleRegion | null>(null)
+    const [pendingPdfs, setPendingPdfs] = useState<PdfEntry[]>([])
+    const [originStep, setOriginStep] = useState<ModalStep>("choose-type")
+
+    // Helper to get missing fields for Buy Contract
+    const getMissingBuyFields = () => {
+        if (!vehicle) return []
+        const missing: string[] = []
+        const v = vehicle as any
+        
+        if (!v.buy_price) missing.push("Buy Price (Gross)")
+        if (!v.buy_date) missing.push("Buy Date")
+        if (!v.buy_payment_method_id && !v.buy_payment_method) missing.push("Payment Method")
+        if (!v.seller_id && !v.seller_name && !v.seller) missing.push("Seller (Legal Entity)")
+        
+        return missing
+    }
+
+    // Helper to get missing fields for Sale Documents
+    const getMissingSaleFields = () => {
+        if (!vehicle) return []
+        const missing: string[] = []
+        const v = vehicle as any
+        
+        if (!v.sale_price) missing.push("Sale Price (Gross)")
+        if (!v.sale_date) missing.push("Sale Date")
+        if (!v.sale_payment_method_id && !v.sale_payment_method) missing.push("Payment Method")
+        if (!v.buyer_id && !v.buyer_name && !v.buyer) missing.push("Buyer (Legal Entity)")
+        
+        return missing
+    }
+
 
     // Reset state when modal closes
     const handleOpenChange = (isOpen: boolean) => {
         if (!isOpen) {
             setStep("choose-type")
             setSaleRegion(null)
+            setPendingPdfs([])
+            setOriginStep("choose-type")
         }
         onOpenChange(isOpen)
     }
@@ -51,32 +90,40 @@ export function ContractModal({
         return url
     }
 
-    const openPdfTabs = (urls: string[]) => {
-        const timestamp = Date.now()
+    /**
+     * Core PDF generation handler.
+     * 1. Attempts to open each PDF in a new tab (best-effort — may be blocked).
+     * 2. Always transitions to the "download-ready" step with individual download buttons.
+     */
+    const triggerPdfGeneration = (pdfs: PdfEntry[], fromStep: ModalStep) => {
+        if (!vehicle?.internal_id) return
 
-        urls.forEach((url, index) => {
+        // Best-effort: try to open all tabs at once
+        // Browsers will block all but the first — that's expected, the buttons are the real fallback
+        pdfs.forEach((pdf, index) => {
             const link = document.createElement("a")
-            link.href = url
-            link.target = `pdf-tab-${timestamp}-${index}`
+            link.href = pdf.url
+            link.target = `pdf-tab-${Date.now()}-${index}`
             link.rel = "noopener noreferrer"
             link.style.display = "none"
-
             document.body.appendChild(link)
             link.click()
             document.body.removeChild(link)
         })
 
-        setTimeout(() => handleOpenChange(false), 50)
+        // Always show the download-ready step regardless of whether tabs opened
+        setOriginStep(fromStep)
+        setPendingPdfs(pdfs)
+        setStep("download-ready")
     }
 
-    // Generate buy contract PDF (single tab)
     const handleBuyContract = (e: React.MouseEvent) => {
         e.preventDefault()
         e.stopPropagation()
         if (!vehicle?.internal_id) return
-        window.open(pdfUrl("buy-contract"), "_blank")
-        // Defer modal close so it doesn't interfere with the navigation
-        setTimeout(() => handleOpenChange(false), 50)
+        triggerPdfGeneration([
+            { label: "Purchase Contract", url: pdfUrl("buy-contract") },
+        ], step)
     }
 
     // Start sale contract wizard
@@ -90,43 +137,42 @@ export function ContractModal({
         setStep("sale-documents")
     }
 
-    // Generate Sales Agreement + Identity Check (two separate tabs)
     const handleSalesAgreement = (e: React.MouseEvent) => {
         e.preventDefault()
         e.stopPropagation()
         if (!vehicle?.internal_id) return
-        openPdfTabs([
-            pdfUrl("sale-agreement"),
-            pdfUrl("identity-check"),
-        ])
+        triggerPdfGeneration([
+            { label: "Sales Agreement", url: pdfUrl("sale-agreement") },
+            { label: "Identity Check", url: pdfUrl("identity-check") },
+        ], step)
     }
 
-    // Generate Receipt + Identity Check (two separate tabs)
     const handleReceipt = (e: React.MouseEvent) => {
         e.preventDefault()
         e.stopPropagation()
         if (!vehicle?.internal_id) return
-
-        // Map frontend "non-eu" to backend expected "outside_eu"
         const backendRegion = saleRegion === "non-eu" ? "outside_eu" : "eu"
-        openPdfTabs([
-            pdfUrl("receipt", { region: backendRegion }),
-            pdfUrl("identity-check"),
-        ])
+        triggerPdfGeneration([
+            { label: "Receipt", url: pdfUrl("receipt", { region: backendRegion }) },
+            { label: "Identity Check", url: pdfUrl("identity-check") },
+        ], step)
     }
 
-    // Generate Binding Order (single tab)
     const handleBindingOrder = (e: React.MouseEvent) => {
         e.preventDefault()
         e.stopPropagation()
         if (!vehicle?.internal_id) return
-        window.open(pdfUrl("binding-order"), "_blank")
-        setTimeout(() => handleOpenChange(false), 50)
+        triggerPdfGeneration([
+            { label: "Binding Order", url: pdfUrl("binding-order") },
+        ], step)
     }
 
     // Go back one step
     const handleBack = () => {
-        if (step === "sale-documents") {
+        if (step === "download-ready") {
+            setStep(originStep)
+            setPendingPdfs([])
+        } else if (step === "sale-documents") {
             setStep("sale-region")
             setSaleRegion(null)
         } else if (step === "sale-region") {
@@ -167,33 +213,63 @@ export function ContractModal({
                     {step === "choose-type" && (
                         <div className="space-y-4">
                             <p className="text-sm text-muted-foreground">Select document type:</p>
-                            <div className="grid grid-cols-2 gap-4">
-                                <Button
-                                    type="button"
-                                    variant="outline"
-                                    className="h-auto flex-col gap-2 p-4 hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-950"
-                                    onClick={handleBuyContract}
-                                    disabled={!vehicle.can_generate_buy_contract}
-                                >
-                                    <FileText className="h-8 w-8 text-blue-500" />
-                                    <span className="font-medium">Purchase Contract</span>
-                                    <span className="text-xs text-muted-foreground">
-                                        {vehicle.can_generate_buy_contract ? "Opens PDF" : "Not available"}
-                                    </span>
-                                </Button>
-                                <Button
-                                    type="button"
-                                    variant="outline"
-                                    className="h-auto flex-col gap-2 p-4 hover:border-green-500 hover:bg-green-50 dark:hover:bg-green-950"
-                                    onClick={handleSaleContract}
-                                    disabled={!vehicle.can_generate_sale_contract}
-                                >
-                                    <FileText className="h-8 w-8 text-green-500" />
-                                    <span className="font-medium">Sale Documents</span>
-                                    <span className="text-xs text-muted-foreground">
-                                        {vehicle.can_generate_sale_contract ? "Choose options" : "Not available"}
-                                    </span>
-                                </Button>
+                            <div className="grid grid-cols-2 gap-4 items-start">
+                                <div className="flex flex-col gap-2">
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        className="w-full h-auto flex-col gap-2 p-4 hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-950"
+                                        onClick={handleBuyContract}
+                                        disabled={!vehicle.can_generate_buy_contract}
+                                    >
+                                        <FileText className="h-8 w-8 text-blue-500" />
+                                        <span className="font-medium">Purchase Contract</span>
+                                        <span className="text-xs text-muted-foreground">
+                                            {vehicle.can_generate_buy_contract ? "Opens PDF" : "Not available"}
+                                        </span>
+                                    </Button>
+                                    {!vehicle.can_generate_buy_contract && (
+                                        <div className="mt-1 px-3 py-2 text-[11px] leading-relaxed text-amber-800 dark:text-amber-300 bg-amber-500/10 rounded-md border border-amber-500/20">
+                                            <p className="font-semibold mb-1 flex items-center gap-1">
+                                                <AlertCircle className="h-3.5 w-3.5 text-amber-600 dark:text-amber-400 flex-shrink-0" />
+                                                <span>To unlock, fill in:</span>
+                                            </p>
+                                            <div className="space-y-0.5 ml-1 text-muted-foreground dark:text-gray-400">
+                                                {getMissingBuyFields().map((f, i) => (
+                                                    <span key={i} className="block">• {f}</span>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                                <div className="flex flex-col gap-2">
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        className="w-full h-auto flex-col gap-2 p-4 hover:border-green-500 hover:bg-green-50 dark:hover:bg-green-950"
+                                        onClick={handleSaleContract}
+                                        disabled={!vehicle.can_generate_sale_contract}
+                                    >
+                                        <FileText className="h-8 w-8 text-green-500" />
+                                        <span className="font-medium">Sale Documents</span>
+                                        <span className="text-xs text-muted-foreground">
+                                            {vehicle.can_generate_sale_contract ? "Choose options" : "Not available"}
+                                        </span>
+                                    </Button>
+                                    {!vehicle.can_generate_sale_contract && (
+                                        <div className="mt-1 px-3 py-2 text-[11px] leading-relaxed text-amber-800 dark:text-amber-300 bg-amber-500/10 rounded-md border border-amber-500/20">
+                                            <p className="font-semibold mb-1 flex items-center gap-1">
+                                                <AlertCircle className="h-3.5 w-3.5 text-amber-600 dark:text-amber-400 flex-shrink-0" />
+                                                <span>To unlock, fill in:</span>
+                                            </p>
+                                            <div className="space-y-0.5 ml-1 text-muted-foreground dark:text-gray-400">
+                                                {getMissingSaleFields().map((f, i) => (
+                                                    <span key={i} className="block">• {f}</span>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
                             </div>
                         </div>
                     )}
@@ -269,6 +345,41 @@ export function ContractModal({
                                     </div>
                                 </Button>
                             </div>
+                        </div>
+                    )}
+
+                    {/* Step 4: Download Ready — PDF buttons + popup hint */}
+                    {step === "download-ready" && (
+                        <div className="space-y-3">
+                            <p className="text-sm text-muted-foreground">
+                                {pendingPdfs.length === 1
+                                    ? "Your document is ready. Click below to open it."
+                                    : `Your ${pendingPdfs.length} documents are ready. Open each one below.`}
+                            </p>
+
+                            {/* One download button per PDF */}
+                            <div className="space-y-2">
+                                {pendingPdfs.map((pdf, index) => (
+                                    <a
+                                        key={index}
+                                        href={pdf.url}
+                                        target={`pdf-download-${index}`}
+                                        rel="noopener noreferrer"
+                                        className="flex items-center gap-3 w-full rounded-lg border border-border bg-card px-4 py-3 text-sm font-medium text-foreground hover:bg-muted/50 hover:border-primary/40 transition-colors"
+                                    >
+                                        <FileText className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                                        <span>{pdf.label}</span>
+                                        <span className="ml-auto text-xs text-muted-foreground">Open PDF →</span>
+                                    </a>
+                                ))}
+                            </div>
+
+                            {/* Quiet popup hint — only shown if there are multiple PDFs */}
+                            {pendingPdfs.length > 1 && (
+                                <p className="text-xs text-muted-foreground pt-1 border-t border-border">
+                                    If a PDF didn't open automatically, use the buttons above. You may need to allow pop-ups for this site in your browser settings.
+                                </p>
+                            )}
                         </div>
                     )}
                 </div>

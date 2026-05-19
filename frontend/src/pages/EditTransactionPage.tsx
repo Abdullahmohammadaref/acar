@@ -1,9 +1,11 @@
+import { useState, useEffect } from "react"
 import { useNavigate, useParams } from "react-router-dom"
-import { ArrowLeft, Edit, Loader2 } from "lucide-react"
+import { ArrowLeft, Edit, Loader2, Columns2, Rows2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { TransactionForm } from "@/components/transactions/TransactionForm"
 import { useTransaction, transactionKeys } from "@/hooks/useTransactions"
 import { useAutoSave } from "@/hooks/useAutoSave"
+import { getSplitWidth, saveSplitWidth } from "@/lib/paginationPrefs"
 import type { TransactionFormData, TransactionUpdateData } from "@/types/transaction"
 
 /**
@@ -25,7 +27,48 @@ export function EditTransactionPage() {
     // Use isFetching to distinguish between initial load and navigation refetch
     const { data: transaction, isLoading, isFetching, error } = useTransaction(transactionId)
 
+    // Layout Toggle State (persisted)
+    const [isSplitView, setIsSplitView] = useState<boolean>(() => {
+        const stored = localStorage.getItem("acar_transaction_split_view")
+        // Default to split view if not set
+        return stored === null ? true : stored === "true"
+    })
 
+    useEffect(() => {
+        localStorage.setItem("acar_transaction_split_view", String(isSplitView))
+    }, [isSplitView])
+
+    const [panelWidth, setPanelWidth] = useState(() => getSplitWidth("acar_transaction_split_width", 450))
+    const [isDragging, setIsDragging] = useState(false)
+
+    const handleWidthSave = () => {
+        setIsDragging(false)
+        saveSplitWidth("acar_transaction_split_width", panelWidth)
+    }
+
+    const splitViewToggle = (
+        <div className="flex items-center gap-2">
+            <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setIsSplitView(!isSplitView)}
+                className="hidden lg:flex gap-2 text-muted-foreground hover:text-foreground"
+            >
+                {isSplitView ? (
+                    <>
+                        <Rows2 className="h-4 w-4" />
+                        Stack View
+                    </>
+                ) : (
+                    <>
+                        <Columns2 className="h-4 w-4" />
+                        Split View
+                    </>
+                )}
+            </Button>
+        </div>
+    )
     // Auto-save hook with cache invalidation
     // - updateQueryKey: Instantly updates the detail cache with response data
     // - invalidateQueryKeys: Marks list queries as stale so navigation shows fresh data
@@ -100,8 +143,9 @@ export function EditTransactionPage() {
                 </div>
             </div>
 
-            {/* Transaction Form (includes Related Transactions Table) */}
-            <TransactionForm
+            <div className={isDragging ? 'pointer-events-none' : ''}>
+                {/* Transaction Form (includes Related Transactions Table) */}
+                <TransactionForm
                 mode="edit"
                 initialData={transaction}
                 onSubmit={handleSubmit}
@@ -111,7 +155,14 @@ export function EditTransactionPage() {
                 onAutoSaveDebounced={saveDebounced}
                 autoSaveStatus={autoSaveStatus}
                 autoSaveErrorMessage={errorMessage}
+                isSplitView={isSplitView}
+                splitViewToggle={splitViewToggle}
+                splitViewWidth={panelWidth}
+                onSplitViewWidthChange={setPanelWidth}
+                onSplitViewWidthSave={handleWidthSave}
+                onSplitViewWidthStart={() => setIsDragging(true)}
             />
+            </div>
         </div>
     )
 }

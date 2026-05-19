@@ -61,10 +61,6 @@ export function VehicleCard({
         return isNaN(num) ? "—" : `€${num.toFixed(2)}`
     }
 
-    // Stop propagation wrapper for interactive elements
-    const stopPropagation = (e: React.MouseEvent) => {
-        e.stopPropagation()
-    }
 
     // Can generate any contract?
     const canGenerateAnyContract = vehicle.can_generate_buy_contract || vehicle.can_generate_sale_contract
@@ -242,7 +238,7 @@ export function VehicleCard({
                 </div>
 
                 {/* Actions Column */}
-                <div className="pointer-events-auto relative z-20 col-span-12 sm:col-span-2 flex flex-col items-end gap-2" onClick={stopPropagation}>
+                <div className="pointer-events-none relative z-20 col-span-12 sm:col-span-2 flex flex-col items-end gap-2">
                     {/* Status Badge */}
                     <Badge className={statusColors[status] || "bg-gray-500"}>
                         {statusLabels[status] || status}
@@ -253,8 +249,8 @@ export function VehicleCard({
                         variant="outline"
                         size="sm"
                         className={canGenerateAnyContract
-                            ? "gap-2"
-                            : "gap-2 opacity-75"
+                            ? "gap-2 pointer-events-auto"
+                            : "gap-2 opacity-75 pointer-events-auto"
                         }
                         onClick={(e) => {
                             e.stopPropagation()
@@ -271,7 +267,7 @@ export function VehicleCard({
                         {status === "inactive" ? (
                             <Button
                                 size="sm"
-                                className="bg-green-600 hover:bg-green-700 text-white"
+                                className="bg-green-600 hover:bg-green-700 text-white pointer-events-auto"
                                 onClick={(e) => {
                                     e.stopPropagation()
                                     onStatusChange?.(vehicle, "purchased")
@@ -283,6 +279,7 @@ export function VehicleCard({
                             <Button
                                 size="sm"
                                 variant="destructive"
+                                className="pointer-events-auto"
                                 onClick={(e) => {
                                     e.stopPropagation()
                                     onDelete?.(vehicle)
@@ -299,7 +296,7 @@ export function VehicleCard({
                             <>
                                 <Button
                                     size="sm"
-                                    className="bg-orange-600 hover:bg-orange-700 text-white"
+                                    className="bg-orange-600 hover:bg-orange-700 text-white pointer-events-auto"
                                     onClick={(e) => {
                                         e.stopPropagation()
                                         onStatusChange?.(vehicle, "ready_for_sale")
@@ -309,7 +306,7 @@ export function VehicleCard({
                                 </Button>
                                 <Button
                                     size="sm"
-                                    className="bg-blue-600 hover:bg-blue-700 text-white"
+                                    className="bg-blue-600 hover:bg-blue-700 text-white pointer-events-auto"
                                     onClick={(e) => {
                                         e.stopPropagation()
                                         onStatusChange?.(vehicle, "reserved")
@@ -322,7 +319,7 @@ export function VehicleCard({
                         {(status === "ready_for_sale" || status === "reserved") && (
                             <Button
                                 size="sm"
-                                className="bg-red-600 hover:bg-red-700 text-white"
+                                className="bg-red-600 hover:bg-red-700 text-white pointer-events-auto"
                                 disabled={!vehicle.can_generate_sale_contract}
                                 onClick={(e) => {
                                     e.stopPropagation()

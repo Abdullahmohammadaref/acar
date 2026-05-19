@@ -64,33 +64,6 @@ function LocaleWrapper({ children }: { children: React.ReactNode }) {
   return <>{children}</>
 }
 
-// Protected routes content (shared between locale and non-locale routes)
-function ProtectedRoutesContent() {
-  return (
-    <Route element={<AppLayout />}>
-      {/* Dashboard */}
-      <Route index element={<Navigate to="dashboard" replace />} />
-      <Route path="dashboard" element={<DashboardPage />} />
-
-      {/* Vehicles */}
-      <Route path="vehicles" element={<VehiclesPage />} />
-      <Route path="vehicles/new" element={<VehicleFormPage />} />
-      <Route path="vehicles/:id/edit" element={<VehicleFormPage />} />
-
-      {/* Transactions */}
-      <Route path="transactions" element={<TransactionsPage />} />
-      <Route path="transactions/new" element={<AddTransactionPage />} />
-      <Route path="transactions/:id" element={<EditTransactionPage />} />
-
-      {/* Placeholder routes for future pages */}
-      <Route path="legal-entities" element={<PlaceholderPage title="Legal Entities" />} />
-      <Route path="settings" element={<PlaceholderPage title="Settings" />} />
-
-      {/* Business Settings */}
-      <Route path="business-settings" element={<BusinessSettingsPage />} />
-    </Route>
-  )
-}
 
 function AppRoutes() {
   return (

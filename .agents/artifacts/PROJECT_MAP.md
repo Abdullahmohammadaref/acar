@@ -1,6 +1,6 @@
 # 🗺️ ACAR — Project Map
 
-> **Last updated:** 2026-04-13
+> **Last updated:** 2026-05-18
 > This file maps every module and file in the codebase. Read this before making changes.
 > For data model details, see [`schema.prisma`](./schema.prisma).
 > For project overview, see [`README.md`](./README.md).
@@ -16,7 +16,16 @@ acar/
 ├── README.md                # Project overview, setup, API docs
 ├── schema.prisma            # Prisma data model (mirrors Django models 1:1)
 ├── PROJECT_MAP.md           # ← You are here
+├── docs-fixes-and-new-field.md  # Documentation for Key Number management and Choices stability fixes
+├── docs-ui-changes.md       # Documentation for UI stability, choices management hierarchy, and dashboard refinements
+├── docs-ui-tweaks.md        # Documentation for legacy UI improvements
+├── docs-deployment.md       # Documentation for deployment infrastructure
 ├── .gitignore
+├── Dockerfile               # Production Django container (Python 3.11-slim + Gunicorn)
+├── docker-compose.yml       # Django + Nginx orchestration
+├── nginx/nginx.conf         # Reverse proxy, SSL, static/media serving, SPA fallback
+├── .github/workflows/deploy.yml  # CI/CD — auto-deploy on push to main
+├── scripts/backup.sh        # Daily SQLite + media backup with 7-day rotation
 ├── backend/                 # Django backend (Python)
 └── frontend/                # React SPA (TypeScript)
 ```
@@ -42,7 +51,7 @@ This is the **only Django app**. All models, APIs, and views live here.
 
 | File | Purpose | Key Contents |
 |---|---|---|
-| `models.py` | **ALL data models** (1,835 lines) | `Business`, `Branch`, `User`, `LegalEntity`, `Vehicle`, `Transaction`, `AuthActionRequest`, `ActivityLog` + 11 dynamic choice models (`PaymentMethod`, `VehicleType`, `BodyType`, `Make`, `VehicleModel`, `Color`, `FuelType`, `DamageType`, `DoorsChoice`, `TaxPercentage`, `Category`, `Subcategory`, `Currency`) |
+| `models.py` | **ALL data models** (1,870+ lines) | `Business`, `Branch`, `User`, `LegalEntity`, `Vehicle`, `Transaction`, `AuthActionRequest`, `ActivityLog`, `KeyNumber` + 11 dynamic choice models (`PaymentMethod`, `VehicleType`, `BodyType`, `Make`, `VehicleModel`, `Color`, `FuelType`, `DamageType`, `DoorsChoice`, `TaxPercentage`, `Category`, `Subcategory`, `Currency`) |
 | `migrations/` | Django migration files | Auto-generated — never edit applied migrations |
 
 #### API Layer (Django Ninja)
@@ -55,6 +64,7 @@ This is the **only Django app**. All models, APIs, and views live here.
 | `transaction_api.py` | Transaction CRUD + financial summaries + CSV import | `/api/transactions/` |
 | `settings_api.py` | Business settings, user management, branch management | `/api/settings/` |
 | `activity_logs_api.py` | Activity log retrieval (read-only) | `/api/activity-logs/` |
+| `dashboard_api.py` | Aggregated dashboard KPIs, monthly trends, financial breakdown | `/api/dashboard/` |
 
 #### Schema / Validation Layer
 
@@ -216,6 +226,7 @@ This is the **only Django app**. All models, APIs, and views live here.
 | `VehicleFilters.tsx` | Status, make, body type, and date range filters |
 | `ContractModal.tsx` | PDF contract generation dialog |
 | `FinancialSummary.tsx` | Vehicle-level financial summary card |
+| `FinancialMetricsStrip.tsx` | Compact inline financial KPI grid (COGS, margin, ROI, etc.) |
 | `StatusBanner.tsx` | Vehicle lifecycle status banner |
 
 ##### Transactions (`src/components/transactions/`)
@@ -244,6 +255,9 @@ This is the **only Django app**. All models, APIs, and views live here.
 | `RecordNavigation.tsx` | Prev/next navigation between records |
 | `ScrollToTop.tsx` | Scroll-to-top button |
 | `StickyFooter.tsx` | Fixed footer bar for form pages |
+| `SplitViewArrows.tsx` | Component to adjust split view proportions dynamically |
+| `PerPageInput.tsx` | Table row limit selector component |
+| `PageInput.tsx` | Direct page jump input component |
 
 #### Hooks (`src/hooks/`)
 
@@ -255,6 +269,7 @@ This is the **only Django app**. All models, APIs, and views live here.
 | `useActivityLogs.ts` | Activity log hooks | `useActivityLogs` |
 | `useAutoSave.ts` | Auto-save debounced form persistence | `useAutoSave` |
 | `useAuthPolling.ts` | Polls `AuthActionRequest` status during login | `useAuthPolling` |
+| `useDashboard.ts` | Dashboard API hook | `useDashboard` |
 
 #### Lib / Utilities (`src/lib/`)
 
@@ -264,6 +279,8 @@ This is the **only Django app**. All models, APIs, and views live here.
 | `auth.tsx` | `AuthProvider` context — login, logout, session check |
 | `i18n.ts` | i18next configuration — locale detection, namespace setup |
 | `utils.ts` | General utilities — `cn()` classname merger, date formatters |
+| `paginationPrefs.ts` | Shared utilities to persist and retrieve user pagination settings using cookies |
+| `vehicleFinancials.ts` | Financial calculation utilities (COGS, margin, ROI, break-even, holding cost) |
 | `validations.ts` | Zod validation schemas for forms |
 
 #### Types (`src/types/`)
@@ -272,6 +289,7 @@ This is the **only Django app**. All models, APIs, and views live here.
 |---|---|
 | `vehicle.ts` | `Vehicle`, `VehicleFilters`, `VehicleFormData` interfaces |
 | `transaction.ts` | `Transaction`, `TransactionFilters`, `TransactionFormData` interfaces |
+| `dashboard.ts` | `DashboardData`, `MonthlyDataPoint`, `TopVehicle` interfaces |
 
 #### Locales (`src/locales/`)
 
@@ -281,6 +299,42 @@ This is the **only Django app**. All models, APIs, and views live here.
 | `en.json` | English | LTR |
 | `tr.json` | Turkish | LTR |
 | `ar.json` | Arabic | RTL |
+
+---
+
+## Deployment Infrastructure
+
+### Docker
+
+| File | Purpose |
+|---|---|
+| `Dockerfile` | Python 3.11-slim container — installs system deps (Pillow, ReportLab), pip deps, copies backend, runs Gunicorn on port 8000 |
+| `docker-compose.yml` | Orchestrates `django` (Gunicorn) + `nginx` (reverse proxy) services with volume mounts for DB, media, locale, SSL certs |
+
+### Nginx
+
+| File | Purpose |
+|---|---|
+| `nginx/nginx.conf` | HTTP→HTTPS redirect, Let's Encrypt ACME, proxies `/api/`, `/admin/`, `/rosetta/` to Django, serves `/media/` and `/static/` directly, React SPA fallback for `/*` |
+
+### Production Settings
+
+| File | Purpose |
+|---|---|
+| `backend/acar/settings_prod.py` | Imports from `settings.py`, overrides: `DEBUG=False`, enforces `SECRET_KEY` from env, adds WhiteNoise middleware, secure cookies, env-based CORS/CSRF |
+| `backend/.env.production.template` | Template showing required env vars — committed to git, real `.env.production` is gitignored |
+
+### CI/CD
+
+| File | Purpose |
+|---|---|
+| `.github/workflows/deploy.yml` | GitHub Actions — on push to `main`: SSH into server, pull both repos, build React, rebuild Docker, migrate, collectstatic |
+
+### Backup
+
+| File | Purpose |
+|---|---|
+| `scripts/backup.sh` | Daily cron — SQLite `.backup` + media tarball, 7-day retention, intended for `0 3 * * *` crontab |
 
 ---
 

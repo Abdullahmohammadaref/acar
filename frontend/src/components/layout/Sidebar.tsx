@@ -63,6 +63,7 @@ const navItems: NavItem[] = [
             { titleKey: "nav.all_entities", path: "legal-entities" },
             { titleKey: "nav.private", path: "legal-entities?type=individual", status: "individual" },
             { titleKey: "nav.companies", path: "legal-entities?type=company", status: "company" },
+            { titleKey: "nav.inactive_entities", path: "legal-entities?status=inactive", status: "inactive_entity" },
         ],
     },
     {
@@ -87,6 +88,7 @@ const statusColors: Record<string, string> = {
     // Legal Entities
     individual: "text-blue-500",
     company: "text-purple-500",
+    inactive_entity: "text-zinc-400",
 }
 
 interface SidebarProps {
@@ -148,8 +150,13 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
         // 1. Explicit Status Check (legacy support / Vehicles)
         if (status) {
             // Special handling for Legal Entities "type" query param mapping to "status" prop
-            if (path.includes("legal-entities") && pathQuery?.includes("type=")) {
-                return searchParams.get("type") === status
+            if (path.includes("legal-entities")) {
+                if (pathQuery?.includes("type=")) {
+                    return searchParams.get("type") === status
+                }
+                if (pathQuery?.includes("status=") && status === "inactive_entity") {
+                    return searchParams.get("status") === "inactive"
+                }
             }
             // Standard status param check
             return searchParams.get("status") === status
@@ -177,6 +184,10 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
     const filteredNavItems = navItems.filter((item) => {
         // Hide transactions for employees without transactions_access
         if (item.titleKey === "nav.transactions" && user && !user.is_manager && !user.transactions_access) {
+            return false
+        }
+        // Hide choices management for non-managers
+        if (item.titleKey === "nav.choices_management" && user && !user.is_manager) {
             return false
         }
         return true

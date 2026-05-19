@@ -456,6 +456,36 @@ class Currency(models.Model):
     def __str__(self):
         return f"{self.name} ({self.code})"
 
+
+class KeyNumber(models.Model):
+    """Tracks physical key numbers that can be assigned to vehicles."""
+    number = models.PositiveIntegerField(_('key number'))
+    business = models.ForeignKey(
+        Business,
+        on_delete=models.CASCADE,
+        related_name='key_numbers',
+        verbose_name=_('business')
+    )
+    vehicle = models.OneToOneField(
+        'Vehicle',
+        on_delete=models.SET_NULL,
+        related_name='key_number',
+        null=True,
+        blank=True,
+        verbose_name=_('vehicle')
+    )
+    is_active = models.BooleanField(_('is active'), default=True)
+
+    class Meta:
+        ordering = ['number']
+        unique_together = ['number', 'business']
+        verbose_name = _('Key Number')
+        verbose_name_plural = _('Key Numbers')
+
+    def __str__(self):
+        return str(self.number)
+
+
 class Vehicle(models.Model):
     ### weel drice of car
     ### benzin liters, voltagem,
@@ -1024,6 +1054,11 @@ class Vehicle(models.Model):
 
             # Create invoice number
             self.sale_invoice_number = f"Rng-{sequential_number:04d}"
+
+        # Auto-release key if vehicle is sold or inactive
+        if self.pk and self.status in ['sold', 'inactive']:
+            from manager.models import KeyNumber
+            KeyNumber.objects.filter(vehicle=self).update(vehicle=None)
 
         super().save(*args, **kwargs)
 

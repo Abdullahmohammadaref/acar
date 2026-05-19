@@ -1,4 +1,3 @@
-import { useMemo } from "react"
 import {
     Car,
     TrendingUp,
@@ -8,121 +7,42 @@ import {
     Timer,
     Target,
     Loader2,
+    AlertCircle,
+    BarChart3,
+    Trophy,
+    ArrowUpRight,
 } from "lucide-react"
-import { useVehicles } from "@/hooks/useVehicles"
-import { useTransactions } from "@/hooks/useTransactions"
+import {
+    BarChart,
+    Bar,
+    XAxis,
+    YAxis,
+    CartesianGrid,
+    Tooltip,
+    ResponsiveContainer,
+    Legend,
+    AreaChart,
+    Area,
+} from "recharts"
+import { useParams } from "react-router-dom"
+import { useDashboard } from "@/hooks/useDashboard"
 import { formatCurrency } from "@/lib/utils"
 import {
-    calcDaysOnStock,
     getDaysOnStockColor,
     formatPercent,
     formatDays,
 } from "@/lib/vehicleFinancials"
+import { FinancialSummaryTable } from "@/components/transactions/FinancialSummaryTable"
+// Types imported via useDashboard return type
 
 /**
  * Dashboard page — KPI-driven financial overview
- * This page has NO vertical space constraints (per requirements).
- * All data is sourced from the vehicle and transaction list endpoints.
+ * Powered by dedicated /api/dashboard/ endpoint.
+ * All data is pre-computed server-side.
  */
 export function DashboardPage() {
-    // Fetch all vehicles (up to 500 for aggregate stats)
-    const { data: vehicleData, isLoading: vehiclesLoading } = useVehicles({
-        per_page: 500,
-    })
-    // Fetch all transactions
-    const { data: transactionData, isLoading: transactionsLoading } = useTransactions({
-        per_page: 500,
-    })
-    // Use transactionData in future enhancements
-    void transactionData
-
-    const isLoading = vehiclesLoading || transactionsLoading
-    const vehicles = vehicleData?.vehicles?.items ?? []
-    const financialSummary = vehicleData?.financial_summary
-
-    // Compute KPIs from vehicle data
-    const kpis = useMemo(() => {
-        if (!vehicles.length) return null
-
-        const totalVehicles = vehicles.length
-        const statusCounts: Record<string, number> = {}
-        vehicles.forEach((v) => {
-            const s = v.status || "unknown"
-            statusCounts[s] = (statusCounts[s] || 0) + 1
-        })
-
-        // Price metrics — only vehicles with both buy and sale net values
-        const soldVehicles = vehicles.filter(
-            (v) => v.status === "sold" && v.buy_price_net != null && v.sale_price_net != null,
-        )
-        const totalSold = soldVehicles.length
-
-        let totalProfit = 0
-        let totalRevenue = 0
-        let totalCost = 0
-        const profitPerVehicle: number[] = []
-        const marginPerVehicle: number[] = []
-        const daysOnStockList: number[] = []
-
-        soldVehicles.forEach((v) => {
-            const buyNet = typeof v.buy_price_net === "string" ? parseFloat(v.buy_price_net) : (v.buy_price_net ?? 0)
-            const saleNet = typeof v.sale_price_net === "string" ? parseFloat(v.sale_price_net) : (v.sale_price_net ?? 0)
-            const profit = Math.round((saleNet - buyNet) * 100) / 100
-            totalProfit += profit
-            totalRevenue += saleNet
-            totalCost += buyNet
-            profitPerVehicle.push(profit)
-            if (saleNet !== 0) {
-                marginPerVehicle.push(Math.round((profit / saleNet) * 100 * 10) / 10)
-            }
-            const days = calcDaysOnStock(v.buy_date, v.sale_date)
-            if (days !== null) daysOnStockList.push(days)
-        })
-
-        // Unsold vehicles — days on stock
-        const unsoldVehicles = vehicles.filter(
-            (v) => v.status !== "sold" && v.status !== "inactive" && v.buy_date,
-        )
-        const unsoldDays: number[] = []
-        unsoldVehicles.forEach((v) => {
-            const days = calcDaysOnStock(v.buy_date, null)
-            if (days !== null) unsoldDays.push(days)
-        })
-
-        const avgProfit = totalSold > 0 ? totalProfit / totalSold : null
-        const avgMargin = marginPerVehicle.length > 0
-            ? marginPerVehicle.reduce((a, b) => a + b, 0) / marginPerVehicle.length
-            : null
-        const avgDaysSold = daysOnStockList.length > 0
-            ? Math.round(daysOnStockList.reduce((a, b) => a + b, 0) / daysOnStockList.length)
-            : null
-        const avgDaysUnsold = unsoldDays.length > 0
-            ? Math.round(unsoldDays.reduce((a, b) => a + b, 0) / unsoldDays.length)
-            : null
-        const overallROI = totalCost > 0
-            ? Math.round((totalProfit / totalCost) * 100 * 10) / 10
-            : null
-        const overallMargin = totalRevenue > 0
-            ? Math.round((totalProfit / totalRevenue) * 100 * 10) / 10
-            : null
-
-        return {
-            totalVehicles,
-            statusCounts,
-            totalSold,
-            totalProfit: Math.round(totalProfit * 100) / 100,
-            totalRevenue: Math.round(totalRevenue * 100) / 100,
-            totalCost: Math.round(totalCost * 100) / 100,
-            avgProfit: avgProfit !== null ? Math.round(avgProfit * 100) / 100 : null,
-            avgMargin,
-            avgDaysSold,
-            avgDaysUnsold,
-            overallROI,
-            overallMargin,
-            unsoldCount: unsoldVehicles.length,
-            profitPerVehicle,
-        }
-    }, [vehicles])
+    const { business_slug } = useParams<{ business_slug: string }>()
+    const { data, isLoading, isError, error } = useDashboard()
 
     if (isLoading) {
         return (
@@ -132,28 +52,74 @@ export function DashboardPage() {
         )
     }
 
-    if (!kpis) {
+    if (isError || !data) {
         return (
-            <div className="space-y-8">
+            <div className="space-y-6">
                 <div>
                     <h1 className="text-2xl font-bold text-foreground">Dashboard</h1>
-                    <p className="text-muted-foreground">No vehicle data available yet.</p>
+                </div>
+                <div className="flex items-center gap-3 rounded-xl border border-amber-500/30 bg-amber-500/5 p-5">
+                    <AlertCircle className="h-5 w-5 text-amber-500 flex-shrink-0" />
+                    <div>
+                        <p className="text-sm font-medium text-foreground">Unable to load dashboard data</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                            {(error as Error)?.message || "Please try refreshing the page."}
+                        </p>
+                    </div>
                 </div>
             </div>
         )
     }
 
-    // Status breakdown data for visual bar
-    const statusConfig: Record<string, { label: string; color: string; bgColor: string }> = {
-        purchased: { label: "Purchased", color: "bg-green-500", bgColor: "bg-green-500/10" },
-        ready_for_sale: { label: "Ready", color: "bg-orange-500", bgColor: "bg-orange-500/10" },
-        reserved: { label: "Reserved", color: "bg-blue-500", bgColor: "bg-blue-500/10" },
-        sold: { label: "Sold", color: "bg-red-500", bgColor: "bg-red-500/10" },
-        inactive: { label: "Inactive", color: "bg-gray-400", bgColor: "bg-gray-400/10" },
+    // Empty state
+    if (data.total_vehicles === 0) {
+        return (
+            <div className="space-y-6">
+                <div>
+                    <h1 className="text-2xl font-bold text-foreground">Dashboard</h1>
+                    <p className="text-muted-foreground">Overview of your vehicle inventory and finances</p>
+                </div>
+                <div className="flex flex-col items-center justify-center h-64 rounded-xl border border-dashed border-border bg-card/50">
+                    <Car className="h-12 w-12 text-muted-foreground/40 mb-3" />
+                    <p className="text-lg font-medium text-muted-foreground">No vehicles yet</p>
+                    <p className="text-sm text-muted-foreground/60 mt-1">
+                        Add your first vehicle to see analytics here.
+                    </p>
+                    <a
+                        href={`/${business_slug}/vehicles/new`}
+                        className="mt-4 inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
+                    >
+                        <Car className="h-4 w-4" />
+                        Add Vehicle
+                    </a>
+                </div>
+            </div>
+        )
     }
 
+    const d = data
+    const statusConfig: Record<string, { label: string; color: string; dotColor: string }> = {
+        purchased: { label: "Purchased", color: "bg-green-500", dotColor: "bg-green-500" },
+        ready_for_sale: { label: "Ready", color: "bg-orange-500", dotColor: "bg-orange-500" },
+        reserved: { label: "Reserved", color: "bg-blue-500", dotColor: "bg-blue-500" },
+        sold: { label: "Sold", color: "bg-red-500", dotColor: "bg-red-500" },
+        inactive: { label: "Inactive", color: "bg-gray-400", dotColor: "bg-gray-400" },
+    }
+
+    const statusEntries = Object.entries(d.status_counts).filter(([, count]) => count > 0)
+
+    // Chart data
+    const chartData = d.monthly_trend.map((p) => ({
+        name: p.month.substring(5), // "MM" only
+        fullMonth: p.month,
+        Revenue: Math.round(p.revenue),
+        Expenses: Math.round(p.expenses),
+        Profit: Math.round(p.profit),
+        Sold: p.vehicles_sold,
+    }))
+
     return (
-        <div className="space-y-8">
+        <div className="space-y-6">
             {/* Page Header */}
             <div>
                 <h1 className="text-2xl font-bold text-foreground">Dashboard</h1>
@@ -162,98 +128,83 @@ export function DashboardPage() {
                 </p>
             </div>
 
-            {/* Top KPI Row — 4 primary cards */}
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                {/* Total Vehicles */}
+            {/* Top KPI Row */}
+            <div className="grid gap-3 grid-cols-2 lg:grid-cols-4">
                 <KPICard
                     icon={Car}
                     label="Total Vehicles"
-                    value={String(kpis.totalVehicles)}
-                    subLabel={`${kpis.unsoldCount} in stock`}
+                    value={String(d.total_vehicles)}
+                    subLabel={`${d.in_stock} in stock`}
                     color="text-primary"
                     bgColor="bg-primary/10"
                 />
-
-                {/* Total Sold */}
                 <KPICard
                     icon={Package}
                     label="Vehicles Sold"
-                    value={String(kpis.totalSold)}
-                    subLabel={`of ${kpis.totalVehicles} total`}
+                    value={String(d.status_counts.sold)}
+                    subLabel={`of ${d.total_vehicles} total`}
                     color="text-emerald-600 dark:text-emerald-400"
                     bgColor="bg-emerald-500/10"
                 />
-
-                {/* Total Profit */}
                 <KPICard
                     icon={DollarSign}
                     label="Total Net Profit"
-                    value={formatCurrency(kpis.totalProfit)}
-                    subLabel={`avg ${kpis.avgProfit !== null ? formatCurrency(kpis.avgProfit) : "—"} / vehicle`}
-                    color={kpis.totalProfit >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-red-500"}
-                    bgColor={kpis.totalProfit >= 0 ? "bg-emerald-500/10" : "bg-red-500/10"}
+                    value={formatCurrency(d.total_profit)}
+                    subLabel={`avg ${d.profit_distribution.avg_profit !== null ? formatCurrency(d.profit_distribution.avg_profit) : "—"} / vehicle`}
+                    color={d.total_profit >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-red-500"}
+                    bgColor={d.total_profit >= 0 ? "bg-emerald-500/10" : "bg-red-500/10"}
                     equation="Σ (saleNet − buyNet)"
                 />
-
-                {/* Overall ROI */}
                 <KPICard
                     icon={Target}
-                    label="Overall ROI (Return on Investment)"
-                    value={kpis.overallROI !== null ? formatPercent(kpis.overallROI) : "—"}
-                    subLabel={`Margin: ${kpis.overallMargin !== null ? formatPercent(kpis.overallMargin) : "—"}`}
-                    color={kpis.overallROI !== null && kpis.overallROI >= 0 ? "text-fuchsia-600 dark:text-fuchsia-400" : "text-red-500"}
+                    label="Overall ROI"
+                    value={d.overall_roi !== null ? formatPercent(d.overall_roi) : "—"}
+                    subLabel={`Margin: ${d.overall_margin !== null ? formatPercent(d.overall_margin) : "—"}`}
+                    color={d.overall_roi !== null && d.overall_roi >= 0 ? "text-fuchsia-600 dark:text-fuchsia-400" : "text-red-500"}
                     bgColor="bg-fuchsia-500/10"
-                    equation="totalProfit ÷ totalCost × 100"
+                    equation="profit ÷ cost × 100"
                 />
             </div>
 
             {/* Second Row — Revenue, Expenses, Days */}
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {/* Total Revenue */}
+            <div className="grid gap-3 grid-cols-2 lg:grid-cols-3">
                 <KPICard
                     icon={TrendingUp}
                     label="Total Revenue"
-                    value={formatCurrency(kpis.totalRevenue)}
+                    value={formatCurrency(d.total_revenue)}
                     subLabel="Net sale prices"
                     color="text-green-500"
                     bgColor="bg-green-500/10"
-                    equation="Σ saleNet"
                 />
-
-                {/* Total Cost */}
                 <KPICard
                     icon={TrendingDown}
                     label="Total Cost"
-                    value={formatCurrency(kpis.totalCost)}
+                    value={formatCurrency(d.total_cost)}
                     subLabel="Net buy prices"
                     color="text-red-500"
                     bgColor="bg-red-500/10"
-                    equation="Σ buyNet"
                 />
-
-                {/* Avg Days on Stock */}
-                <div className="rounded-xl border border-border bg-card p-5">
+                {/* Days on Stock Card */}
+                <div className="rounded-xl border border-border bg-card p-4 col-span-2 lg:col-span-1">
                     <div className="flex items-center gap-3">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-slate-500/10">
-                            <Timer className="h-5 w-5 text-slate-500" />
+                        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-500/10 flex-shrink-0">
+                            <Timer className="h-4 w-4 text-slate-500" />
                         </div>
-                        <div className="min-w-0">
-                            <p className="text-sm text-muted-foreground">Avg Days on Stock</p>
-                            <div className="flex items-center gap-4 mt-1">
-                                {/* Sold vehicles avg */}
+                        <div className="min-w-0 flex-1">
+                            <p className="text-xs text-muted-foreground">Avg Days on Stock</p>
+                            <div className="flex items-center gap-4 mt-0.5">
                                 <div>
-                                    <p className={`text-xl font-bold ${getDaysOnStockColor(kpis.avgDaysSold)}`}>
-                                        {kpis.avgDaysSold !== null ? formatDays(kpis.avgDaysSold) : "—"}
+                                    <p className={`text-lg font-bold ${getDaysOnStockColor(d.days_on_stock.avg_sold)}`}>
+                                        {d.days_on_stock.avg_sold !== null ? formatDays(d.days_on_stock.avg_sold) : "—"}
                                     </p>
-                                    <p className="text-[10px] text-muted-foreground/60">sold vehicles</p>
+                                    <p className="text-[10px] text-muted-foreground/60">sold</p>
                                 </div>
-                                {/* Unsold vehicles avg */}
                                 <div className="border-l border-border pl-4">
-                                    <p className={`text-xl font-bold ${getDaysOnStockColor(kpis.avgDaysUnsold)}`}>
-                                        {kpis.avgDaysUnsold !== null ? formatDays(kpis.avgDaysUnsold) : "—"}
+                                    <p className={`text-lg font-bold ${getDaysOnStockColor(d.days_on_stock.avg_unsold)}`}>
+                                        {d.days_on_stock.avg_unsold !== null ? formatDays(d.days_on_stock.avg_unsold) : "—"}
                                     </p>
                                     <p className="text-[10px] text-muted-foreground/60">
-                                        current stock ({kpis.unsoldCount})
+                                        stock ({d.days_on_stock.unsold_count})
                                     </p>
                                 </div>
                             </div>
@@ -262,39 +213,34 @@ export function DashboardPage() {
                 </div>
             </div>
 
-            {/* Status Distribution */}
-            <div className="rounded-xl border border-border bg-card p-5">
-                <h3 className="text-sm font-medium text-muted-foreground mb-3">
+            {/* Status Distribution Bar */}
+            <div className="rounded-xl border border-border bg-card p-4">
+                <h3 className="text-xs font-medium text-muted-foreground mb-2.5 uppercase tracking-wider">
                     Vehicle Status Distribution
                 </h3>
-                {/* Visual bar */}
-                <div className="h-4 w-full rounded-full overflow-hidden flex bg-muted">
-                    {Object.entries(kpis.statusCounts).map(([status, count]) => {
-                        const pct = (count / kpis.totalVehicles) * 100
+                <div className="h-3 w-full rounded-full overflow-hidden flex bg-muted">
+                    {statusEntries.map(([status, count]) => {
+                        const pct = (count / d.total_vehicles) * 100
                         const cfg = statusConfig[status] || { color: "bg-gray-400" }
                         return (
                             <div
                                 key={status}
-                                className={`${cfg.color} transition-all`}
+                                className={`${cfg.color} transition-all duration-500`}
                                 style={{ width: `${pct}%` }}
                                 title={`${cfg.label || status}: ${count}`}
                             />
                         )
                     })}
                 </div>
-                {/* Legend */}
-                <div className="flex flex-wrap gap-4 mt-3">
-                    {Object.entries(kpis.statusCounts).map(([status, count]) => {
-                        const cfg = statusConfig[status] || {
-                            label: status,
-                            color: "bg-gray-400",
-                        }
+                <div className="flex flex-wrap gap-x-5 gap-y-1.5 mt-2.5">
+                    {statusEntries.map(([status, count]) => {
+                        const cfg = statusConfig[status] || { label: status, dotColor: "bg-gray-400" }
                         return (
-                            <div key={status} className="flex items-center gap-2 text-sm">
-                                <span className={`w-3 h-3 rounded-full ${cfg.color}`} />
+                            <div key={status} className="flex items-center gap-1.5 text-xs">
+                                <span className={`w-2 h-2 rounded-full ${cfg.dotColor}`} />
                                 <span className="text-foreground font-medium">{cfg.label || status}</span>
                                 <span className="text-muted-foreground">
-                                    {count} ({Math.round((count / kpis.totalVehicles) * 100)}%)
+                                    {count} ({Math.round((count / d.total_vehicles) * 100)}%)
                                 </span>
                             </div>
                         )
@@ -302,109 +248,145 @@ export function DashboardPage() {
                 </div>
             </div>
 
-            {/* Financial Summary from API */}
-            {financialSummary && (
-                <div className="rounded-xl border border-border bg-card overflow-hidden">
-                    <div className="px-5 py-4 border-b border-border">
-                        <h3 className="text-base font-medium">Financial Breakdown</h3>
-                        <p className="text-xs text-muted-foreground mt-0.5">
-                            Net / Tax / Gross split from all vehicle transactions
-                        </p>
+            {/* Charts Row */}
+            {chartData.some((c) => c.Revenue > 0 || c.Expenses > 0) && (
+                <div className="grid gap-3 lg:grid-cols-2">
+                    {/* Revenue vs Expenses Bar Chart */}
+                    <div className="rounded-xl border border-border bg-card p-4">
+                        <h3 className="text-xs font-medium text-muted-foreground mb-3 uppercase tracking-wider flex items-center gap-1.5">
+                            <BarChart3 className="h-3.5 w-3.5" />
+                            Monthly Revenue vs Cost
+                        </h3>
+                        <div className="h-56">
+                            <ResponsiveContainer width="100%" height="100%">
+                                <BarChart data={chartData} margin={{ top: 5, right: 5, left: -15, bottom: 0 }}>
+                                    <CartesianGrid strokeDasharray="3 3" className="stroke-border/50" />
+                                    <XAxis dataKey="name" tick={{ fontSize: 11 }} className="fill-muted-foreground" />
+                                    <YAxis tick={{ fontSize: 10 }} className="fill-muted-foreground" tickFormatter={(v) => `${Math.round(v / 1000)}k`} />
+                                    <Tooltip
+                                        contentStyle={{
+                                            backgroundColor: "hsl(var(--card))",
+                                            border: "1px solid hsl(var(--border))",
+                                            borderRadius: "8px",
+                                            fontSize: "12px",
+                                        }}
+                                        formatter={(value) => formatCurrency(Number(value))}
+                                    />
+                                    <Legend wrapperStyle={{ fontSize: "11px" }} />
+                                    <Bar dataKey="Revenue" fill="hsl(142, 71%, 45%)" radius={[3, 3, 0, 0]} />
+                                    <Bar dataKey="Expenses" fill="hsl(0, 84%, 60%)" radius={[3, 3, 0, 0]} />
+                                </BarChart>
+                            </ResponsiveContainer>
+                        </div>
                     </div>
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-sm">
-                            <thead>
-                                <tr className="border-b border-border bg-muted/50">
-                                    <th className="px-5 py-3 text-left font-medium text-muted-foreground w-24">Type</th>
-                                    <th className="px-5 py-3 text-right font-medium text-green-500">Revenue</th>
-                                    <th className="px-5 py-3 text-center font-medium text-muted-foreground w-8">−</th>
-                                    <th className="px-5 py-3 text-right font-medium text-red-500">Expenses</th>
-                                    <th className="px-5 py-3 text-center font-medium text-muted-foreground w-8">=</th>
-                                    <th className="px-5 py-3 text-right font-medium text-foreground">Difference</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {[
-                                    {
-                                        label: "Net",
-                                        revenue: financialSummary.net_total_revenue,
-                                        expenses: financialSummary.net_total_expenses,
-                                        diff: financialSummary.net_difference,
-                                    },
-                                    {
-                                        label: "Tax",
-                                        revenue: financialSummary.tax_total_revenue,
-                                        expenses: financialSummary.tax_total_expenses,
-                                        diff: financialSummary.tax_difference,
-                                        hasDivider: true,
-                                    },
-                                    {
-                                        label: "Gross",
-                                        revenue: financialSummary.gross_total_revenue,
-                                        expenses: financialSummary.gross_total_expenses,
-                                        diff: financialSummary.gross_difference,
-                                    },
-                                ].map((row) => (
-                                    <tr
-                                        key={row.label}
-                                        className={`transition-colors hover:bg-muted/30 ${
-                                            row.hasDivider ? "border-b-2 border-border" : ""
-                                        }`}
-                                    >
-                                        <td className="px-5 py-3 font-medium text-foreground">{row.label}</td>
-                                        <td className="px-5 py-3 text-right text-green-500 font-mono">
-                                            {formatCurrency(row.revenue)}
-                                        </td>
-                                        <td className="px-5 py-3 text-center text-muted-foreground">−</td>
-                                        <td className="px-5 py-3 text-right text-red-500 font-mono">
-                                            {formatCurrency(row.expenses)}
-                                        </td>
-                                        <td className="px-5 py-3 text-center text-muted-foreground">=</td>
-                                        <td
-                                            className={`px-5 py-3 text-right font-mono font-semibold ${
-                                                row.diff >= 0 ? "text-green-500" : "text-red-500"
-                                            }`}
-                                        >
-                                            {formatCurrency(row.diff)}
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
+
+                    {/* Profit Trend Area Chart */}
+                    <div className="rounded-xl border border-border bg-card p-4">
+                        <h3 className="text-xs font-medium text-muted-foreground mb-3 uppercase tracking-wider flex items-center gap-1.5">
+                            <TrendingUp className="h-3.5 w-3.5" />
+                            Profit Trend
+                        </h3>
+                        <div className="h-56">
+                            <ResponsiveContainer width="100%" height="100%">
+                                <AreaChart data={chartData} margin={{ top: 5, right: 5, left: -15, bottom: 0 }}>
+                                    <defs>
+                                        <linearGradient id="profitGrad" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="5%" stopColor="hsl(262, 83%, 58%)" stopOpacity={0.3} />
+                                            <stop offset="95%" stopColor="hsl(262, 83%, 58%)" stopOpacity={0} />
+                                        </linearGradient>
+                                    </defs>
+                                    <CartesianGrid strokeDasharray="3 3" className="stroke-border/50" />
+                                    <XAxis dataKey="name" tick={{ fontSize: 11 }} className="fill-muted-foreground" />
+                                    <YAxis tick={{ fontSize: 10 }} className="fill-muted-foreground" tickFormatter={(v) => `${Math.round(v / 1000)}k`} />
+                                    <Tooltip
+                                        contentStyle={{
+                                            backgroundColor: "hsl(var(--card))",
+                                            border: "1px solid hsl(var(--border))",
+                                            borderRadius: "8px",
+                                            fontSize: "12px",
+                                        }}
+                                        formatter={(value) => formatCurrency(Number(value))}
+                                    />
+                                    <Area
+                                        type="monotone"
+                                        dataKey="Profit"
+                                        stroke="hsl(262, 83%, 58%)"
+                                        fill="url(#profitGrad)"
+                                        strokeWidth={2}
+                                    />
+                                </AreaChart>
+                            </ResponsiveContainer>
+                        </div>
                     </div>
                 </div>
             )}
 
-            {/* Profit Distribution (text-based since no chart library) */}
-            {kpis.profitPerVehicle.length > 0 && (
-                <div className="rounded-xl border border-border bg-card p-5">
-                    <h3 className="text-sm font-medium text-muted-foreground mb-3">
-                        Profit Distribution (Sold Vehicles)
+            {/* Financial Breakdown (9 Cards) */}
+            <div className="space-y-4">
+                <div className="flex items-center justify-between px-1">
+                    <div className="flex items-center gap-2">
+                        <DollarSign className="h-4 w-4 text-primary" />
+                        <h3 className="text-sm font-bold text-foreground uppercase tracking-wider">
+                            Financial Performance Breakdown
+                        </h3>
+                    </div>
+                    <div className="h-px flex-1 mx-6 bg-border/40" />
+                </div>
+                <div className="rounded-2xl border border-border bg-card/30 p-2 shadow-sm">
+                    <FinancialSummaryTable summary={d.financial_breakdown} />
+                </div>
+            </div>
+
+            {/* Bottom Row — Profit Distribution + Top Vehicles */}
+            <div className="grid gap-3 lg:grid-cols-2">
+                {/* Profit Distribution */}
+                <div className="rounded-xl border border-border bg-card p-4">
+                    <h3 className="text-xs font-medium text-muted-foreground mb-3 uppercase tracking-wider">
+                        Profit Distribution
                     </h3>
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                        <MiniStat
-                            label="Highest Profit"
-                            value={formatCurrency(Math.max(...kpis.profitPerVehicle))}
-                            color="text-emerald-600 dark:text-emerald-400"
-                        />
-                        <MiniStat
-                            label="Lowest Profit"
-                            value={formatCurrency(Math.min(...kpis.profitPerVehicle))}
-                            color={Math.min(...kpis.profitPerVehicle) >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-red-500"}
-                        />
-                        <MiniStat
-                            label="Avg Profit"
-                            value={kpis.avgProfit !== null ? formatCurrency(kpis.avgProfit) : "—"}
-                            color={kpis.avgProfit !== null && kpis.avgProfit >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-red-500"}
-                        />
-                        <MiniStat
-                            label="Avg Margin"
-                            value={kpis.avgMargin !== null ? formatPercent(kpis.avgMargin) : "—"}
-                            color={kpis.avgMargin !== null && kpis.avgMargin >= 0 ? "text-purple-600 dark:text-purple-400" : "text-red-500"}
-                        />
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                        <MiniStat label="Highest" value={d.profit_distribution.highest !== null ? formatCurrency(d.profit_distribution.highest) : "—"} color="text-emerald-600 dark:text-emerald-400" />
+                        <MiniStat label="Lowest" value={d.profit_distribution.lowest !== null ? formatCurrency(d.profit_distribution.lowest) : "—"} color={d.profit_distribution.lowest !== null && d.profit_distribution.lowest >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-red-500"} />
+                        <MiniStat label="Avg Profit" value={d.profit_distribution.avg_profit !== null ? formatCurrency(d.profit_distribution.avg_profit) : "—"} color={d.profit_distribution.avg_profit !== null && d.profit_distribution.avg_profit >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-red-500"} />
+                        <MiniStat label="Avg Margin" value={d.profit_distribution.avg_margin !== null ? formatPercent(d.profit_distribution.avg_margin) : "—"} color="text-purple-600 dark:text-purple-400" />
                     </div>
                 </div>
-            )}
+
+                {/* Top Performers */}
+                {d.top_vehicles.length > 0 && (
+                    <div className="rounded-xl border border-border bg-card p-4">
+                        <h3 className="text-xs font-medium text-muted-foreground mb-3 uppercase tracking-wider flex items-center gap-1.5">
+                            <Trophy className="h-3.5 w-3.5 text-amber-500" />
+                            Top Performers
+                        </h3>
+                        <div className="space-y-1.5">
+                            {d.top_vehicles.slice(0, 5).map((v, i) => (
+                                <a
+                                    key={v.internal_id}
+                                    href={`/${business_slug}/vehicles/${v.internal_id}/edit`}
+                                    className="flex items-center justify-between rounded-lg px-2.5 py-1.5 hover:bg-muted/50 transition-colors group text-xs"
+                                >
+                                    <div className="flex items-center gap-2 min-w-0">
+                                        <span className="text-muted-foreground font-mono w-4 text-right">{i + 1}.</span>
+                                        <span className="text-foreground font-medium truncate">
+                                            #{v.internal_id} {v.make} {v.model}
+                                        </span>
+                                    </div>
+                                    <div className="flex items-center gap-3 flex-shrink-0">
+                                        <span className={`font-bold font-mono ${v.profit >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-red-500"}`}>
+                                            {formatCurrency(v.profit)}
+                                        </span>
+                                        {v.margin !== null && (
+                                            <span className="text-muted-foreground">{formatPercent(v.margin)}</span>
+                                        )}
+                                        <ArrowUpRight className="h-3 w-3 text-muted-foreground/0 group-hover:text-muted-foreground transition-colors" />
+                                    </div>
+                                </a>
+                            ))}
+                        </div>
+                    </div>
+                )}
+            </div>
         </div>
     )
 }
@@ -425,19 +407,19 @@ interface KPICardProps {
 
 function KPICard({ icon: Icon, label, value, subLabel, color, bgColor, equation }: KPICardProps) {
     return (
-        <div className="rounded-xl border border-border bg-card p-5">
-            <div className="flex items-center gap-3">
-                <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${bgColor}`}>
-                    <Icon className={`h-5 w-5 ${color}`} />
+        <div className="rounded-xl border border-border bg-card p-4">
+            <div className="flex items-center gap-2.5">
+                <div className={`flex h-9 w-9 items-center justify-center rounded-lg ${bgColor} flex-shrink-0`}>
+                    <Icon className={`h-4 w-4 ${color}`} />
                 </div>
                 <div className="min-w-0">
-                    <p className="text-sm text-muted-foreground">{label}</p>
-                    <p className={`text-xl font-bold ${color}`}>{value}</p>
+                    <p className="text-xs text-muted-foreground truncate">{label}</p>
+                    <p className={`text-lg font-bold ${color} leading-tight`}>{value}</p>
                     {subLabel && (
-                        <p className="text-xs text-muted-foreground">{subLabel}</p>
+                        <p className="text-[10px] text-muted-foreground truncate">{subLabel}</p>
                     )}
                     {equation && (
-                        <p className="text-[10px] text-muted-foreground/60 mt-0.5">{equation}</p>
+                        <p className="text-[9px] text-muted-foreground/50 mt-0.5 font-mono">{equation}</p>
                     )}
                 </div>
             </div>
@@ -445,21 +427,11 @@ function KPICard({ icon: Icon, label, value, subLabel, color, bgColor, equation 
     )
 }
 
-function MiniStat({
-    label,
-    value,
-    color,
-}: {
-    label: string
-    value: string
-    color: string
-}) {
+function MiniStat({ label, value, color }: { label: string; value: string; color: string }) {
     return (
         <div>
-            <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium mb-1">
-                {label}
-            </p>
-            <p className={`text-lg font-bold ${color}`}>{value}</p>
+            <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium mb-0.5">{label}</p>
+            <p className={`text-base font-bold ${color}`}>{value}</p>
         </div>
     )
 }

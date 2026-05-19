@@ -37,6 +37,8 @@ export interface VehicleListItem {
     sale_invoice_number: string | null
     image_url: string | null
     internal_comments: string | null
+    key_number_id?: number | null
+    key_number_value?: number | null
 
     // Contract availability flags
     can_generate_buy_contract: boolean
@@ -149,6 +151,7 @@ export interface VehicleFilters {
     fuel_type?: number
     color?: number
     damage_type?: number
+    key_number?: number
 
     // Price ranges
     min_buy_price?: number
@@ -189,6 +192,8 @@ export interface Choice {
     id: number
     name: string
 }
+
+export interface KeyNumber extends Choice {}
 
 export interface TaxPercentage extends Choice {
     percentage: number
@@ -232,6 +237,7 @@ export interface AllChoices {
     payment_methods: Choice[]
     tax_percentages: TaxPercentage[]
     legal_entities: LegalEntity[]
+    key_numbers: KeyNumber[]
     status_choices: StatusChoice[]
     year_choices: number[]
 }

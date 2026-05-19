@@ -1,9 +1,8 @@
 import { useState, useCallback, useEffect } from "react"
 import { Link, useSearchParams } from "react-router-dom"
-import { Plus, Filter, Search, X } from "lucide-react"
+import { Plus, Search, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Badge } from "@/components/ui/badge"
 import { SortMenuButton } from "@/components/ui/SortMenuButton"
 import {
     Dialog,
@@ -15,10 +14,14 @@ import {
 } from "@/components/ui/dialog"
 import { useVehicles, useDeleteVehicle, useChangeVehicleStatus } from "@/hooks/useVehicles"
 import { VehicleCard } from "@/components/vehicles/VehicleCard"
-import { VehicleFiltersSheet } from "@/components/vehicles/VehicleFilters"
+import { VehicleFiltersSidebar } from "@/components/vehicles/VehicleFilters"
 import { FinancialSummaryCard } from "@/components/vehicles/FinancialSummary"
 import { ContractModal } from "@/components/vehicles/ContractModal"
 import { StickyFooter } from "@/components/StickyFooter"
+import { PerPageInput } from "@/components/PerPageInput"
+import { PageInput } from "@/components/PageInput"
+import { getPagePref, savePagePref, getSplitWidth, saveSplitWidth } from "@/lib/paginationPrefs"
+import { SplitViewDivider } from "@/components/SplitViewDivider"
 import type { VehicleFilters, VehicleListItem } from "@/types/vehicle"
 
 const VEHICLE_SORT_OPTIONS = [
@@ -44,7 +47,7 @@ export function VehiclesPage() {
         const statusFromUrl = searchParams.get("status")
         return {
             page: 1,
-            per_page: 20,
+            per_page: getPagePref("acar_vehicles_per_page", 20),
             order: "desc",
             sort: "internal_id",
             status: statusFromUrl || undefined,
@@ -64,8 +67,7 @@ export function VehiclesPage() {
         }))
     }, [searchParams])
 
-    // Sheet open state
-    const [filtersOpen, setFiltersOpen] = useState(false)
+
 
     // Delete confirmation dialog
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
@@ -80,18 +82,30 @@ export function VehiclesPage() {
     // Fetch vehicles
     const { data, isLoading, isFetching } = useVehicles(filters)
 
+    // Split view preferences
+    const [panelWidth, setPanelWidth] = useState(() => 
+        getSplitWidth("acar_vehicles_filter_width", 260, 200, 500)
+    )
+    const [isDragging, setIsDragging] = useState(false)
+
+    const handleDrag = (deltaX: number) => {
+        setPanelWidth(prev => {
+            const next = prev + deltaX // Positive deltaX increases left panel width
+            // Clamping between 200px and 500px
+            return Math.min(500, Math.max(200, next))
+        })
+    }
+
+    const handleDragEnd = () => {
+        setIsDragging(false)
+        saveSplitWidth("acar_vehicles_filter_width", panelWidth, 200, 500)
+    }
+
     // Mutations
     const deleteMutation = useDeleteVehicle()
     const statusMutation = useChangeVehicleStatus()
 
-    // Count active filters (excluding pagination and sort)
-    const activeFilterCount = Object.entries(filters).filter(([key, value]) => {
-        if (
-            ["page", "per_page", "sort", "order"].includes(key)
-        )
-            return false
-        return value !== undefined && value !== null && value !== ""
-    }).length
+
 
     // Handle page change
     const handlePageChange = useCallback((page: number) => {
@@ -123,28 +137,27 @@ export function VehiclesPage() {
         }))
     }, [])
 
-    // Handle quick search
-    const handleQuickSearch = useCallback(
-        (e: React.KeyboardEvent<HTMLInputElement>) => {
-            if (e.key === "Enter") {
-                setFilters((prev) => ({
-                    ...prev,
-                    search: searchValue || undefined,
-                    page: 1,
-                }))
-            }
-        },
-        [searchValue]
-    )
+    // Handle search debounce
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setFilters((prev) => ({
+                ...prev,
+                search: searchValue.trim() || undefined,
+                page: 1,
+            }))
+        }, 400)
+        return () => clearTimeout(timer)
+    }, [searchValue])
 
     // Clear search
     const handleClearSearch = useCallback(() => {
         setSearchValue("")
-        setFilters((prev) => ({
-            ...prev,
-            search: undefined,
-            page: 1,
-        }))
+    }, [])
+
+    // Handle per page
+    const handlePerPageChange = useCallback((newPerPage: number) => {
+        savePagePref("acar_vehicles_per_page", newPerPage)
+        setFilters(prev => ({ ...prev, per_page: newPerPage, page: 1 }))
     }, [])
 
     // Handle delete click
@@ -187,63 +200,73 @@ export function VehiclesPage() {
                 isLoading={isLoading}
             />
 
-            {/* Toolbar */}
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-                {/* Search */}
-                <div className="relative flex-1">
-                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                    <Input
-                        type="text"
-                        placeholder="Search by Make, Model, ID, VIN..."
-                        className="pl-10 pr-10"
-                        value={searchValue}
-                        onChange={(e) => setSearchValue(e.target.value)}
-                        onKeyDown={handleQuickSearch}
+            {/* Main Layout */}
+            <div className="flex flex-col lg:flex-row relative lg:items-start">
+                {/* Left Sidebar (Mobile) */}
+                <div className="w-full lg:hidden shrink-0 order-2 mb-6">
+                    <VehicleFiltersSidebar
+                        filters={filters}
+                        onApplyFilters={handleApplyFilters}
                     />
-                    {searchValue && (
-                        <button
-                            onClick={handleClearSearch}
-                            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                        >
-                            <X className="h-4 w-4" />
-                        </button>
-                    )}
                 </div>
 
-                <div className="flex flex-wrap items-center gap-2">
-                    <SortMenuButton
-                        options={VEHICLE_SORT_OPTIONS}
-                        sort={filters.sort || "internal_id"}
-                        order={filters.order || "desc"}
-                        onSortChange={handleSortChange}
-                        onOrderChange={handleSortOrderChange}
+                {/* Left Sidebar (Desktop) */}
+                <div 
+                    className={`hidden lg:block shrink-0 order-1 ${isDragging ? 'pointer-events-none' : ''}`}
+                    style={{ width: `${panelWidth}px` }}
+                >
+                    <VehicleFiltersSidebar
+                        filters={filters}
+                        onApplyFilters={handleApplyFilters}
                     />
-
-                    <Button
-                        variant="outline"
-                        className="gap-2"
-                        onClick={() => setFiltersOpen(true)}
-                    >
-                        <Filter className="h-4 w-4" />
-                        Filters
-                        {activeFilterCount > 0 && (
-                            <Badge variant="secondary" className="ml-1 h-5 px-1.5">
-                                {activeFilterCount}
-                            </Badge>
-                        )}
-                    </Button>
                 </div>
-            </div>
 
-            {/* Results Count & Sort Controls */}
-            <div className="flex items-center justify-between">
-                <p className="text-sm text-muted-foreground">
-                    Showing {data?.vehicles?.items?.length || 0} of {data?.vehicles?.total || 0} vehicles
-                </p>
-            </div>
+                {/* Draggable Divider */}
+                <SplitViewDivider 
+                    onDrag={handleDrag}
+                    onDragStart={() => setIsDragging(true)}
+                    onDragEnd={handleDragEnd}
+                    className="hidden lg:flex order-2"
+                    handlePosition="top"
+                />
 
-            {/* Vehicle Cards Grid */}
-            <div className="space-y-4">
+                {/* Right Content */}
+                <div className={`flex-1 min-w-0 order-1 lg:order-3 flex flex-col gap-6 mb-6 lg:mb-0 ${isDragging ? 'pointer-events-none' : ''}`}>
+                    {/* Toolbar */}
+                    <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+                        {/* Search */}
+                        <div className="relative flex-1">
+                            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                            <Input
+                                type="text"
+                                placeholder="Search by Make, Model, ID, VIN..."
+                                className="pl-10 pr-10"
+                                value={searchValue}
+                                onChange={(e) => setSearchValue(e.target.value)}
+                            />
+                            {searchValue && (
+                                <button
+                                    onClick={handleClearSearch}
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                                >
+                                    <X className="h-4 w-4" />
+                                </button>
+                            )}
+                        </div>
+
+                        <div className="flex flex-wrap items-center gap-2">
+                            <SortMenuButton
+                                options={VEHICLE_SORT_OPTIONS}
+                                sort={filters.sort || "internal_id"}
+                                order={filters.order || "desc"}
+                                onSortChange={handleSortChange}
+                                onOrderChange={handleSortOrderChange}
+                            />
+                        </div>
+                    </div>
+
+                    {/* Vehicle Cards Grid */}
+                    <div className="space-y-4">
                 {isLoading ? (
                     // Loading skeleton
                     Array.from({ length: 5 }).map((_, i) => (
@@ -275,34 +298,52 @@ export function VehiclesPage() {
                     ))
                 )}
             </div>
+            </div>
+            </div>
 
             {/* Padding to prevent sticky footer overlap */}
             <div className="pb-24" />
 
             {/* Pagination Sticky Footer */}
-            {data?.vehicles && data.vehicles.total > (filters.per_page || 20) && (
-                <StickyFooter>
-                    <p className="text-sm text-muted-foreground">
-                        Page {data.vehicles.page} of {Math.ceil(data.vehicles.total / (filters.per_page || 20))}
-                    </p>
-                    <div className="flex gap-2">
-                        <Button
-                            variant="outline"
-                            disabled={data.vehicles.page <= 1}
-                            onClick={() => handlePageChange(data.vehicles.page - 1)}
-                        >
-                            Previous
-                        </Button>
-                        <Button
-                            variant="outline"
-                            disabled={data.vehicles.page >= Math.ceil(data.vehicles.total / (filters.per_page || 20))}
-                            onClick={() => handlePageChange(data.vehicles.page + 1)}
-                        >
-                            Next
-                        </Button>
-                    </div>
-                </StickyFooter>
-            )}
+            <StickyFooter>
+                <div className="flex items-center gap-1.5 text-sm text-muted-foreground font-medium">
+                    Showing
+                    <PerPageInput
+                        value={filters.per_page || 20}
+                        onChange={handlePerPageChange}
+                        label=""
+                    />
+                    of <span className="text-foreground">{data?.vehicles?.total || 0}</span> vehicles
+                </div>
+                <div className="flex items-center gap-2">
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        disabled={!data?.vehicles || data.vehicles.page <= 1}
+                        onClick={() => handlePageChange((data?.vehicles?.page || 1) - 1)}
+                    >
+                        Previous
+                    </Button>
+                    <span className="text-sm text-muted-foreground px-2 font-medium flex items-center gap-1.5">
+                        Page
+                        <PageInput
+                            currentPage={data?.vehicles?.page || 1}
+                            totalPages={data?.vehicles?.total ? Math.ceil(data.vehicles.total / (filters.per_page || 20)) : 1}
+                            onPageChange={handlePageChange}
+                            disabled={isFetching}
+                        />
+                        of <span className="text-foreground">{data?.vehicles?.total ? Math.ceil(data.vehicles.total / (filters.per_page || 20)) : 1}</span>
+                    </span>
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        disabled={!data?.vehicles || data.vehicles.page >= Math.ceil(data.vehicles.total / (filters.per_page || 20))}
+                        onClick={() => handlePageChange((data?.vehicles?.page || 1) + 1)}
+                    >
+                        Next
+                    </Button>
+                </div>
+            </StickyFooter>
 
             {/* Loading overlay */}
             {isFetching && !isLoading && (
@@ -311,13 +352,7 @@ export function VehiclesPage() {
                 </div>
             )}
 
-            {/* Filters Sheet */}
-            <VehicleFiltersSheet
-                open={filtersOpen}
-                onOpenChange={setFiltersOpen}
-                filters={filters}
-                onApplyFilters={handleApplyFilters}
-            />
+
 
             {/* Delete Confirmation Dialog */}
             <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>

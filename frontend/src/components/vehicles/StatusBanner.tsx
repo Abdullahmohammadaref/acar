@@ -171,7 +171,7 @@ export function StatusBanner({
     status,
     onStatusChange,
     isLoading = false,
-    vehicleTitle,
+    vehicleTitle: _vehicleTitle,
     variant = "banner",
     className,
 }: StatusBannerProps) {

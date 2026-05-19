@@ -15,7 +15,7 @@ from django.http import HttpRequest
 from .models import (
     Vehicle, Branch, Make, VehicleModel, VehicleType, BodyType, 
     Color, FuelType, DoorsChoice, DamageType, PaymentMethod, TaxPercentage,
-    LegalEntity
+    LegalEntity, KeyNumber
 )
 
 vehicle_router = Router(auth=django_auth, tags=["Vehicles"])
@@ -133,16 +133,19 @@ class VehicleListSchema(Schema):
     @staticmethod
     def resolve_can_generate_buy_contract(obj):
         return all([
-            obj.buy_price, obj.buy_tax, obj.buy_date, 
-            obj.buy_delivery_collection_date, obj.buy_payment_method, obj.seller
+            obj.buy_price,
+            obj.buy_date,
+            obj.buy_payment_method,
+            obj.seller
         ])
     
     @staticmethod
     def resolve_can_generate_sale_contract(obj):
         return all([
-            obj.status != 'purchased',
-            obj.sale_price, obj.sale_tax, obj.sale_date,
-            obj.sale_delivery_collection_date, obj.sale_payment_method, obj.buyer
+            obj.sale_price,
+            obj.sale_date,
+            obj.sale_payment_method,
+            obj.buyer
         ])
 
 
@@ -157,6 +160,7 @@ class VehicleFiltersSchema(Schema):
     doors: List[dict]
     damage_types: List[dict]
     branches: List[dict]
+    key_numbers: List[dict]
 
 
 class VehicleSummarySchema(Schema):
@@ -214,6 +218,7 @@ class FilterParams(Schema):
     doors: Optional[int] = None
     damage_type: Optional[int] = None
     branch: Optional[int] = None
+    key_number: Optional[int] = None
     
     # Price filters
     min_buy_price: Optional[float] = None
@@ -291,6 +296,8 @@ def list_vehicles(request: HttpRequest, filters: FilterParams = Query(...)):
         queryset = queryset.filter(damage_type_id=filters.damage_type)
     if filters.branch:
         queryset = queryset.filter(branch_id=filters.branch)
+    if filters.key_number:
+        queryset = queryset.filter(key_number__id=filters.key_number)
     
     # Apply price filters
     if filters.min_buy_price:
@@ -429,6 +436,10 @@ def get_filter_options(request: HttpRequest):
             {"value": b.id, "label": b.name}
             for b in Branch.objects.filter(business=business, is_active=True)
         ],
+        "key_numbers": [
+            {"value": k.id, "label": str(k.number)}
+            for k in KeyNumber.objects.filter(business=business, is_active=True)
+        ],
     }
 
 
@@ -553,4 +564,5 @@ def get_empty_filters() -> dict:
         "doors": [],
         "damage_types": [],
         "branches": [],
+        "key_numbers": [],
     }

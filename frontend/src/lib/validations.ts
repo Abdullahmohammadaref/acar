@@ -54,6 +54,7 @@ export const vehicleCreateSchema = z.object({
     // Optional fields
     description: z.string().optional().nullable(),
     internal_comments: z.string().optional().nullable(),
+    key_number_id: z.number({ message: "Key number is required" }),
 })
 
 // Helper to transform empty/NaN values to undefined for optional number fields
@@ -123,6 +124,7 @@ export const vehicleUpdateSchema = z.object({
     // Optional fields
     description: z.string().optional().nullable(),
     internal_comments: z.string().optional().nullable(),
+    key_number_id: optionalNumber.nullable(),
 })
 
 // =============================================================================

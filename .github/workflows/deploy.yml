@@ -1,0 +1,55 @@
+name: Deploy to Production
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          script: |
+            set -e
+            cd /home/ubuntu/acar
+
+            echo "=== Pulling latest code ==="
+            git pull origin main
+
+            echo "=== Pulling private files ==="
+            cd /home/ubuntu/acar-private
+            git pull origin main
+            cp -r backend/manager/pdf_generators/*.py /home/ubuntu/acar/backend/manager/pdf_generators/ 2>/dev/null || true
+            cp -r backend/manager/templates/ /home/ubuntu/acar/backend/manager/ 2>/dev/null || true
+            cd /home/ubuntu/acar
+
+            echo "=== Building React frontend ==="
+            cd frontend
+            npm ci --prefer-offline
+            npm run build
+            cd ..
+
+            echo "=== Rebuilding Django container ==="
+            docker compose build django
+
+            echo "=== Restarting ==="
+            docker compose up -d --no-deps django
+            sleep 5
+
+            echo "=== Running migrations ==="
+            docker compose exec -T django python manage.py migrate --noinput --settings=acar.settings_prod
+
+            echo "=== Collecting static ==="
+            docker compose exec -T django python manage.py collectstatic --noinput --settings=acar.settings_prod
+
+            echo "=== Deploy complete ==="

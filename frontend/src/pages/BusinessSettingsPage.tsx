@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
-import { Building, Save, Plus, ArrowLeft, Eye, EyeOff } from "lucide-react"
+import { Building, Save, Plus, ArrowLeft, Eye, EyeOff, Download, Loader2 } from "lucide-react"
 import api from "@/lib/api"
 import { StickyFooter } from "@/components/StickyFooter"
 import { VehicleImageUpload } from "@/components/vehicles/VehicleImageUpload"
@@ -61,14 +61,16 @@ export default function BusinessSettingsPage() {
     const [newBranch, setNewBranch] = useState({ name: "", address: "" })
 
     // Users state
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const [editingEmployee, setEditingEmployee] = useState<Record<number, Partial<Employee & { password: string }>>>({})
+    const [, setEditingEmployee] = useState<Record<number, Partial<Employee & { password: string }>>>({})
     const [showPasswords, setShowPasswords] = useState<Record<number, boolean>>({})
     const [newEmployee, setNewEmployee] = useState({ username: "", password: "" })
     const [showNewPassword, setShowNewPassword] = useState(false)
 
     // Logo upload state
     const [logoFile, setLogoFile] = useState<File | null>(null)
+
+    // Export loading state
+    const [exportLoading, setExportLoading] = useState(false)
 
     // Fetch business data
     const { data: business, isLoading, error } = useQuery<BusinessData>({
@@ -190,6 +192,43 @@ export default function BusinessSettingsPage() {
     const handleCreateEmployee = () => {
         if (newEmployee.username.trim() && newEmployee.password.trim()) {
             createEmployeeMutation.mutate(newEmployee)
+        }
+    }
+
+    const handleDownloadExport = async () => {
+        setExportLoading(true)
+        try {
+            const response = await api.get("/settings/business/export-data", {
+                responseType: "blob"
+            })
+            
+            // Get content-disposition header if available to extract filename
+            const contentDisposition = response.headers["content-disposition"]
+            let filename = `acar_backup_${business?.name?.toLowerCase().replace(/\s+/g, "_") || "business"}.zip`
+            if (contentDisposition) {
+                const match = contentDisposition.match(/filename="(.+)"/)
+                if (match && match[1]) {
+                    filename = match[1]
+                }
+            }
+            
+            const blob = new Blob([response.data], { type: "application/zip" })
+            const url = window.URL.createObjectURL(blob)
+            
+            const link = document.createElement("a")
+            link.href = url
+            link.setAttribute("download", filename)
+            document.body.appendChild(link)
+            link.click()
+            // Cleanup
+            document.body.removeChild(link)
+            setTimeout(() => {
+                window.URL.revokeObjectURL(url)
+            }, 10000)
+        } catch (error) {
+            console.error("Failed to download export:", error)
+        } finally {
+            setExportLoading(false)
         }
     }
 
@@ -578,6 +617,32 @@ export default function BusinessSettingsPage() {
                             </button>
                         </div>
                     </div>
+                </div>
+            </div>
+
+            {/* Data Export Section */}
+            <div className="rounded-xl border border-border bg-card p-6">
+                <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+                    <div>
+                        <h3 className="text-base font-semibold text-foreground">
+                            Export Business Data
+                        </h3>
+                        <p className="mt-1 text-sm text-muted-foreground">
+                            Download a ZIP file containing all your business data — vehicles, transactions, legal entities, choices, and uploaded images. Keep a copy somewhere safe.
+                        </p>
+                    </div>
+                    <button
+                        onClick={handleDownloadExport}
+                        disabled={exportLoading}
+                        className="flex-shrink-0 inline-flex items-center justify-center gap-2 rounded-lg border border-border bg-background px-4 py-2 text-sm font-medium text-foreground hover:bg-muted/50 hover:border-primary/40 transition-colors shrink-0 w-full sm:w-auto text-center disabled:opacity-50 disabled:pointer-events-none"
+                    >
+                        {exportLoading ? (
+                            <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                        ) : (
+                            <Download className="h-4 w-4" />
+                        )}
+                        {exportLoading ? "Preparing Export..." : "Download Export"}
+                    </button>
                 </div>
             </div>
 

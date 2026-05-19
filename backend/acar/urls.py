@@ -30,6 +30,7 @@ from manager.vehicle_api import vehicle_router
 from manager.transaction_api import router as transaction_router
 from manager.settings_api import settings_router
 from manager.activity_logs_api import router as activity_logs_router
+from manager.dashboard_api import dashboard_router
 
 
 # Standalone CSRF view with ensure_csrf_cookie decorator
@@ -58,6 +59,7 @@ api.add_router("/", vehicle_router)
 api.add_router("/transactions", transaction_router)
 api.add_router("/settings", settings_router)
 api.add_router("/activity-logs", activity_logs_router)
+api.add_router("/", dashboard_router)
 
 urlpatterns = [
     # CSRF endpoint - MUST be outside NinjaAPI to use ensure_csrf_cookie

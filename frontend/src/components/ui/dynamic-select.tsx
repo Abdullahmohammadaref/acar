@@ -79,11 +79,17 @@ export function DynamicSelect({
     const [newCode, setNewCode] = useState("") // For currency code
     const [searchQuery, setSearchQuery] = useState("")
     const [error, setError] = useState<string | null>(null) // For duplicate/validation errors
+    const [createdOptions, setCreatedOptions] = useState<Choice[]>([])
 
     const queryClient = useQueryClient()
 
+    const mergedOptions = [
+        ...options,
+        ...createdOptions.filter((created) => !options.some((option) => option.id === created.id)),
+    ]
+
     // Find selected option
-    const selectedOption = options.find((opt) => opt.id === value)
+    const selectedOption = mergedOptions.find((opt) => opt.id === value)
 
     // Create mutation
     const createMutation = useMutation({
@@ -115,8 +121,19 @@ export function DynamicSelect({
             return response.data
         },
         onSuccess: (data) => {
+            const createdItem = {
+                ...data,
+                id: data.id,
+                name: data.name || newName.trim(),
+                percentage: newPercentage ? Number(newPercentage) : data.percentage,
+            }
+            setCreatedOptions((previous) => [
+                createdItem,
+                ...previous.filter((item) => item.id !== createdItem.id),
+            ])
+
             // Select the newly created item
-            onChange(data.id)
+            onChange(createdItem.id)
 
             // Notify parent of the full created item data (for immediate use before cache updates)
             // This is critical for tax_percentage where we need the percentage value immediately
@@ -124,11 +141,9 @@ export function DynamicSelect({
             // the backend API response may not include the percentage field
             if (onCreated) {
                 onCreated({
-                    id: data.id,
-                    name: data.name,
-                    // Prefer locally known percentage (from form input) over API response
-                    // This ensures the percentage is available even if API doesn't return it
-                    percentage: newPercentage ? Number(newPercentage) : data.percentage,
+                    id: createdItem.id,
+                    name: createdItem.name,
+                    percentage: createdItem.percentage,
                 })
             }
 
@@ -142,10 +157,12 @@ export function DynamicSelect({
             } else if (choiceType === "vehicle_model" && parentId) {
                 // Vehicle model created - invalidate models for this make
                 queryClient.invalidateQueries({ queryKey: vehicleKeys.models(parentId) })
+                queryClient.invalidateQueries({ queryKey: ["choices"] })
             } else {
                 // Default: invalidate vehicle choices
-                queryClient.invalidateQueries({ queryKey: vehicleKeys.choices() })
+                queryClient.invalidateQueries({ queryKey: ["choices"] })
             }
+            queryClient.invalidateQueries({ queryKey: ["choices-management"] })
 
             // Close dialogs
             setDialogOpen(false)
@@ -168,6 +185,15 @@ export function DynamicSelect({
     })
 
     const handleCreate = () => {
+
+        if (choiceType === "key_number") {
+            const val = Number(newName.trim())
+            if (!Number.isInteger(val) || val <= 0) {
+                setError("Key number must be a positive integer without zero.")
+                return
+            }
+        }
+
         if (!newName.trim()) return
         // Currency requires code
         if (choiceType === "currency" && !newCode.trim()) return
@@ -197,10 +223,10 @@ export function DynamicSelect({
 
     // Filter options based on search
     const filteredOptions = searchQuery
-        ? options.filter((opt) =>
+        ? mergedOptions.filter((opt) =>
             opt.name.toLowerCase().includes(searchQuery.toLowerCase())
         )
-        : options
+        : mergedOptions
 
     return (
         <>
@@ -213,7 +239,9 @@ export function DynamicSelect({
                         className="w-full justify-between text-foreground"
                         disabled={disabled}
                     >
-                        {selectedOption ? selectedOption.name : placeholder}
+                        <span className="truncate text-left font-normal">
+                            {selectedOption ? selectedOption.name : placeholder}
+                        </span>
                         <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                     </Button>
                 </PopoverTrigger>
@@ -326,11 +354,11 @@ export function DynamicSelect({
                                     setError(null) // Clear error when user types
                                 }}
                                 placeholder={`Enter ${createLabel || choiceType} name`}
-                                className={`text-foreground ${error ? 'border-red-500' : ''}`}
+                                className={`text-foreground ${error ? 'border-destructive' : ''}`}
                                 autoFocus
                             />
                             {error && (
-                                <p className="text-sm text-red-500 mt-1">{error}</p>
+                                <p className="text-sm text-destructive mt-1">{error}</p>
                             )}
                         </div>
 

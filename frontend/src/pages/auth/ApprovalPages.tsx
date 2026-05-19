@@ -194,7 +194,7 @@ export function ApprovalPage() {
  * For direct magic link logins (if we keep them in the future)
  */
 export function VerifyPage() {
-    const { uid, token } = useParams<{ uid: string; token: string }>()
+    useParams<{ uid: string; token: string }>()
 
     return (
         <div className="w-full max-w-md space-y-6 text-center">

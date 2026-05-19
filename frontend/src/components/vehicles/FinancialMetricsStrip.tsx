@@ -2,11 +2,13 @@
  * FinancialMetricsStrip — Compact inline financial summary
  *
  * Used on the Vehicle Form (add/edit) to show live-calculated
- * financial metrics in a tight horizontal grid. Each metric shows:
- * - Colored value (14-16px, weight 500)
- * - Muted equation text (11px, gray)
+ * financial metrics in a tight horizontal layout.
  *
- * Follows Rule 1 (minimal vertical space) and Rule 2 (show equations).
+ * Design goals:
+ * - Minimal vertical space (Rule 1)
+ * - Show equations with real numbers (Rule 2)
+ * - Clean, organized layout — grouped by category
+ * - Each metric: colored value + muted equation below
  */
 import {
     Banknote,
@@ -15,10 +17,10 @@ import {
     Percent,
     PieChart,
     Receipt,
-    Scale,
     Target,
     Timer,
     TrendingUp,
+    TrendingDown,
 } from "lucide-react"
 import { formatCurrency } from "@/lib/utils"
 import {
@@ -41,6 +43,7 @@ interface FinancialMetricsStripProps {
     annualTargetRate?: number
 }
 
+/** Single metric cell — value + equation in a bordered pill */
 function MetricCell({
     label,
     value,
@@ -57,22 +60,23 @@ function MetricCell({
     icon?: React.ReactNode
 }) {
     return (
-        <div className={`flex flex-col min-w-0 rounded-md border p-2.5 shadow-sm transition-colors ${
-            highlight 
-                ? "bg-primary/5 border-primary/20 shadow-primary/5" 
-                : "bg-background border-border/40 hover:border-border/80"
-        } ${highlight ? "md:col-span-2 xl:col-span-1" : ""}`}>
-            <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold mb-1.5 flex items-center justify-between">
-                <span className="truncate pr-1">{label}</span>
-                {icon && <span className="flex-shrink-0 text-muted-foreground/40">{icon}</span>}
+        <div
+            className={`flex flex-col min-w-0 rounded-lg border px-3 py-2 transition-colors ${highlight
+                    ? "bg-primary/5 border-primary/20 ring-1 ring-primary/10"
+                    : "bg-background border-border/40 hover:border-border/70"
+                }`}
+        >
+            <div className="flex items-center justify-between gap-1 mb-1">
+                <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold truncate">
+                    {label}
+                </span>
+                {icon && <span className="flex-shrink-0 text-muted-foreground/30">{icon}</span>}
             </div>
-            <div
-                className={`text-sm font-bold ${colorClass} ${highlight ? "text-base" : ""} leading-none truncate`}
-            >
+            <div className={`text-sm font-bold ${colorClass} ${highlight ? "text-base" : ""} leading-none truncate`}>
                 {value}
             </div>
             {equation && (
-                <div className="text-[10px] text-muted-foreground/50 leading-tight mt-1.5 truncate font-medium">
+                <div className="text-[9px] text-muted-foreground/40 leading-tight mt-1 truncate font-mono">
                     {equation}
                 </div>
             )}
@@ -91,8 +95,8 @@ export function FinancialMetricsStrip({
 
     if (!hasBuy && !hasSale) return null
 
+    // Compact mode: inline profit/margin/days
     if (compact) {
-        // Compact: just totalProfit, margin, days
         return (
             <div className="flex items-center gap-3 text-xs">
                 {f.totalProfit !== null && (
@@ -117,90 +121,43 @@ export function FinancialMetricsStrip({
         )
     }
 
+    // Helper: format value or dash
+    const fc = (v: number | null) => (v !== null ? formatCurrency(v) : "—")
+
     return (
-        <div className="rounded-xl border border-border/40 bg-muted/20 p-3">
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-3">
+        <div className="rounded-xl border border-border/30 bg-muted/10 p-3 space-y-2">
+            {/* Row 1: Cost basis metrics */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
                 {/* COGS */}
                 <MetricCell
                     label="COGS"
-                    value={f.cogs !== null ? formatCurrency(f.cogs) : "—"}
-                    equation={!hideTransactions 
-                        ? `buyNet(${formatCurrency(f.buyNet || 0)}) + txnCost(${formatCurrency(f.totalTxnCost || 0)})` 
-                        : `buyNet(${formatCurrency(f.buyNet || 0)})`}
+                    value={fc(f.cogs)}
+                    equation={!hideTransactions
+                        ? `${fc(f.buyNet)} + ${fc(f.totalTxnCost || 0)}`
+                        : `buyNet ${fc(f.buyNet)}`}
                     colorClass={getFinancialColor("cogs")}
-                    icon={<PackageSearch className="h-3.5 w-3.5" />}
+                    icon={<PackageSearch className="h-3 w-3" />}
                 />
 
-                {/* Total Txn Cost — only if transactions exist */}
+                {/* Txn Expenses */}
                 {!hideTransactions && (
                     <MetricCell
-                        label="Transaction Expenses"
-                        value={
-                            f.txnCount > 0
-                                ? formatCurrency(f.totalTxnCost)
-                                : "€0.00"
-                        }
-                        equation={f.txnCount > 0 ? `${f.txnCount} txns` : "no txns"}
+                        label="Txn Expenses"
+                        value={f.txnCount > 0 ? formatCurrency(f.totalTxnCost) : "€0.00"}
+                        equation={f.txnCount > 0 ? `${f.txnCount} transactions` : "none"}
                         colorClass={getFinancialColor("totalTxnCost")}
-                        icon={<Receipt className="h-3.5 w-3.5" />}
+                        icon={<Receipt className="h-3 w-3" />}
                     />
                 )}
 
-                {/* Gross Profit */}
-                {hasSale && (
+                {/* Break-Even */}
+                {f.breakEvenPrice !== null && (
                     <MetricCell
-                        label="Gross Profit"
-                        value={f.grossProfit !== null ? formatCurrency(f.grossProfit) : "—"}
-                        equation={`saleGross(${formatCurrency(f.saleGross || 0)}) − buyGross(${formatCurrency(f.buyGross || 0)})`}
-                        colorClass={getProfitColor(f.grossProfit)}
-                        icon={<PieChart className="h-3.5 w-3.5" />}
-                    />
-                )}
-
-                {/* Net Profit */}
-                {hasSale && (
-                    <MetricCell
-                        label="Net Profit"
-                        value={f.netProfit !== null ? formatCurrency(f.netProfit) : "—"}
-                        equation={`saleNet(${formatCurrency(f.saleNet || 0)}) − buyNet(${formatCurrency(f.buyNet || 0)})`}
-                        colorClass={getProfitColor(f.netProfit)}
-                        icon={<TrendingUp className="h-3.5 w-3.5" />}
-                    />
-                )}
-
-                {/* Total Profit — highlight this most prominently */}
-                {hasSale && (
-                    <MetricCell
-                        label="Total Profit"
-                        value={
-                            f.totalProfit !== null ? formatCurrency(f.totalProfit) : "—"
-                        }
-                        equation={`saleNet(${formatCurrency(f.saleNet || 0)}) − buyNet(${formatCurrency(f.buyNet || 0)}) − txnCost(${formatCurrency(f.totalTxnCost || 0)})`}
-                        colorClass={getTotalProfitColor(f.totalProfit)}
-                        icon={<Banknote className="h-4 w-4 text-primary/60" />}
-                        highlight
-                    />
-                )}
-
-                {/* Profit Margin */}
-                {hasSale && f.profitMargin !== null && (
-                    <MetricCell
-                        label="Margin"
-                        value={formatPercent(f.profitMargin)}
-                        equation={`totalProfit(${formatCurrency(f.totalProfit || 0)}) ÷ revenue(${formatCurrency(f.saleNet || 0)}) × 100`}
-                        colorClass={getProfitColor(f.profitMargin)}
-                        icon={<Percent className="h-3.5 w-3.5" />}
-                    />
-                )}
-
-                {/* ROI */}
-                {hasSale && f.roi !== null && (
-                    <MetricCell
-                        label="ROI (Return on Investment)"
-                        value={formatPercent(f.roi)}
-                        equation={`totalProfit(${formatCurrency(f.totalProfit || 0)}) ÷ COGS(${formatCurrency(f.cogs || 0)}) × 100`}
-                        colorClass={getProfitColor(f.roi)}
-                        icon={<LineChart className="h-3.5 w-3.5" />}
+                        label="Break-Even"
+                        value={formatCurrency(f.breakEvenPrice)}
+                        equation={`${fc(f.cogs)} × 1.10`}
+                        colorClass={getFinancialColor("breakEvenPrice")}
+                        icon={<Target className="h-3 w-3" />}
                     />
                 )}
 
@@ -209,38 +166,78 @@ export function FinancialMetricsStrip({
                     <MetricCell
                         label="Holding Cost"
                         value={formatCurrency(f.holdingCost)}
-                        equation={`COGS(${formatCurrency(f.cogs || 0)}) × target(${annualTargetRate ?? 10}%) ÷ 365 × days(${f.daysOnStock || 0})`}
+                        equation={`${fc(f.cogs)} × ${annualTargetRate ?? 10}% ÷ 365 × ${f.daysOnStock || 0}d`}
                         colorClass={getFinancialColor("holdingCost")}
-                        icon={<Timer className="h-3.5 w-3.5" />}
+                        icon={<Timer className="h-3 w-3" />}
                     />
                 )}
 
                 {/* Adjusted Profit */}
-                {hasSale && f.adjustedProfit !== null && (
+                {f.adjustedProfit !== null && (
                     <MetricCell
-                        label="Adjusted Profit"
-                        value={formatCurrency(f.adjustedProfit)}
-                        equation={`totalProfit(${formatCurrency(f.totalProfit || 0)}) − holdingCost(${formatCurrency(f.holdingCost || 0)})`}
-                        colorClass={
-                            f.adjustedProfit > 0
-                                ? "text-emerald-600 dark:text-emerald-400"
-                                : "text-red-600 dark:text-red-400"
-                        }
-                        icon={<Scale className="h-3.5 w-3.5" />}
-                    />
-                )}
-
-                {/* Break-Even Price */}
-                {f.breakEvenPrice !== null && (
-                    <MetricCell
-                        label="Break-Even"
-                        value={formatCurrency(f.breakEvenPrice)}
-                        equation={`COGS(${formatCurrency(f.cogs || 0)}) × (1 + margin(10%))`}
-                        colorClass={getFinancialColor("breakEvenPrice")}
-                        icon={<Target className="h-3.5 w-3.5" />}
+                        label="Adj. Profit"
+                        value={fc(f.adjustedProfit)}
+                        equation={`${fc(f.totalProfit)} − ${fc(f.holdingCost)}`}
+                        colorClass={getFinancialColor("adjustedProfit")}
+                        icon={<TrendingDown className="h-3 w-3" />}
                     />
                 )}
             </div>
+
+            {/* Row 2: Profit metrics (only when sold) */}
+            {hasSale && (
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
+                    {/* Gross Profit */}
+                    <MetricCell
+                        label="Gross Profit"
+                        value={fc(f.grossProfit)}
+                        equation={`${fc(f.saleGross)} − ${fc(f.buyGross)}`}
+                        colorClass={getProfitColor(f.grossProfit)}
+                        icon={<PieChart className="h-3 w-3" />}
+                    />
+
+                    {/* Net Profit */}
+                    <MetricCell
+                        label="Net Profit"
+                        value={fc(f.netProfit)}
+                        equation={`${fc(f.saleNet)} − ${fc(f.buyNet)}`}
+                        colorClass={getProfitColor(f.netProfit)}
+                        icon={<TrendingUp className="h-3 w-3" />}
+                    />
+
+                    {/* Total Profit — highlighted */}
+                    <MetricCell
+                        label="Total Profit"
+                        value={fc(f.totalProfit)}
+                        equation={`${fc(f.saleNet)} − ${fc(f.buyNet)} − ${fc(f.totalTxnCost || 0)}`}
+                        colorClass={getTotalProfitColor(f.totalProfit)}
+                        icon={<Banknote className="h-3.5 w-3.5 text-primary/50" />}
+                        highlight
+                    />
+
+                    {/* Margin + ROI side by side */}
+                    {f.profitMargin !== null && (
+                        <MetricCell
+                            label="Margin"
+                            value={formatPercent(f.profitMargin)}
+                            equation={`${fc(f.totalProfit)} ÷ ${fc(f.saleNet)} × 100`}
+                            colorClass={getProfitColor(f.profitMargin)}
+                            icon={<Percent className="h-3 w-3" />}
+                        />
+                    )}
+
+                    {f.roi !== null && (
+                        <MetricCell
+                            label="ROI"
+                            value={formatPercent(f.roi)}
+                            equation={`${fc(f.totalProfit)} ÷ ${fc(f.cogs)} × 100`}
+                            colorClass={getProfitColor(f.roi)}
+                            icon={<LineChart className="h-3 w-3" />}
+                        />
+                    )}
+                </div>
+            )}
         </div>
     )
 }
+

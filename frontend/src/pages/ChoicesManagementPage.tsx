@@ -1,7 +1,7 @@
 import { useState } from "react"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { useTranslation } from "react-i18next"
-import { ChevronDown, ChevronRight, Loader2, Plus, Search, X } from "lucide-react"
+import { ChevronDown, ChevronRight, Loader2, Plus, Search, Trash2, X } from "lucide-react"
 import api from "@/lib/api"
 import { Input } from "@/components/ui/input"
 import { FilterSelect } from "@/components/ui/filter-select"
@@ -10,6 +10,7 @@ import { SortMenuButton } from "@/components/ui/SortMenuButton"
 interface ChoiceItem {
     id: number
     name: string
+    percentage?: number
     is_protected?: boolean
 }
 
@@ -57,22 +58,19 @@ const TAB_ORDER = [
     "payment_method",
     "tax_percentage",
     "currency",
+    "key_number",
 ] as const
 
-const SORT_OPTIONS = [
-    { value: "name", label: "Name" },
-    { value: "status", label: "Status" },
-]
-
-type SortValue = "name" | "status"
+type SortValue = "name" | "status" | "tax_amount"
 
 const ACTIVE_ITEM_CLASS =
     "flex items-center justify-between rounded-lg border border-border bg-card/60 px-4 py-2.5 shadow-sm transition-all hover:border-primary/30 hover:bg-muted/50 group"
 const INACTIVE_ITEM_CLASS =
     "flex items-center justify-between rounded-lg border border-zinc-200/50 dark:border-zinc-800/50 bg-zinc-50/50 dark:bg-zinc-900/20 px-4 py-2.5 opacity-70 transition-all hover:opacity-100 group shadow-sm"
 
-function matchesSearch(name: string, searchValue: string) {
-    return name.toLowerCase().includes(searchValue)
+function matchesSearch(name: string | undefined | null, searchValue: string) {
+    if (!name) return false
+    return name.toLowerCase().includes(searchValue.toLowerCase())
 }
 
 export default function ChoicesManagementPage() {
@@ -88,11 +86,14 @@ export default function ChoicesManagementPage() {
     const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc")
 
     const [modalOpen, setModalOpen] = useState(false)
+    const [modalMode, setModalMode] = useState<"add" | "edit">("add")
+    const [modalEditId, setModalEditId] = useState<number | null>(null)
     const [modalChoiceType, setModalChoiceType] = useState("")
     const [modalTitle, setModalTitle] = useState("")
     const [modalName, setModalName] = useState("")
     const [modalPercentage, setModalPercentage] = useState("")
     const [modalParentId, setModalParentId] = useState<number | null>(null)
+    const [modalError, setModalError] = useState<string | null>(null)
 
     const { data, isLoading, error } = useQuery<ChoicesManagementData>({
         queryKey: ["choices-management"],
@@ -135,6 +136,35 @@ export default function ChoicesManagementPage() {
             queryClient.invalidateQueries({ queryKey: ["choices-management"] })
             closeModal()
         },
+        onError: (error: any) => {
+            console.error("Add failed:", error)
+            const message = error.response?.data?.detail || error.response?.data?.message || t("choices.errorAdd", "Failed to add choice.")
+            setModalError(message)
+        },
+    })
+    const updateMutation = useMutation({
+        mutationFn: async (params: {
+            choiceType: string
+            choiceId: number
+            name: string
+            percentage?: string
+        }) => {
+            const payload = {
+                name: params.name,
+                ...(params.percentage && { percentage: parseFloat(params.percentage) })
+            }
+            const response = await api.patch(`/choices/${params.choiceType}/${params.choiceId}`, payload)
+            return response.data
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["choices-management"] })
+            closeModal()
+        },
+        onError: (error: any) => {
+            console.error("Update failed:", error)
+            const message = error.response?.data?.detail || error.response?.data?.message || t("choices.updateError", "Failed to update choice.")
+            setModalError(message)
+        },
     })
 
     const deactivateMutation = useMutation({
@@ -144,6 +174,10 @@ export default function ChoicesManagementPage() {
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["choices-management"] })
+        },
+        onError: (error) => {
+            console.error("Deactivation failed:", error)
+            alert(t("choices.deactivateError", "Failed to deactivate. This item may be in use by an active vehicle or transaction."))
         },
     })
 
@@ -155,16 +189,25 @@ export default function ChoicesManagementPage() {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["choices-management"] })
         },
+        onError: (error) => {
+            console.error("Reactivation failed:", error)
+            alert(t("choices.reactivateError", "Failed to reactivate. Please try again."))
+        },
     })
 
     const normalizedSearch = searchValue.trim().toLowerCase()
 
-    const sortItems = <T extends { name: string; is_active?: boolean }>(items: T[]) =>
+    const sortItems = <T extends { name: string; is_active?: boolean; percentage?: number }>(items: T[]) =>
         [...items].sort((a, b) => {
             if (sortBy === "status") {
                 const statusA = a.is_active === false ? 0 : 1
                 const statusB = b.is_active === false ? 0 : 1
                 return sortOrder === "asc" ? statusA - statusB : statusB - statusA
+            }
+            if (sortBy === "tax_amount") {
+                const valA = a.percentage ?? 0
+                const valB = b.percentage ?? 0
+                return sortOrder === "asc" ? valA - valB : valB - valA
             }
             return sortOrder === "asc"
                 ? a.name.localeCompare(b.name)
@@ -182,10 +225,32 @@ export default function ChoicesManagementPage() {
         if (key === "make") return t("choices.manufacturers", "Manufacturers")
         if (key === "vehicle_model") return t("choices.manufacturerModels", "Manufacturer Models")
         if (key === "subcategory") return t("choices.subcategories", "Subcategories")
+        if (key === "key_number") return t("choices.keyNumbers", "Key Numbers")
         return choiceTypes[key]?.name || key
     }
 
+    const getSortOptions = () => {
+        const options = [
+            { value: "name", label: t("choices.sortName", "Name") },
+            { value: "status", label: t("choices.sortStatus", "Status") },
+        ]
+        if (activeTab === "tax_percentage") {
+            options.push({ value: "tax_amount", label: t("choices.sortTaxAmount", "Tax Amount") })
+        }
+        return options
+    }
+
+    // Reset sort when switching tabs if current sort is not applicable
+    const handleTabChange = (tab: string) => {
+        setActiveTab(tab)
+        if (tab !== "tax_percentage" && sortBy === "tax_amount") {
+            setSortBy("name")
+        }
+    }
+
     const openAddModal = (choiceType: string, title: string, parentId: number | null = null) => {
+        setModalMode("add")
+        setModalEditId(null)
         setModalChoiceType(choiceType)
         setModalTitle(title)
         setModalName("")
@@ -194,11 +259,25 @@ export default function ChoicesManagementPage() {
         setModalOpen(true)
     }
 
+    const openEditModal = (choiceType: string, item: ChoiceItem) => {
+        setModalMode("edit")
+        setModalEditId(item.id)
+        setModalChoiceType(choiceType)
+        setModalTitle(t("choices.editOption", "Edit Option"))
+        setModalName(item.name)
+        setModalPercentage(item.percentage?.toString() || "")
+        setModalParentId(null)
+        setModalOpen(true)
+    }
+
     const closeModal = () => {
         setModalOpen(false)
+        setModalMode("add")
+        setModalEditId(null)
         setModalName("")
         setModalPercentage("")
         setModalParentId(null)
+        setModalError(null)
     }
 
     const handleAddChoice = (event: React.FormEvent) => {
@@ -207,18 +286,34 @@ export default function ChoicesManagementPage() {
             return
         }
 
-        addMutation.mutate({
-            choiceType: modalChoiceType,
-            name: modalName.trim(),
-            percentage: modalPercentage,
-            parentId: modalParentId,
-        })
+        if (modalChoiceType === "key_number") {
+            const val = Number(modalName.trim())
+            if (!Number.isInteger(val) || val <= 0) {
+                setModalError(t("choices.keyNumberError", "Key number must be a positive integer without zero."))
+                return
+            }
+        }
+
+        setModalError(null)
+
+        if (modalMode === "edit" && modalEditId) {
+            updateMutation.mutate({
+                choiceType: modalChoiceType,
+                choiceId: modalEditId,
+                name: modalName.trim(),
+                percentage: modalPercentage,
+            })
+        } else {
+            addMutation.mutate({
+                choiceType: modalChoiceType,
+                name: modalName.trim(),
+                percentage: modalPercentage,
+                parentId: modalParentId,
+            })
+        }
     }
 
     const handleDeactivate = (choiceType: string, choiceId: number) => {
-        if (!confirm(t("choices.confirmDeactivate", "Are you sure you want to deactivate this option?"))) {
-            return
-        }
         deactivateMutation.mutate({ choiceType, choiceId })
     }
 
@@ -227,7 +322,11 @@ export default function ChoicesManagementPage() {
     }
 
     const visibleTabKeys = TAB_ORDER.filter(
-        (key) => key === "vehicle_model" || key === "subcategory" || Boolean(choiceTypes[key])
+        (key) => {
+            if (key === "vehicle_model") return true
+            if (key === "subcategory") return true
+            return Boolean(choiceTypes[key])
+        }
     )
 
     const filteredMakesWithModels = sortItems(makesWithModels)
@@ -276,9 +375,10 @@ export default function ChoicesManagementPage() {
         })
         .filter((categoryGroup) => categoryGroup.isVisible)
 
-    const renderChoiceTypeContent = (typeKey: string, typeData: ChoiceType) => {
-        const activeItems = statusFilter === "inactive" ? [] : sortItems(filterItems(typeData.active).map(i => ({ ...i, is_active: true })))
-        const inactiveItems = statusFilter === "active" ? [] : sortItems(filterItems(typeData.inactive).map(i => ({ ...i, is_active: false })))
+    const renderChoiceTypeContent = (typeKey: string, typeData: ChoiceType | undefined) => {
+        if (!typeData) return null
+        const activeItems = statusFilter === "inactive" ? [] : sortItems(filterItems(typeData.active || []).map(i => ({ ...i, is_active: true })))
+        const inactiveItems = statusFilter === "active" ? [] : sortItems(filterItems(typeData.inactive || []).map(i => ({ ...i, is_active: false })))
         const hasVisibleItems = activeItems.length > 0 || inactiveItems.length > 0
 
         return (
@@ -312,7 +412,22 @@ export default function ChoicesManagementPage() {
                                     {activeItems.length > 0 ? (
                                         activeItems.map((item) => (
                                             <div key={item.id} className={ACTIVE_ITEM_CLASS}>
-                                                <span className="text-sm text-foreground">{item.name}</span>
+                                                <button
+                                                    onClick={() => openEditModal(typeKey, item)}
+                                                    className="font-medium text-foreground hover:text-primary transition-colors text-left flex-1"
+                                                >
+                                                    {item.name}
+                                                    {item.percentage !== undefined && (
+                                                        <span className="ml-2 text-xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
+                                                            {item.percentage}%
+                                                        </span>
+                                                    )}
+                                                    {(item as any).vehicle_name && (
+                                                        <span className="ml-2 text-xs text-muted-foreground italic">
+                                                            — {(item as any).vehicle_name}
+                                                        </span>
+                                                    )}
+                                                </button>
                                                 {item.is_protected ? (
                                                     <span className="text-xs italic text-muted-foreground">
                                                         {t("choices.protected", "Protected")}
@@ -346,7 +461,12 @@ export default function ChoicesManagementPage() {
                                     {inactiveItems.length > 0 ? (
                                         inactiveItems.map((item) => (
                                             <div key={item.id} className={INACTIVE_ITEM_CLASS}>
-                                                <span className="text-sm text-muted-foreground">{item.name}</span>
+                                                <button
+                                                    onClick={() => openEditModal(typeKey, item)}
+                                                    className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors text-left flex-1"
+                                                >
+                                                    {item.name}
+                                                </button>
                                                 <button
                                                     onClick={() => handleReactivate(typeKey, item.id)}
                                                     disabled={reactivateMutation.isPending}
@@ -382,99 +502,132 @@ export default function ChoicesManagementPage() {
             </div>
 
             {filteredMakesWithModels.length > 0 ? (
-                filteredMakesWithModels.map((makeGroup) => {
-                    const isExpanded = expandedMakes.has(makeGroup.id)
-                    const visibleChildrenCount = makeGroup.filteredActive.length + makeGroup.filteredInactive.length
+                <div className="space-y-2">
+                    {filteredMakesWithModels.map((makeGroup) => {
+                        const isExpanded = expandedMakes.has(makeGroup.id)
+                        const activeModels = makeGroup.filteredActive || []
+                        const inactiveModels = makeGroup.filteredInactive || []
+                        const visibleChildrenCount = activeModels.length + inactiveModels.length
 
-                    return (
-                        <div key={makeGroup.id} className="mb-4 rounded-lg border border-border">
-                            <button
-                                onClick={() =>
-                                    setExpandedMakes((previous) => {
-                                        const next = new Set(previous)
-                                        if (next.has(makeGroup.id)) {
-                                            next.delete(makeGroup.id)
-                                        } else {
-                                            next.add(makeGroup.id)
-                                        }
-                                        return next
-                                    })
-                                }
-                                className="flex w-full items-center justify-between rounded-lg bg-muted/50 px-4 py-3 text-left hover:bg-muted"
-                            >
-                                <span className="font-medium text-foreground">{makeGroup.name}</span>
-                                <div className="flex items-center gap-3">
-                                    <span className="text-xs text-muted-foreground">
-                                        {visibleChildrenCount} {t("choices.visibleItems", "visible")}
-                                    </span>
-                                    {isExpanded ? (
-                                        <ChevronDown className="h-5 w-5" />
-                                    ) : (
-                                        <ChevronRight className="h-5 w-5" />
-                                    )}
-                                </div>
-                            </button>
-
-                            {isExpanded && (
-                                <div className="border-t border-border px-4 py-3">
-                                    <div className="mb-3 flex justify-end">
-                                        <button
-                                            onClick={() =>
-                                                openAddModal(
-                                                    "vehicle_model",
-                                                    `${t("choices.addModelFor", "Add Model for")} ${makeGroup.name}`,
-                                                    makeGroup.id
-                                                )
+                        return (
+                            <div key={makeGroup.id} className="mb-4 rounded-lg border border-border">
+                                <button
+                                    onClick={() =>
+                                        setExpandedMakes((previous) => {
+                                            const next = new Set(previous)
+                                            if (next.has(makeGroup.id)) {
+                                                next.delete(makeGroup.id)
+                                            } else {
+                                                next.add(makeGroup.id)
                                             }
-                                            className="inline-flex items-center gap-1 rounded-lg bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90"
+                                            return next
+                                        })
+                                    }
+                                    className="flex w-full items-center justify-between rounded-lg bg-muted/50 px-4 py-3 text-left hover:bg-muted"
+                                >
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation()
+                                            openEditModal("make", makeGroup as any)
+                                        }}
+                                        className="font-medium text-foreground hover:text-primary transition-colors text-left"
+                                    >
+                                        {makeGroup.name}
+                                    </button>
+                                    <div className="flex items-center gap-3">
+                                        <span className="text-xs text-muted-foreground">
+                                            {visibleChildrenCount} {t("choices.visibleItems", "visible")}
+                                        </span>
+                                        <button
+                                            type="button"
+                                            onClick={(e) => {
+                                                e.stopPropagation()
+                                                handleDeactivate(activeTab === "vehicle_model" ? "make" : "category", activeTab === "vehicle_model" ? (makeGroup as any).id : (makeGroup as any).id)
+                                            }}
+                                            disabled={deactivateMutation.isPending}
+                                            className="h-7 w-7 flex items-center justify-center rounded-md text-rose-500 hover:bg-rose-500/10 transition-colors"
                                         >
-                                            <Plus className="h-3 w-3" />
-                                            {t("choices.addModel", "Add Model")}
+                                            <Trash2 className="h-3.5 w-3.5" />
                                         </button>
-                                    </div>
-
-                                    <div className="space-y-2">
-                                        {statusFilter !== "inactive" &&
-                                            makeGroup.filteredActive.map((model) => (
-                                                <div key={model.id} className={ACTIVE_ITEM_CLASS}>
-                                                    <span className="text-sm text-foreground">{model.name}</span>
-                                                    <button
-                                                        onClick={() => handleDeactivate("vehicle_model", model.id)}
-                                                        disabled={deactivateMutation.isPending}
-                                                        className="text-xs font-semibold text-rose-500 hover:text-rose-600 dark:text-rose-400 dark:hover:text-rose-300 disabled:opacity-50 transition-colors"
-                                                    >
-                                                        {t("choices.deactivate", "Deactivate")}
-                                                    </button>
-                                                </div>
-                                            ))}
-
-                                        {statusFilter !== "active" &&
-                                            makeGroup.filteredInactive.map((model) => (
-                                                <div key={model.id} className={INACTIVE_ITEM_CLASS}>
-                                                    <span className="text-sm text-muted-foreground line-through">{model.name}</span>
-                                                    <button
-                                                        onClick={() => handleReactivate("vehicle_model", model.id)}
-                                                        disabled={reactivateMutation.isPending}
-                                                        className="text-xs text-green-600 hover:text-green-500 disabled:opacity-50"
-                                                    >
-                                                        {t("choices.reactivate", "Reactivate")}
-                                                    </button>
-                                                </div>
-                                            ))}
-
-                                        {visibleChildrenCount === 0 && (
-                                            <p className="text-sm italic text-muted-foreground">
-                                                {normalizedSearch
-                                                    ? t("choices.noMatchingItems", "No matching items found.")
-                                                    : t("choices.noModels", "No models")}
-                                            </p>
+                                        {isExpanded ? (
+                                            <ChevronDown className="h-5 w-5" />
+                                        ) : (
+                                            <ChevronRight className="h-5 w-5" />
                                         )}
                                     </div>
-                                </div>
-                            )}
-                        </div>
-                    )
-                })
+                                </button>
+
+                                {isExpanded && (
+                                    <div className="border-t border-border px-4 py-3">
+                                        <div className="mb-3 flex justify-end">
+                                            <button
+                                                onClick={() =>
+                                                    openAddModal(
+                                                        "vehicle_model",
+                                                        `${t("choices.addModelFor", "Add Model for")} ${makeGroup.name}`,
+                                                        makeGroup.id
+                                                    )
+                                                }
+                                                className="inline-flex items-center gap-1 rounded-lg bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90"
+                                            >
+                                                <Plus className="h-3 w-3" />
+                                                {t("choices.addModel", "Add Model")}
+                                            </button>
+                                        </div>
+
+                                        <div className="space-y-2">
+                                            {statusFilter !== "inactive" &&
+                                                makeGroup.filteredActive.map((model) => (
+                                                    <div key={model.id} className={ACTIVE_ITEM_CLASS}>
+                                                        <button
+                                                            onClick={() => openEditModal("vehicle_model", model)}
+                                                            className="text-sm font-medium text-foreground hover:text-primary transition-colors text-left flex-1"
+                                                        >
+                                                            {model.name}
+                                                        </button>
+                                                        <button
+                                                            onClick={() => handleDeactivate("vehicle_model", model.id)}
+                                                            disabled={deactivateMutation.isPending}
+                                                            className="text-xs font-semibold text-rose-500 hover:text-rose-600 dark:text-rose-400 dark:hover:text-rose-300 disabled:opacity-50 transition-colors"
+                                                        >
+                                                            {t("choices.deactivate", "Deactivate")}
+                                                        </button>
+                                                    </div>
+                                                ))}
+
+                                            {statusFilter !== "active" &&
+                                                makeGroup.filteredInactive.map((model) => (
+                                                    <div key={model.id} className={INACTIVE_ITEM_CLASS}>
+                                                        <button
+                                                            onClick={() => openEditModal("vehicle_model", model)}
+                                                            className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors text-left flex-1"
+                                                        >
+                                                            <span className="line-through">{model.name}</span>
+                                                        </button>
+                                                        <button
+                                                            onClick={() => handleReactivate("vehicle_model", model.id)}
+                                                            disabled={reactivateMutation.isPending}
+                                                            className="text-xs text-green-600 hover:text-green-500 disabled:opacity-50"
+                                                        >
+                                                            {t("choices.reactivate", "Reactivate")}
+                                                        </button>
+                                                    </div>
+                                                ))}
+
+                                            {visibleChildrenCount === 0 && (
+                                                <p className="text-sm italic text-muted-foreground">
+                                                    {normalizedSearch
+                                                        ? t("choices.noMatchingItems", "No matching items found.")
+                                                        : t("choices.noModels", "No models")}
+                                                </p>
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        )
+                    })}
+                </div>
             ) : (
                 <p className="text-sm italic text-muted-foreground">
                     {normalizedSearch
@@ -497,99 +650,132 @@ export default function ChoicesManagementPage() {
             </div>
 
             {filteredCategoriesWithSubcategories.length > 0 ? (
-                filteredCategoriesWithSubcategories.map((categoryGroup) => {
-                    const isExpanded = expandedCategories.has(categoryGroup.id)
-                    const visibleChildrenCount = categoryGroup.filteredActive.length + categoryGroup.filteredInactive.length
+                <div className="space-y-2">
+                    {filteredCategoriesWithSubcategories.map((categoryGroup) => {
+                        const isExpanded = expandedCategories.has(categoryGroup.id)
+                        const activeSubs = categoryGroup.filteredActive || []
+                        const inactiveSubs = categoryGroup.filteredInactive || []
+                        const visibleChildrenCount = activeSubs.length + inactiveSubs.length
 
-                    return (
-                        <div key={categoryGroup.id} className="mb-4 rounded-lg border border-border">
-                            <button
-                                onClick={() =>
-                                    setExpandedCategories((previous) => {
-                                        const next = new Set(previous)
-                                        if (next.has(categoryGroup.id)) {
-                                            next.delete(categoryGroup.id)
-                                        } else {
-                                            next.add(categoryGroup.id)
-                                        }
-                                        return next
-                                    })
-                                }
-                                className="flex w-full items-center justify-between rounded-lg bg-muted/50 px-4 py-3 text-left hover:bg-muted"
-                            >
-                                <span className="font-medium text-foreground">{categoryGroup.name}</span>
-                                <div className="flex items-center gap-3">
-                                    <span className="text-xs text-muted-foreground">
-                                        {visibleChildrenCount} {t("choices.visibleItems", "visible")}
-                                    </span>
-                                    {isExpanded ? (
-                                        <ChevronDown className="h-5 w-5" />
-                                    ) : (
-                                        <ChevronRight className="h-5 w-5" />
-                                    )}
-                                </div>
-                            </button>
-
-                            {isExpanded && (
-                                <div className="border-t border-border px-4 py-3">
-                                    <div className="mb-3 flex justify-end">
-                                        <button
-                                            onClick={() =>
-                                                openAddModal(
-                                                    "subcategory",
-                                                    `${t("choices.addSubcategoryFor", "Add Subcategory for")} ${categoryGroup.name}`,
-                                                    categoryGroup.id
-                                                )
+                        return (
+                            <div key={categoryGroup.id} className="mb-4 rounded-lg border border-border">
+                                <button
+                                    onClick={() =>
+                                        setExpandedCategories((previous) => {
+                                            const next = new Set(previous)
+                                            if (next.has(categoryGroup.id)) {
+                                                next.delete(categoryGroup.id)
+                                            } else {
+                                                next.add(categoryGroup.id)
                                             }
-                                            className="inline-flex items-center gap-1 rounded-lg bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90"
+                                            return next
+                                        })
+                                    }
+                                    className="flex w-full items-center justify-between rounded-lg bg-muted/50 px-4 py-3 text-left hover:bg-muted"
+                                >
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation()
+                                            openEditModal("category", categoryGroup as any)
+                                        }}
+                                        className="font-medium text-foreground hover:text-primary transition-colors text-left"
+                                    >
+                                        {categoryGroup.name}
+                                    </button>
+                                    <div className="flex items-center gap-3">
+                                        <span className="text-xs text-muted-foreground">
+                                            {visibleChildrenCount} {t("choices.visibleItems", "visible")}
+                                        </span>
+                                        <button
+                                            type="button"
+                                            onClick={(e) => {
+                                                e.stopPropagation()
+                                                handleDeactivate("category", categoryGroup.id)
+                                            }}
+                                            disabled={deactivateMutation.isPending}
+                                            className="h-7 w-7 flex items-center justify-center rounded-md text-rose-500 hover:bg-rose-500/10 transition-colors"
                                         >
-                                            <Plus className="h-3 w-3" />
-                                            {t("choices.addSubcategory", "Add Subcategory")}
+                                            <Trash2 className="h-3.5 w-3.5" />
                                         </button>
-                                    </div>
-
-                                    <div className="space-y-2">
-                                        {statusFilter !== "inactive" &&
-                                            categoryGroup.filteredActive.map((sub) => (
-                                                <div key={sub.id} className={ACTIVE_ITEM_CLASS}>
-                                                    <span className="text-sm text-foreground">{sub.name}</span>
-                                                    <button
-                                                        onClick={() => handleDeactivate("subcategory", sub.id)}
-                                                        disabled={deactivateMutation.isPending}
-                                                        className="text-xs font-semibold text-rose-500 hover:text-rose-600 dark:text-rose-400 dark:hover:text-rose-300 disabled:opacity-50 transition-colors"
-                                                    >
-                                                        {t("choices.deactivate", "Deactivate")}
-                                                    </button>
-                                                </div>
-                                            ))}
-
-                                        {statusFilter !== "active" &&
-                                            categoryGroup.filteredInactive.map((sub) => (
-                                                <div key={sub.id} className={INACTIVE_ITEM_CLASS}>
-                                                    <span className="text-sm text-muted-foreground">{sub.name}</span>
-                                                    <button
-                                                        onClick={() => handleReactivate("subcategory", sub.id)}
-                                                        disabled={reactivateMutation.isPending}
-                                                        className="text-xs font-semibold text-emerald-600 hover:text-emerald-500 dark:text-emerald-400 dark:hover:text-emerald-300 disabled:opacity-50 transition-colors"
-                                                    >
-                                                        {t("choices.reactivate", "Reactivate")}
-                                                    </button>
-                                                </div>
-                                            ))}
-
-                                        {visibleChildrenCount === 0 && (
-                                            <p className="text-sm italic text-muted-foreground">
-                                                {normalizedSearch
-                                                    ? t("choices.noMatchingItems", "No matching items found.")
-                                                    : t("choices.noSubcategories", "No subcategories")}
-                                            </p>
+                                        {isExpanded ? (
+                                            <ChevronDown className="h-5 w-5" />
+                                        ) : (
+                                            <ChevronRight className="h-5 w-5" />
                                         )}
                                     </div>
-                                </div>
-                            )}
-                        </div>
-                    )
-                })
+                                </button>
+
+                                {isExpanded && (
+                                    <div className="border-t border-border px-4 py-3">
+                                        <div className="mb-3 flex justify-end">
+                                            <button
+                                                onClick={() =>
+                                                    openAddModal(
+                                                        "subcategory",
+                                                        `${t("choices.addSubcategoryFor", "Add Subcategory for")} ${categoryGroup.name}`,
+                                                        categoryGroup.id
+                                                    )
+                                                }
+                                                className="inline-flex items-center gap-1 rounded-lg bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90"
+                                            >
+                                                <Plus className="h-3 w-3" />
+                                                {t("choices.addSubcategory", "Add Subcategory")}
+                                            </button>
+                                        </div>
+
+                                        <div className="space-y-2">
+                                            {statusFilter !== "inactive" &&
+                                                categoryGroup.filteredActive.map((sub) => (
+                                                    <div key={sub.id} className={ACTIVE_ITEM_CLASS}>
+                                                        <button
+                                                            onClick={() => openEditModal("subcategory", sub)}
+                                                            className="text-sm font-medium text-foreground hover:text-primary transition-colors text-left flex-1"
+                                                        >
+                                                            {sub.name}
+                                                        </button>
+                                                        <button
+                                                            onClick={() => handleDeactivate("subcategory", sub.id)}
+                                                            disabled={deactivateMutation.isPending}
+                                                            className="text-xs font-semibold text-rose-500 hover:text-rose-600 dark:text-rose-400 dark:hover:text-rose-300 disabled:opacity-50 transition-colors"
+                                                        >
+                                                            {t("choices.deactivate", "Deactivate")}
+                                                        </button>
+                                                    </div>
+                                                ))}
+
+                                            {statusFilter !== "active" &&
+                                                categoryGroup.filteredInactive.map((sub) => (
+                                                    <div key={sub.id} className={INACTIVE_ITEM_CLASS}>
+                                                        <button
+                                                            onClick={() => openEditModal("subcategory", sub)}
+                                                            className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors text-left flex-1"
+                                                        >
+                                                            <span className="line-through">{sub.name}</span>
+                                                        </button>
+                                                        <button
+                                                            onClick={() => handleReactivate("subcategory", sub.id)}
+                                                            disabled={reactivateMutation.isPending}
+                                                            className="text-xs font-semibold text-emerald-600 hover:text-emerald-500 dark:text-emerald-400 dark:hover:text-emerald-300 disabled:opacity-50 transition-colors"
+                                                        >
+                                                            {t("choices.reactivate", "Reactivate")}
+                                                        </button>
+                                                    </div>
+                                                ))}
+
+                                            {visibleChildrenCount === 0 && (
+                                                <p className="text-sm italic text-muted-foreground">
+                                                    {normalizedSearch
+                                                        ? t("choices.noMatchingItems", "No matching items found.")
+                                                        : t("choices.noSubcategories", "No subcategories")}
+                                                </p>
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        )
+                    })}
+                </div>
             ) : (
                 <p className="text-sm italic text-muted-foreground">
                     {normalizedSearch
@@ -629,18 +815,21 @@ export default function ChoicesManagementPage() {
                 </p>
             </div>
 
-            <div className="rounded-2xl border border-border bg-card">
-                <div className="overflow-x-auto border-b border-border">
-                    <nav className="flex space-x-4 px-5 py-3" aria-label="Tabs">
+            <div className="flex flex-col md:flex-row gap-6 h-[calc(100vh-12rem)] min-h-[500px]">
+                {/* Left Sidebar (Tabs) */}
+                <div className="w-full md:w-64 flex-shrink-0 flex flex-col rounded-2xl border border-border bg-card overflow-hidden shadow-sm">
+                    <div className="p-4 border-b border-border bg-muted/20">
+                        <h3 className="font-semibold text-foreground">Categories</h3>
+                    </div>
+                    <nav className="flex-1 overflow-y-auto p-2 space-y-1" aria-label="Tabs">
                         {visibleTabKeys.map((key) => (
                             <button
                                 key={key}
-                                onClick={() => setActiveTab(key)}
-                                className={`whitespace-nowrap border-b-2 px-1 pb-2 text-sm font-medium transition-colors ${
-                                    activeTab === key
-                                        ? "border-primary text-primary"
-                                        : "border-transparent text-muted-foreground hover:border-muted-foreground/50 hover:text-foreground"
-                                }`}
+                                onClick={() => handleTabChange(key)}
+                                className={`w-full text-left px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${activeTab === key
+                                    ? "bg-primary/10 text-primary"
+                                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                                    }`}
                             >
                                 {getTabDisplayName(key)}
                             </button>
@@ -648,59 +837,64 @@ export default function ChoicesManagementPage() {
                     </nav>
                 </div>
 
-                <div className="border-b border-border px-5 py-4">
-                    <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
-                        <div className="relative flex-1">
-                            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                            <Input
-                                value={searchValue}
-                                onChange={(event) => setSearchValue(event.target.value)}
-                                placeholder={t("choices.searchPlaceholder", "Search choices in this tab...")}
-                                className="pl-10 pr-10"
-                            />
-                            {searchValue && (
-                                <button
-                                    type="button"
-                                    onClick={() => setSearchValue("")}
-                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                                >
-                                    <X className="h-4 w-4" />
-                                </button>
-                            )}
-                        </div>
+                {/* Right Content Area */}
+                <div className="flex-1 flex flex-col min-w-0 rounded-2xl border border-border bg-card overflow-hidden shadow-sm">
+                    {/* Sticky Header with Search and Filters */}
+                    <div className="sticky top-0 z-10 border-b border-border bg-card/95 backdrop-blur p-4">
+                        <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
+                            <div className="relative flex-1">
+                                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                                <Input
+                                    value={searchValue}
+                                    onChange={(event) => setSearchValue(event.target.value)}
+                                    placeholder={t("choices.searchPlaceholder", "Search choices in this tab...")}
+                                    className="pl-10 pr-10"
+                                />
+                                {searchValue && (
+                                    <button
+                                        type="button"
+                                        onClick={() => setSearchValue("")}
+                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                                    >
+                                        <X className="h-4 w-4" />
+                                    </button>
+                                )}
+                            </div>
 
-                        <div className="w-full lg:w-56">
-                            <FilterSelect
-                                options={[
-                                    { value: "active", label: t("choices.active", "Active") },
-                                    { value: "inactive", label: t("choices.inactive", "Inactive") },
-                                ]}
-                                value={statusFilter === "all" ? undefined : statusFilter}
-                                onChange={(value) => setStatusFilter((value as StatusFilterValue | undefined) ?? "all")}
-                                placeholder={t("choices.allStatuses", "All statuses")}
-                                allLabel={t("choices.allStatuses", "All statuses")}
-                                searchPlaceholder={t("choices.searchStatuses", "Search statuses...")}
+                            <div className="w-full lg:w-56">
+                                <FilterSelect
+                                    options={[
+                                        { value: "active", label: t("choices.active", "Active") },
+                                        { value: "inactive", label: t("choices.inactive", "Inactive") },
+                                    ]}
+                                    value={statusFilter === "all" ? undefined : statusFilter}
+                                    onChange={(value) => setStatusFilter((value as StatusFilterValue | undefined) ?? "all")}
+                                    placeholder={t("choices.allStatuses", "All statuses")}
+                                    allLabel={t("choices.allStatuses", "All statuses")}
+                                    searchPlaceholder={t("choices.searchStatuses", "Search statuses...")}
+                                />
+                            </div>
+
+                            <SortMenuButton
+                                options={getSortOptions()}
+                                sort={sortBy}
+                                order={sortOrder}
+                                onSortChange={(value) => setSortBy(value as SortValue)}
+                                onOrderChange={setSortOrder}
                             />
                         </div>
-
-                        <SortMenuButton
-                            options={SORT_OPTIONS}
-                            sort={sortBy}
-                            order={sortOrder}
-                            onSortChange={(value) => setSortBy(value as SortValue)}
-                            onOrderChange={setSortOrder}
-                        />
                     </div>
-                </div>
 
-                <div className="p-5">
+                    {/* Scrollable Content */}
+                    <div className="flex-1 overflow-y-auto p-5">
                         {activeTab === "vehicle_model"
                             ? renderVehicleModelContent()
                             : activeTab === "subcategory"
-                              ? renderSubcategoriesContent()
-                              : choiceTypes[activeTab]
-                                ? renderChoiceTypeContent(activeTab, choiceTypes[activeTab])
-                                : null}
+                                ? renderSubcategoriesContent()
+                                : choiceTypes[activeTab]
+                                    ? renderChoiceTypeContent(activeTab, choiceTypes[activeTab])
+                                    : null}
+                    </div>
                 </div>
             </div>
 
@@ -726,9 +920,12 @@ export default function ChoicesManagementPage() {
                                     <input
                                         type="text"
                                         value={modalName}
-                                        onChange={(event) => setModalName(event.target.value)}
+                                        onChange={(event) => {
+                                            setModalName(event.target.value)
+                                            setModalError(null)
+                                        }}
                                         required
-                                        className="w-full rounded-lg border border-input bg-transparent px-4 py-2.5 text-sm text-foreground focus:border-primary focus:ring-2 focus:ring-primary/20"
+                                        className={`w-full rounded-lg border border-input bg-transparent px-4 py-2.5 text-sm text-foreground focus:border-primary focus:ring-2 focus:ring-primary/20 ${modalError ? 'border-destructive' : ''}`}
                                         placeholder={t("choices.enterName", "Enter name...")}
                                         autoFocus
                                     />
@@ -763,20 +960,22 @@ export default function ChoicesManagementPage() {
                                     </button>
                                     <button
                                         type="submit"
-                                        disabled={addMutation.isPending}
+                                        disabled={addMutation.isPending || updateMutation.isPending}
                                         className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
                                     >
-                                        {addMutation.isPending ? (
+                                        {addMutation.isPending || updateMutation.isPending ? (
                                             <Loader2 className="h-4 w-4 animate-spin" />
+                                        ) : modalMode === "edit" ? (
+                                            t("common.save", "Save")
                                         ) : (
                                             t("choices.add", "Add")
                                         )}
                                     </button>
                                 </div>
 
-                                {addMutation.isError && (
+                                {modalError && (
                                     <p className="mt-3 text-sm text-destructive">
-                                        {t("choices.errorAdd", "Failed to add choice. Please try again.")}
+                                        {modalError}
                                     </p>
                                 )}
                             </form>

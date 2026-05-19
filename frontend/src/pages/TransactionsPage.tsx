@@ -1,9 +1,8 @@
 import { useState, useCallback, useEffect } from "react"
 import { Link, useSearchParams, useParams } from "react-router-dom"
-import { Plus, Filter, Search, X, Upload, CheckCircle2, Download, Loader2, RefreshCw } from "lucide-react"
+import { Plus, Search, X, Upload, CheckCircle2, Download, Loader2, RefreshCw } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Badge } from "@/components/ui/badge"
 import {
     Dialog,
     DialogContent,
@@ -13,9 +12,13 @@ import {
     DialogTitle,
 } from "@/components/ui/dialog"
 import { useTransactions, useDeleteTransaction, useActivateTransaction } from "@/hooks/useTransactions"
-import { FinancialSummaryTable, TransactionFiltersSheet, TransactionTable, ImportTransactionsModal } from "@/components/transactions"
+import { FinancialSummaryTable, TransactionFiltersSidebar, TransactionTable, ImportTransactionsModal } from "@/components/transactions"
 import { StickyFooter } from "@/components/StickyFooter"
+import { PerPageInput } from "@/components/PerPageInput"
+import { PageInput } from "@/components/PageInput"
+import { getPagePref, savePagePref, getSplitWidth, saveSplitWidth } from "@/lib/paginationPrefs"
 import api from "@/lib/api"
+import { SplitViewDivider } from "@/components/SplitViewDivider"
 import type { TransactionFilters, TransactionListItem } from "@/types/transaction"
 
 
@@ -33,7 +36,7 @@ export function TransactionsPage() {
         const statusFromUrl = searchParams.get("status")
         return {
             page: 1,
-            per_page: 20,
+            per_page: getPagePref("acar_transactions_per_page", 20),
             order: "desc",
             sort: "internal_id",
             status: statusFromUrl || undefined,
@@ -53,8 +56,7 @@ export function TransactionsPage() {
         }))
     }, [searchParams])
 
-    // Sheet open state
-    const [filtersOpen, setFiltersOpen] = useState(false)
+
 
     // Import modal state
     const [importModalOpen, setImportModalOpen] = useState(false)
@@ -87,18 +89,29 @@ export function TransactionsPage() {
     // Fetch transactions
     const { data, isLoading, isFetching } = useTransactions(filters)
 
+    // Split view preferences
+    const [panelWidth, setPanelWidth] = useState(() => 
+        getSplitWidth("acar_transactions_filter_width", 260, 200, 500)
+    )
+    const [isDragging, setIsDragging] = useState(false)
+
+    const handleDrag = (deltaX: number) => {
+        setPanelWidth(prev => {
+            const next = prev + deltaX // Positive deltaX increases left panel width
+            return Math.min(500, Math.max(200, next))
+        })
+    }
+
+    const handleDragEnd = () => {
+        setIsDragging(false)
+        saveSplitWidth("acar_transactions_filter_width", panelWidth, 200, 500)
+    }
+
     // Mutations
     const deleteMutation = useDeleteTransaction()
     const activateMutation = useActivateTransaction()
 
-    // Count active filters (excluding pagination and sort)
-    const activeFilterCount = Object.entries(filters).filter(([key, value]) => {
-        if (
-            ["page", "per_page", "sort", "order"].includes(key)
-        )
-            return false
-        return value !== undefined && value !== null && value !== ""
-    }).length
+
 
     // Handle page change
     const handlePageChange = useCallback((page: number) => {
@@ -116,19 +129,23 @@ export function TransactionsPage() {
 
 
 
-    // Handle advanced search
-    const handleQuickSearch = useCallback(
-        (e: React.KeyboardEvent<HTMLInputElement>) => {
-            if (e.key === "Enter") {
-                setFilters((prev) => ({
-                    ...prev,
-                    search: searchValue || undefined,
-                    page: 1,
-                }))
-            }
-        },
-        [searchValue]
-    )
+    // Handle search debounce
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setFilters((prev) => ({
+                ...prev,
+                search: searchValue.trim() || undefined,
+                page: 1,
+            }))
+        }, 400)
+        return () => clearTimeout(timer)
+    }, [searchValue])
+
+    // Handle per page
+    const handlePerPageChange = useCallback((newPerPage: number) => {
+        savePagePref("acar_transactions_per_page", newPerPage)
+        setFilters(prev => ({ ...prev, per_page: newPerPage, page: 1 }))
+    }, [])
 
     // Clear search
     const handleClearSearch = useCallback(() => {
@@ -271,8 +288,40 @@ export function TransactionsPage() {
                 isLoading={isLoading}
             />
 
-            {/* Toolbar */}
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+            {/* Main Layout */}
+            <div className="flex flex-col lg:flex-row relative lg:items-start">
+                {/* Left Sidebar (Mobile) */}
+                <div className="w-full lg:hidden shrink-0 order-2 mb-6">
+                    <TransactionFiltersSidebar
+                        filters={filters}
+                        onApplyFilters={handleApplyFilters}
+                    />
+                </div>
+
+                {/* Left Sidebar (Desktop) */}
+                <div 
+                    className={`hidden lg:block shrink-0 order-1 ${isDragging ? 'pointer-events-none' : ''}`}
+                    style={{ width: `${panelWidth}px` }}
+                >
+                    <TransactionFiltersSidebar
+                        filters={filters}
+                        onApplyFilters={handleApplyFilters}
+                    />
+                </div>
+
+                {/* Draggable Divider */}
+                <SplitViewDivider 
+                    onDrag={handleDrag}
+                    onDragStart={() => setIsDragging(true)}
+                    onDragEnd={handleDragEnd}
+                    className="hidden lg:flex order-2"
+                    handlePosition="top"
+                />
+
+                {/* Right Content */}
+                <div className={`flex-1 min-w-0 order-1 lg:order-3 flex flex-col gap-6 mb-6 lg:mb-0 ${isDragging ? 'pointer-events-none' : ''}`}>
+                    {/* Toolbar */}
+                    <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
                 {/* Search */}
                 <div className="relative flex-1 group">
                     <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground transition-colors group-focus-within:text-primary" />
@@ -282,7 +331,6 @@ export function TransactionsPage() {
                         className="pl-10 pr-10 h-11 hover:border-primary/50 focus:border-primary transition-all shadow-sm"
                         value={searchValue}
                         onChange={(e) => setSearchValue(e.target.value)}
-                        onKeyDown={handleQuickSearch}
                     />
                     {searchValue && (
                         <button
@@ -294,20 +342,8 @@ export function TransactionsPage() {
                     )}
                 </div>
                 <div className="flex items-center gap-2">
-                    <Button
-                        variant="outline"
-                        className="gap-2 h-11 px-4 shadow-sm"
-                        onClick={() => setFiltersOpen(true)}
-                    >
-                        <Filter className="h-4 w-4 text-muted-foreground" />
-                        Filters
-                        {activeFilterCount > 0 && (
-                            <Badge variant="secondary" className="ml-1 h-5 px-1.5 bg-primary/10 text-primary border-primary/20">
-                                {activeFilterCount}
-                            </Badge>
-                        )}
-                    </Button>
-                    {(activeFilterCount > 0 || searchValue) && (
+
+                    {(searchValue) && (
                         <Button
                             variant="ghost"
                             size="sm"
@@ -335,12 +371,7 @@ export function TransactionsPage() {
                 </div>
             </div>
 
-            {/* Results Count */}
-            <div className="flex items-center justify-between px-1">
-                <p className="text-sm text-muted-foreground font-medium">
-                    Showing <span className="text-foreground">{data?.transactions?.items?.length || 0}</span> of <span className="text-foreground">{data?.transactions?.total || 0}</span> transactions
-                </p>
-            </div>
+            {/* Results Count moved to sticky footer */}
 
             {/* Transaction Table */}
             <div className="rounded-xl border border-border bg-card overflow-hidden shadow-sm">
@@ -354,40 +385,52 @@ export function TransactionsPage() {
                     onSort={handleSort}
                 />
             </div>
+            </div>
+            </div>
 
             {/* Padding to prevent sticky footer overlap */}
             <div className="pb-24" />
 
             {/* Pagination Sticky Footer */}
-            {data?.transactions && data.transactions.total > (filters.per_page || 20) && (
-                <StickyFooter>
-                    <div className="flex items-center justify-between w-full px-2">
-                        <p className="text-sm text-muted-foreground font-medium">
-                            Page <span className="text-foreground">{data.transactions.page}</span> of <span className="text-foreground">{Math.ceil(data.transactions.total / (filters.per_page || 20))}</span>
-                        </p>
-                        <div className="flex gap-2">
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                disabled={data.transactions.page <= 1}
-                                onClick={() => handlePageChange(data.transactions.page - 1)}
-                                className="h-9"
-                            >
-                                Previous
-                            </Button>
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                disabled={data.transactions.page >= Math.ceil(data.transactions.total / (filters.per_page || 20))}
-                                onClick={() => handlePageChange(data.transactions.page + 1)}
-                                className="h-9"
-                            >
-                                Next
-                            </Button>
-                        </div>
-                    </div>
-                </StickyFooter>
-            )}
+            <StickyFooter>
+                <div className="flex items-center gap-1.5 text-sm text-muted-foreground font-medium">
+                    Showing
+                    <PerPageInput
+                        value={filters.per_page || 20}
+                        onChange={handlePerPageChange}
+                        label=""
+                    />
+                    of <span className="text-foreground">{data?.transactions?.total || 0}</span> transactions
+                </div>
+                <div className="flex items-center gap-2">
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        disabled={!data?.transactions || data.transactions.page <= 1}
+                        onClick={() => handlePageChange((data?.transactions?.page || 1) - 1)}
+                    >
+                        Previous
+                    </Button>
+                    <span className="text-sm text-muted-foreground px-2 font-medium flex items-center gap-1.5">
+                        Page
+                        <PageInput
+                            currentPage={data?.transactions?.page || 1}
+                            totalPages={data?.transactions?.total ? Math.ceil(data.transactions.total / (filters.per_page || 20)) : 1}
+                            onPageChange={handlePageChange}
+                            disabled={isFetching}
+                        />
+                        of <span className="text-foreground">{data?.transactions?.total ? Math.ceil(data.transactions.total / (filters.per_page || 20)) : 1}</span>
+                    </span>
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        disabled={!data?.transactions || data.transactions.page >= Math.ceil(data.transactions.total / (filters.per_page || 20))}
+                        onClick={() => handlePageChange((data?.transactions?.page || 1) + 1)}
+                    >
+                        Next
+                    </Button>
+                </div>
+            </StickyFooter>
 
             {/* Loading overlay for background updates */}
             {isFetching && !isLoading && (
@@ -399,13 +442,7 @@ export function TransactionsPage() {
                 </div>
             )}
 
-            {/* Filters Sheet */}
-            <TransactionFiltersSheet
-                open={filtersOpen}
-                onOpenChange={setFiltersOpen}
-                filters={filters}
-                onApplyFilters={handleApplyFilters}
-            />
+
 
             {/* Delete Confirmation Dialog */}
             <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>

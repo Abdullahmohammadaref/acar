@@ -35,7 +35,7 @@ i18n
         interpolation: {
             escapeValue: false, // React already escapes values
         },
-        debug: import.meta.env.DEV,
+        debug: (import.meta as any).env?.DEV,
     });
 
 export default i18n;

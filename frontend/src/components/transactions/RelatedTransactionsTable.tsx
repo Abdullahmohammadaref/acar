@@ -130,6 +130,7 @@ export function RelatedTransactionsTable({
                         highlightedRowId={highlightedTransactionId}
                         showEmptyTable={true}
                         maxHeight="400px"
+                        compactBadges={true}
                     />
 
                     {/* Pagination Controls */}

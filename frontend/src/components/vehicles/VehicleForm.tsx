@@ -28,7 +28,7 @@ import {
 import { EntityForm } from "@/components/legal-entities/EntityForm"
 import type { AutoSaveStatus } from "@/hooks/useAutoSave"
 import { useCreateLegalEntity, type LegalEntityCreatePayload } from "@/hooks/useLegalEntities"
-import { useChoices, useModels, useNextVehicleId, vehicleKeys } from "@/hooks/useVehicles"
+import { useChoices, useModels, useNextVehicleId, useNextAvailableKey, vehicleKeys } from "@/hooks/useVehicles"
 import { vehicleCreateSchema, vehicleUpdateSchema, type VehicleCreateInput, type VehicleUpdateInput } from "@/lib/validations"
 import api, { ensureCsrfToken } from "@/lib/api"
 import { formatCurrency } from "@/lib/utils"
@@ -48,6 +48,8 @@ interface VehicleFormProps {
     nextVehicleId?: number | null
     autoSaveStatus?: AutoSaveStatus
     autoSaveErrorMessage?: string | null
+    /** Optional split-view toggle button rendered in footer */
+    splitViewToggle?: React.ReactNode
 }
 
 // Status values that unlock the Sale tab
@@ -78,14 +80,6 @@ interface TaxCalculationBreakdown {
 }
 
 
-
-interface TaxCalculationBreakdown {
-    gross: number | null
-    taxAmount: number | null
-    net: number | null
-    taxRate: number
-    hasValue: boolean
-}
 
 function roundMoney(value: number) {
     return Math.round((value + Number.EPSILON) * 100) / 100
@@ -173,123 +167,35 @@ export function VehicleForm({
     nextVehicleId,
     autoSaveStatus = "idle",
     autoSaveErrorMessage = null,
+    splitViewToggle,
 }: VehicleFormProps) {
     const navigate = useNavigate()
     const { business_slug } = useParams<{ business_slug: string }>()
     const queryClient = useQueryClient()
-    const { data: choices, isLoading: choicesLoading } = useChoices()
 
-    const { data: txData } = useTransactions(
-        { vehicle: vehicle?.internal_id ?? undefined, per_page: 500 },
-        isEditing && !!vehicle?.internal_id
-    )
+    // --- Core Helpers (No hook dependencies) ---
 
-    // Fetch next ID only when adding a new vehicle
-    const { data: nextId, isLoading: nextIdLoading } = useNextVehicleId(!isEditing)
-
-    // Fetch business settings for target preferences
-    const { data: businessSettings } = useQuery({
-        queryKey: ["business-settings"],
-        queryFn: async () => {
-            const response = await api.get("/settings/business")
-            return response.data
-        },
-        staleTime: 5 * 60 * 1000,
-    })
-
-
-
-    // === Mutation / API error state ===
-    const [mutationError, setMutationError] = useState<string | null>(null)
-
-    // === Legal entity creation modal state ===
-    const [entityModalOpen, setEntityModalOpen] = useState(false)
-    const [createEntityTarget, setCreateEntityTarget] = useState<"seller_id" | "buyer_id">("seller_id")
-    const [entityFormData, setEntityFormData] = useState<Partial<LegalEntityCreatePayload>>({ type: "individual" })
-    const [entityFormError, setEntityFormError] = useState<string | null>(null)
-    const [contractModalOpen, setContractModalOpen] = useState(false)
-    const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null)
-    const [imageUploadError, setImageUploadError] = useState<string | null>(null)
-    const [isUploadingImage, setIsUploadingImage] = useState(false)
-    const createEntityMutation = useCreateLegalEntity()
-
-    // Open the full legal entity creation modal for the given field
-    const handleOpenEntityModal = useCallback((target: "seller_id" | "buyer_id") => {
-        setCreateEntityTarget(target)
-        setEntityFormData({ type: "individual" })
-        setEntityFormError(null)
-        setEntityModalOpen(true)
-    }, [])
-
-    // Submit the full legal entity form via the standard validated endpoint
-    const handleCreateEntity = useCallback(async () => {
-        setEntityFormError(null)
-        try {
-            const newEntity = await createEntityMutation.mutateAsync(entityFormData as LegalEntityCreatePayload)
-            // Auto-select the newly created entity in the target dropdown
-            handleDropdownChange(createEntityTarget, newEntity.id)
-            // Refresh vehicle choices so the new entity shows in all dropdowns
-            queryClient.invalidateQueries({ queryKey: vehicleKeys.choices() })
-            // Close modal and reset form
-            setEntityModalOpen(false)
-            setEntityFormData({ type: "individual" })
-        } catch (error: unknown) {
-            const err = error as Error
-            setEntityFormError(err.message || "Failed to create legal entity")
-        }
-    }, [entityFormData, createEntityMutation, createEntityTarget, queryClient])
-
-    // Flag to prevent auto-save during initial data population
-    // This prevents false "Failed to save" errors on page load
-    const isInitializingRef = useRef(isEditing)
-
-    // Smart back handler - preserves URL filters by using browser history
-    const handleBack = () => {
-        if (window.history.state && window.history.state.idx > 0) {
-            navigate(-1)
-        } else {
-            navigate("/vehicles")
-        }
-    }
-
-    // Ensure CSRF token on mount
-    useEffect(() => {
-        ensureCsrfToken()
-    }, [])
-
-    // Determine the current status (for edit mode, use vehicle's status; for create, force "purchased")
-    const currentStatus = isEditing ? (vehicle?.status ?? "purchased") : "purchased"
-    const vehicleTitle = `${vehicle?.make_name ?? ""} ${vehicle?.model_name ?? ""}`.trim() || undefined
-    const canGenerateAnyContract = Boolean(
-        vehicle?.can_generate_buy_contract || vehicle?.can_generate_sale_contract
-    )
-
-    // Helper: parse backend Decimal strings (e.g. "465.00") to JS numbers
-    // Django Ninja serializes Python Decimal as JSON strings, not numbers
+    /** Parse backend Decimal strings to JS numbers */
     const toNum = (val: unknown): number | undefined => {
         if (val === null || val === undefined) return undefined
         const n = typeof val === "string" ? parseFloat(val) : Number(val)
         return Number.isNaN(n) ? undefined : n
     }
 
+    /** Extract error messages from API responses */
     const getApiErrorMessage = (error: unknown, fallback: string) => {
         const axiosError = error as {
             response?: { data?: { detail?: string; message?: string } | string }
             message?: string
         }
-
-        if (typeof axiosError.response?.data === "string") {
-            return axiosError.response.data
-        }
-
+        if (typeof axiosError.response?.data === "string") return axiosError.response.data
         if (axiosError.response?.data && typeof axiosError.response.data === "object") {
             return axiosError.response.data.detail || axiosError.response.data.message || fallback
         }
-
         return axiosError.message || fallback
     }
 
-    // Form setup
+    // --- Form Foundation ---
     const schema = isEditing ? vehicleUpdateSchema : vehicleCreateSchema
     const {
         handleSubmit,
@@ -300,7 +206,6 @@ export function VehicleForm({
     } = useForm<VehicleCreateInput | VehicleUpdateInput>({
         resolver: zodResolver(schema) as any,
         defaultValues: isEditing ? {
-            // Edit mode: include status
             status: (vehicle?.status ?? "purchased") as VehicleStatus,
             branch_id: vehicle?.branch_id ?? undefined,
             vehicle_type_id: vehicle?.vehicle_type_id ?? undefined,
@@ -324,7 +229,6 @@ export function VehicleForm({
             buy_delivery_collection_date: vehicle?.buy_delivery_collection_date ?? "",
             buy_payment_method_id: vehicle?.buy_payment_method_id ?? undefined,
             seller_id: vehicle?.seller_id ?? undefined,
-            // Sale fields (only in edit mode)
             sale_price: toNum(vehicle?.sale_price),
             sale_tax_id: vehicle?.sale_tax_id ?? undefined,
             sale_date: vehicle?.sale_date ?? "",
@@ -335,8 +239,8 @@ export function VehicleForm({
             sale_invoice_number: vehicle?.sale_invoice_number ?? "",
             description: vehicle?.description ?? "",
             internal_comments: vehicle?.internal_comments ?? "",
+            key_number_id: vehicle?.key_number_id ?? undefined,
         } : {
-            // Create mode: no status field (backend defaults to purchased)
             branch_id: undefined,
             vehicle_type_id: undefined,
             body_type_id: undefined,
@@ -361,15 +265,125 @@ export function VehicleForm({
             seller_id: undefined,
             description: "",
             internal_comments: "",
+            key_number_id: undefined,
         },
     })
 
-    // Reset form when navigating to a different vehicle
+    // --- State and Refs ---
+    const isInitializingRef = useRef(isEditing)
+    const [mutationError, setMutationError] = useState<string | null>(null)
+    const [entityModalOpen, setEntityModalOpen] = useState(false)
+    const [createEntityTarget, setCreateEntityTarget] = useState<"seller_id" | "buyer_id">("seller_id")
+    const [entityFormData, setEntityFormData] = useState<Partial<LegalEntityCreatePayload>>({ type: "individual" })
+    const [entityFormError, setEntityFormError] = useState<string | null>(null)
+    const [contractModalOpen, setContractModalOpen] = useState(false)
+    const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null)
+    const [imageUploadError, setImageUploadError] = useState<string | null>(null)
+    const [isUploadingImage, setIsUploadingImage] = useState(false)
+    const createEntityMutation = useCreateLegalEntity()
+
+    // --- Basic Handlers & Helpers ---
+    const handleBack = useCallback(() => {
+        if (window.history.state && window.history.state.idx > 0) navigate(-1)
+        else navigate("/vehicles")
+    }, [navigate])
+
+    const toOptions = useCallback((items: Array<{ id: number; name: string }> | undefined) =>
+        items?.map((item) => ({ id: item.id, name: item.name })) ?? [], [])
+
+    const taxToOptions = useCallback((items: Array<{ id: number; name: string; percentage: number }> | undefined) =>
+        items?.map((item) => ({ id: item.id, name: `${item.name} (${item.percentage}%)` })) ?? [], [])
+
+    const invalidateKeyChoiceCaches = useCallback(() => {
+        queryClient.invalidateQueries({ queryKey: ["choices"] })
+        queryClient.invalidateQueries({ queryKey: ["choices-management"] })
+    }, [queryClient])
+
+    const handleDropdownChange = useCallback((field: string, value: number | string | null | undefined) => {
+        setValue(field as any, value as any)
+        if (isEditing && onAutoSave && !isInitializingRef.current) {
+            onAutoSave({ [field]: value } as Partial<VehicleUpdateInput>)
+        }
+        if (field === "key_number_id") {
+            invalidateKeyChoiceCaches()
+        }
+    }, [setValue, isEditing, onAutoSave, invalidateKeyChoiceCaches])
+
+    const handleTextChange = useCallback((field: string, value: string) => {
+        setValue(field as any, value as any)
+        if (isEditing && onAutoSaveDebounced && !isInitializingRef.current) {
+            onAutoSaveDebounced({ [field]: value } as Partial<VehicleUpdateInput>)
+        }
+    }, [setValue, isEditing, onAutoSaveDebounced])
+
+    const handleNumberChange = useCallback((field: string, value: string, parseFunc: (v: string) => number | undefined = (v) => v ? parseInt(v) : undefined) => {
+        const numVal = parseFunc(value)
+        setValue(field as any, numVal as any)
+        if (isEditing && onAutoSaveDebounced && !isInitializingRef.current) {
+            onAutoSaveDebounced({ [field]: numVal } as Partial<VehicleUpdateInput>)
+        }
+    }, [setValue, isEditing, onAutoSaveDebounced])
+
+    const handleDateChange = useCallback((field: string, value: string) => {
+        setValue(field as any, value as any)
+        if (isEditing && onAutoSave && !isInitializingRef.current) {
+            onAutoSave({ [field]: value || null } as Partial<VehicleUpdateInput>)
+        }
+    }, [setValue, isEditing, onAutoSave])
+
+    // --- Higher-level Callbacks ---
+    const handleOpenEntityModal = useCallback((target: "seller_id" | "buyer_id") => {
+        setCreateEntityTarget(target)
+        setEntityFormData({ type: "individual" })
+        setEntityFormError(null)
+        setEntityModalOpen(true)
+    }, [])
+
+    const handleCreateEntity = useCallback(async () => {
+        setEntityFormError(null)
+        try {
+            const newEntity = await createEntityMutation.mutateAsync(entityFormData as LegalEntityCreatePayload)
+            handleDropdownChange(createEntityTarget, newEntity.id)
+            queryClient.invalidateQueries({ queryKey: vehicleKeys.choices() })
+            setEntityModalOpen(false)
+            setEntityFormData({ type: "individual" })
+        } catch (error: unknown) {
+            const err = error as Error
+            setEntityFormError(err.message || "Failed to create legal entity")
+        }
+    }, [entityFormData, createEntityMutation, createEntityTarget, queryClient, handleDropdownChange])
+
+    // --- Data Fetching ---
+    const { data: choices, isLoading: choicesLoading } = useChoices(vehicle?.id)
+    const { data: txData } = useTransactions(
+        { vehicle: vehicle?.internal_id ?? undefined, per_page: 500 },
+        isEditing && !!vehicle?.internal_id
+    )
+    const { data: nextId, isLoading: nextIdLoading } = useNextVehicleId(!isEditing)
+    const watchedKeyNumberId = watch("key_number_id")
+    const { data: nextKey } = useNextAvailableKey(!isEditing && !watchedKeyNumberId)
+    const { data: businessSettings } = useQuery({
+        queryKey: ["business-settings"],
+        queryFn: async () => {
+            const response = await api.get("/settings/business")
+            return response.data
+        },
+        staleTime: 5 * 60 * 1000,
+    })
+
+    // --- Side Effects ---
+    useEffect(() => { ensureCsrfToken() }, [])
+
+    useEffect(() => {
+        if (!isEditing && nextKey && !watchedKeyNumberId) {
+            handleDropdownChange("key_number_id", nextKey.id)
+        }
+    }, [nextKey, isEditing, watchedKeyNumberId, handleDropdownChange])
+
     useEffect(() => {
         if (isEditing && vehicle) {
-            // Block auto-save during initial population
             isInitializingRef.current = true
-
+            const noTaxId = choices?.tax_percentages?.find((tax) => tax.is_no_tax)?.id
             reset({
                 status: (vehicle.status ?? "purchased") as VehicleStatus,
                 branch_id: vehicle.branch_id ?? undefined,
@@ -389,13 +403,13 @@ export function VehicleForm({
                 motor_vehicle_registration_number: vehicle.motor_vehicle_registration_number ?? "",
                 official_license_plate: vehicle.official_license_plate ?? "",
                 buy_price: toNum(vehicle.buy_price),
-                buy_tax_id: vehicle.buy_tax_id ?? undefined,
+                buy_tax_id: vehicle.buy_tax_id ?? noTaxId ?? undefined,
                 buy_date: vehicle.buy_date ?? "",
                 buy_delivery_collection_date: vehicle.buy_delivery_collection_date ?? "",
                 buy_payment_method_id: vehicle.buy_payment_method_id ?? undefined,
                 seller_id: vehicle.seller_id ?? undefined,
                 sale_price: toNum(vehicle.sale_price),
-                sale_tax_id: vehicle.sale_tax_id ?? undefined,
+                sale_tax_id: vehicle.sale_tax_id ?? noTaxId ?? undefined,
                 sale_date: vehicle.sale_date ?? "",
                 sale_delivery_collection_date: vehicle.sale_delivery_collection_date ?? "",
                 sale_payment_method_id: vehicle.sale_payment_method_id ?? undefined,
@@ -404,14 +418,28 @@ export function VehicleForm({
                 sale_invoice_number: vehicle.sale_invoice_number ?? "",
                 description: vehicle.description ?? "",
                 internal_comments: vehicle.internal_comments ?? "",
+                key_number_id: vehicle.key_number_id ?? undefined,
             })
-
-            // Allow auto-save after a short delay to ensure all initialization is complete
-            setTimeout(() => {
-                isInitializingRef.current = false
-            }, 500)
+            setTimeout(() => { isInitializingRef.current = false }, 500)
         }
-    }, [vehicle?.internal_id, isEditing, reset])
+    }, [vehicle?.internal_id, isEditing, reset, choices?.tax_percentages])
+
+    // Automatically default buy_tax_id and sale_tax_id to the "No Tax" option when choices load
+    useEffect(() => {
+        if (choices?.tax_percentages && choices.tax_percentages.length > 0) {
+            const noTaxOption = choices.tax_percentages.find((tax) => tax.is_no_tax)
+            if (noTaxOption) {
+                const currentBuyTax = watch("buy_tax_id")
+                const currentSaleTax = watch("sale_tax_id")
+                if (currentBuyTax === undefined || currentBuyTax === null) {
+                    setValue("buy_tax_id", noTaxOption.id)
+                }
+                if (currentSaleTax === undefined || currentSaleTax === null) {
+                    setValue("sale_tax_id", noTaxOption.id)
+                }
+            }
+        }
+    }, [choices?.tax_percentages, setValue, watch])
 
     useEffect(() => {
         setSelectedImageFile(null)
@@ -419,11 +447,15 @@ export function VehicleForm({
         setIsUploadingImage(false)
     }, [vehicle?.internal_id, isEditing])
 
-    // Watch status to determine visibility
+    // --- Derived Values ---
+    const currentStatus = isEditing ? (vehicle?.status ?? "purchased") : "purchased"
+    const vehicleTitle = `${vehicle?.make_name ?? ""} ${vehicle?.model_name ?? ""}`.trim() || "Vehicle"
+    const canGenerateAnyContract = Boolean(
+        vehicle?.can_generate_buy_contract || vehicle?.can_generate_sale_contract
+    )
     const watchedStatus = watch("status") ?? currentStatus
-
-    // Check if Sale tab should be visible
     const isSaleTabVisible = isEditing && SALE_ENABLED_STATUSES.includes(watchedStatus as string)
+    const isKeyFieldVisible = watchedStatus !== "sold" && watchedStatus !== "inactive"
     const watchedBuyPrice = toNum(watch("buy_price"))
     const watchedBuyTaxId = watch("buy_tax_id")
     const watchedSalePrice = toNum(watch("sale_price"))
@@ -433,16 +465,20 @@ export function VehicleForm({
 
     const buyTaxRate = choices?.tax_percentages?.find((tax) => tax.id === watchedBuyTaxId)?.percentage ?? 0
     const saleTaxRate = choices?.tax_percentages?.find((tax) => tax.id === watchedSaleTaxId)?.percentage ?? 0
-
     const buyBreakdown = calculateTaxBreakdown(watchedBuyPrice, buyTaxRate)
     const saleBreakdown = calculateTaxBreakdown(watchedSalePrice, saleTaxRate)
+    const keyNumberOptions = [
+        ...toOptions(choices?.key_numbers),
+        ...(nextKey && !choices?.key_numbers?.some((key) => key.id === nextKey.id)
+            ? [{ id: nextKey.id, name: nextKey.name }]
+            : []),
+    ]
 
     const txnsForCalc = txData?.transactions?.items?.map(t => ({
         amount: typeof t.amount === 'string' ? parseFloat(t.amount) : t.amount,
         tax: typeof t.tax === 'string' ? parseFloat(t.tax) : t.tax
     })) ?? null
 
-    // Full financial calculations — uses the centralized utility
     const vehicleFinancials = calcVehicleFinancials({
         buyGross: watchedBuyPrice ?? null,
         buyTaxPercentage: buyTaxRate,
@@ -455,87 +491,78 @@ export function VehicleForm({
         targetDaysOnStock: businessSettings?.target_days_on_stock,
     })
 
-    // Validate sale fields before allowing "Sold" status
+    // --- Validation & Mutation ---
     const validateSaleFields = (): boolean => {
-        const salePrice = watch("sale_price")
-        const saleDate = watch("sale_date")
-        const buyerId = watch("buyer_id")
-        const salePaymentMethodId = watch("sale_payment_method_id")
+        const errorsList: string[] = []
+        if (!watch("sale_price") || Number(watch("sale_price")) <= 0) errorsList.push("Sale price")
+        if (!watch("sale_date")) errorsList.push("Sale date")
+        if (!watch("buyer_id")) errorsList.push("Buyer")
+        if (!watch("sale_payment_method_id")) errorsList.push("Payment method")
 
-        const errors: string[] = []
-        if (!salePrice || salePrice <= 0) errors.push("Sale price")
-        if (!saleDate) errors.push("Sale date")
-        if (!buyerId) errors.push("Buyer")
-        if (!salePaymentMethodId) errors.push("Payment method")
-
-        if (errors.length > 0) {
-            alert(`Please fill in the following required fields before marking as Sold:\n\n• ${errors.join("\n• ")}`)
+        if (errorsList.length > 0) {
+            alert(`Please fill in required fields for Sold status:\n• ${errorsList.join("\n• ")}`)
             return false
         }
         return true
     }
 
-    // Handle status change with validation
     const handleStatusChange = (newStatus: VehicleStatus | string) => {
-        // If trying to change to "Sold", validate sale fields first
-        if (newStatus === "sold" && !validateSaleFields()) {
-            return
-        }
+        if (newStatus === "sold" && !validateSaleFields()) return
         setValue("status", newStatus as VehicleStatus, { shouldDirty: true })
-        // Auto-save the status change immediately (like dropdowns)
+
+        // Clear key number if sold or inactive
+        if (newStatus === "sold" || newStatus === "inactive") {
+            setValue("key_number_id", null as any, { shouldDirty: true })
+        }
+
         if (isEditing && onAutoSave && !isInitializingRef.current) {
-            onAutoSave({ status: newStatus } as Partial<VehicleUpdateInput>)
+            const updateData: any = { status: newStatus }
+            if (newStatus === "sold" || newStatus === "inactive") {
+                updateData.key_number_id = null
+            }
+            onAutoSave(updateData as Partial<VehicleUpdateInput>)
+        }
+        if (newStatus === "sold" || newStatus === "inactive") {
+            invalidateKeyChoiceCaches()
         }
     }
 
-
-    // Create/Update mutation
     const mutation = useMutation({
         mutationFn: async (data: VehicleCreateInput | VehicleUpdateInput) => {
             if (isEditing && vehicle?.internal_id) {
                 const response = await api.patch(`/vehicles/${vehicle.internal_id}`, data)
                 return response.data
-            } else {
-                const response = await api.post("/vehicles", data)
-                return response.data
             }
+            const response = await api.post("/vehicles", data)
+            return response.data
         },
         onSuccess: () => {
             setMutationError(null)
             queryClient.invalidateQueries({ queryKey: vehicleKeys.lists() })
+            invalidateKeyChoiceCaches()
         },
         onError: (error: unknown) => {
-            const message = getApiErrorMessage(error, "Failed to save vehicle. Please try again.")
+            const message = getApiErrorMessage(error, "Failed to save vehicle.")
             setMutationError(message)
-            console.error("[VehicleForm] Mutation error:", error)
-
-            // Scroll to top so the error banner is visible
             window.scrollTo({ top: 0, behavior: "smooth" })
         },
     })
 
-    const uploadVehicleImage = useCallback(async (targetInternalId: number, file: File) => {
+    const uploadVehicleImage = useCallback(async (targetId: number, file: File) => {
         setImageUploadError(null)
         setIsUploadingImage(true)
-
         try {
             const formData = new FormData()
             formData.append("image", file)
-
-            const response = await api.post(`/vehicles/${targetInternalId}/image`, formData, {
-                headers: {
-                    "Content-Type": "multipart/form-data",
-                },
+            const response = await api.post(`/vehicles/${targetId}/image`, formData, {
+                headers: { "Content-Type": "multipart/form-data" }
             })
-
-            queryClient.setQueryData(vehicleKeys.detail(targetInternalId), response.data)
+            // Update local query data to show the new image immediately
+            queryClient.setQueryData(vehicleKeys.detail(targetId), response.data)
             queryClient.invalidateQueries({ queryKey: vehicleKeys.lists() })
             setSelectedImageFile(null)
-
-            return response.data as VehicleDetail
         } catch (error) {
-            const message = getApiErrorMessage(error, "Failed to upload vehicle image.")
-            setImageUploadError(message)
+            setImageUploadError(getApiErrorMessage(error, "Failed to upload vehicle image."))
             throw error
         } finally {
             setIsUploadingImage(false)
@@ -546,90 +573,39 @@ export function VehicleForm({
         setSelectedImageFile(file)
         setImageUploadError(null)
 
-        if (!file || !isEditing || !vehicle?.internal_id) {
-            return
-        }
+        if (!file || !isEditing || !vehicle?.internal_id) return
 
         try {
             await uploadVehicleImage(vehicle.internal_id, file)
-        } catch {
-            // Error state is already handled in uploadVehicleImage.
-        }
+        } catch { }
     }, [isEditing, uploadVehicleImage, vehicle?.internal_id])
 
     const onSubmit = async (data: VehicleCreateInput | VehicleUpdateInput) => {
-        console.log('[VehicleForm] onSubmit called with data:', data)
-        // Clear any previous mutation errors
         setMutationError(null)
-        // Final validation for "Sold" status
-        if ((data as VehicleUpdateInput).status === "sold" && !validateSaleFields()) {
-            // Error handling and scrolling is done within validateSaleFields
-            return
-        }
+        if ((data as VehicleUpdateInput).status === "sold" && !validateSaleFields()) return
 
-        // Sanitize data before sending to backend
-        const cleanedData = { ...data } as Record<string, unknown>
+        // Deep copy and sanitize
+        const cleanedData = JSON.parse(JSON.stringify(data))
 
-        // 1. Convert empty strings to null for optional date/string fields
-        // Pydantic rejects "" for date fields and optional strings — it needs null
-        const optionalStringFields = [
-            "first_registration_date", "buy_delivery_collection_date",
-            "sale_date", "sale_delivery_collection_date",
-            "motor_vehicle_registration_number", "official_license_plate",
-            "description", "internal_comments", "sale_invoice_number",
-        ]
-        for (const field of optionalStringFields) {
-            if (cleanedData[field] === "" || cleanedData[field] === undefined) {
-                cleanedData[field] = null
+        // Convert empty strings to null for all fields (Pydantic requirement)
+        Object.keys(cleanedData).forEach(key => {
+            if (cleanedData[key] === "" || cleanedData[key] === undefined) {
+                cleanedData[key] = null
             }
-        }
-
-        // 2. Parse numeric fields to actual numbers (HTML inputs return strings like "23.00")
-        // Pydantic Decimal/int fields reject string values
-        const numericFields = [
-            "buy_price", "sale_price", "sale_commission",
-            "power_kw", "kilometer", "year_of_construction",
-        ]
-        for (const field of numericFields) {
-            const val = cleanedData[field]
-            if (val !== null && val !== undefined && val !== "") {
-                const parsed = parseFloat(String(val))
-                cleanedData[field] = Number.isNaN(parsed) ? null : parsed
-            } else if (val === "" || val === undefined) {
-                cleanedData[field] = null
-            }
-        }
+        })
 
         try {
-            const savedVehicle = await mutation.mutateAsync(cleanedData as VehicleCreateInput | VehicleUpdateInput)
-
-            if (selectedImageFile && savedVehicle?.internal_id) {
-                try {
-                    await uploadVehicleImage(savedVehicle.internal_id, selectedImageFile)
-                } catch {
-                    if (!isEditing && business_slug) {
-                        window.alert(`Vehicle #${savedVehicle.internal_id} was created, but the image upload failed. The vehicle will open so you can retry the upload.`)
-                        navigate(`/${business_slug}/vehicles/${savedVehicle.internal_id}/edit`)
-                    }
-                    return
-                }
+            const saved = await mutation.mutateAsync(cleanedData)
+            if (selectedImageFile && saved?.internal_id) {
+                await uploadVehicleImage(saved.internal_id, selectedImageFile)
             }
-
-            if (!isEditing) {
-                handleBack()
-            }
+            if (!isEditing) handleBack()
         } catch {
-            // Mutation error state is already handled by the mutation itself.
+            // Error handled by mutation.onError
         }
     }
 
-    // Handle validation errors from react-hook-form
-    const onError = (formErrors: Record<string, unknown>) => {
-        console.error('[VehicleForm] Validation errors:', formErrors)
-
-        // Scroll to top so error banner is visible
-        window.scrollTo({ top: 0, behavior: "smooth" })
-    }
+    const onError = () => { window.scrollTo({ top: 0, behavior: "smooth" }) }
 
     if (choicesLoading) {
         return (
@@ -637,50 +613,6 @@ export function VehicleForm({
                 <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
             </div>
         )
-    }
-
-    // Helper to convert choices to combobox format
-    const toOptions = (items: Array<{ id: number; name: string }> | undefined) =>
-        items?.map((item) => ({ id: item.id, name: item.name })) ?? []
-
-    // Helper to convert tax choices with "Name (Percentage%)" format
-    const taxToOptions = (items: Array<{ id: number; name: string; percentage: number }> | undefined) =>
-        items?.map((item) => ({ id: item.id, name: `${item.name} (${item.percentage}%)` })) ?? []
-
-    // Auto-save helper for dropdown changes (immediate save)
-    // Skips auto-save during initialization to prevent false errors
-    const handleDropdownChange = (field: string, value: number | string | null | undefined) => {
-        setValue(field as any, value as any)
-        if (isEditing && onAutoSave && !isInitializingRef.current) {
-            onAutoSave({ [field]: value } as Partial<VehicleUpdateInput>)
-        }
-    }
-
-    // Auto-save helper for text input changes (debounced save on every keystroke)
-    // This provides real-time saving UX matching the Transaction form
-    const handleTextChange = (field: string, value: string) => {
-        setValue(field as any, value as any)
-        if (isEditing && onAutoSaveDebounced && !isInitializingRef.current) {
-            onAutoSaveDebounced({ [field]: value } as Partial<VehicleUpdateInput>)
-        }
-    }
-
-    // Auto-save helper for number input changes (debounced save on every keystroke)
-    const handleNumberChange = (field: string, value: string, parseFunc: (v: string) => number | undefined = (v) => v ? parseInt(v) : undefined) => {
-        const numVal = parseFunc(value)
-        setValue(field as any, numVal as any)
-        if (isEditing && onAutoSaveDebounced && !isInitializingRef.current) {
-            onAutoSaveDebounced({ [field]: numVal } as Partial<VehicleUpdateInput>)
-        }
-    }
-
-    // Auto-save helper for date input changes (immediate save like dropdowns)
-    const handleDateChange = (field: string, value: string) => {
-        setValue(field as any, value as any)
-        if (isEditing && onAutoSave && !isInitializingRef.current) {
-            // Send null instead of empty string for optional date fields
-            onAutoSave({ [field]: value || null } as Partial<VehicleUpdateInput>)
-        }
     }
 
     return (
@@ -928,6 +860,26 @@ export function VehicleForm({
                                 />
                             </div>
 
+                            {/* Key Number */}
+                            {isKeyFieldVisible && (
+                                <div className="space-y-2">
+                                    <Label className="text-foreground">
+                                        Key Number <span className="text-destructive">*</span>
+                                    </Label>
+                                    <DynamicSelect
+                                        choiceType="key_number"
+                                        options={keyNumberOptions}
+                                        value={watchedKeyNumberId ?? null}
+                                        onChange={(val) => handleDropdownChange("key_number_id", val ?? null)}
+                                        placeholder="Select key number"
+                                        createLabel="Key Number"
+                                    />
+                                    {errors.key_number_id && (
+                                        <p className="text-sm text-red-500">{errors.key_number_id.message}</p>
+                                    )}
+                                </div>
+                            )}
+
                             {/* Year */}
                             <div className="space-y-2">
                                 <Label className="text-foreground">Year of Construction <span className="text-red-500">*</span></Label>
@@ -950,6 +902,7 @@ export function VehicleForm({
                                     type="date"
                                     value={watch("first_registration_date") ?? ""}
                                     onChange={(e) => handleDateChange("first_registration_date", e.target.value)}
+                                    onClick={(e) => { try { e.currentTarget.showPicker(); } catch (err) { } }}
                                     className="text-foreground"
                                 />
                             </div>
@@ -1079,6 +1032,7 @@ export function VehicleForm({
                                         type="date"
                                         value={watch("buy_date") ?? ""}
                                         onChange={(e) => handleDateChange("buy_date", e.target.value)}
+                                        onClick={(e) => { try { e.currentTarget.showPicker(); } catch (err) { } }}
                                         className="text-foreground"
                                     />
                                     {errors.buy_date && (
@@ -1093,6 +1047,7 @@ export function VehicleForm({
                                         type="date"
                                         value={watch("buy_delivery_collection_date") ?? ""}
                                         onChange={(e) => handleDateChange("buy_delivery_collection_date", e.target.value)}
+                                        onClick={(e) => { try { e.currentTarget.showPicker(); } catch (err) { } }}
                                         className="text-foreground"
                                     />
                                 </div>
@@ -1188,6 +1143,11 @@ export function VehicleForm({
                                             type="date"
                                             value={watch("sale_date") ?? ""}
                                             onChange={(e) => handleDateChange("sale_date", e.target.value)}
+                                            onMouseDown={(e) => {
+                                                if (document.activeElement !== e.currentTarget) {
+                                                    try { e.currentTarget.showPicker(); } catch (err) {}
+                                                }
+                                            }}
                                             className="text-foreground"
                                         />
                                     </div>
@@ -1199,13 +1159,18 @@ export function VehicleForm({
                                             type="date"
                                             value={watch("sale_delivery_collection_date") ?? ""}
                                             onChange={(e) => handleDateChange("sale_delivery_collection_date", e.target.value)}
+                                            onMouseDown={(e) => {
+                                                if (document.activeElement !== e.currentTarget) {
+                                                    try { e.currentTarget.showPicker(); } catch (err) {}
+                                                }
+                                            }}
                                             className="text-foreground"
                                         />
                                     </div>
 
                                     {/* Payment Method */}
                                     <div className="space-y-2">
-                                        <Label className="text-foreground">Payment Method *</Label>
+                                        <Label className="text-foreground">Payment Method <span className="text-red-500">*</span></Label>
                                         <DynamicSelect
                                             choiceType="payment_method"
                                             options={toOptions(choices?.payment_methods)}
@@ -1284,6 +1249,9 @@ export function VehicleForm({
 
                             {isEditing && (
                                 <>
+                                    <span className="hidden sm:inline text-sm font-medium text-foreground mr-2">
+                                        {vehicleTitle} <span className="text-muted-foreground">#{vehicle?.internal_id}</span>
+                                    </span>
                                     <VehicleStatusFooterActions
                                         status={watchedStatus as "purchased" | "ready_for_sale" | "reserved" | "sold" | "inactive"}
                                         onStatusChange={handleStatusChange}
@@ -1300,36 +1268,33 @@ export function VehicleForm({
                         </div>
 
                         {isEditing ? (
-                            <div className="flex flex-col gap-3 xl:items-end">
-                                <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-                                    <span>Changes save automatically</span>
-                                    <AutoSaveIndicator
-                                        status={autoSaveStatus}
-                                        errorMessage={autoSaveErrorMessage}
-                                    />
-                                </div>
+                            <div className="flex flex-wrap items-center gap-2 xl:justify-end">
+                                <AutoSaveIndicator
+                                    status={autoSaveStatus}
+                                    errorMessage={autoSaveErrorMessage}
+                                />
 
-                                <div className="flex flex-wrap items-center gap-2 xl:justify-end">
-                                    <Button
-                                        type="button"
-                                        variant="outline"
-                                        size="sm"
-                                        className={canGenerateAnyContract ? "gap-2" : "gap-2 opacity-75"}
-                                        onClick={() => setContractModalOpen(true)}
-                                        title="Generate documents"
-                                    >
-                                        <FileText className="h-4 w-4" />
-                                        Documents
-                                    </Button>
+                                {splitViewToggle}
 
-                                    <RecordNavigation
-                                        basePath={`/${business_slug}/vehicles`}
-                                        prevId={prevVehicleId}
-                                        nextId={nextVehicleId}
-                                        pathSuffix="/edit"
-                                        label="Vehicle"
-                                    />
-                                </div>
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    className={canGenerateAnyContract ? "gap-2" : "gap-2 opacity-75"}
+                                    onClick={() => setContractModalOpen(true)}
+                                    title="Generate documents"
+                                >
+                                    <FileText className="h-4 w-4" />
+                                    Documents
+                                </Button>
+
+                                <RecordNavigation
+                                    basePath={`/${business_slug}/vehicles`}
+                                    prevId={prevVehicleId}
+                                    nextId={nextVehicleId}
+                                    pathSuffix="/edit"
+                                    label="Vehicle"
+                                />
                             </div>
                         ) : (
                             <Button type="submit" disabled={mutation.isPending}>

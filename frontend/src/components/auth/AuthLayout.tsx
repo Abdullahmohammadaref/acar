@@ -58,7 +58,7 @@ const getNextLocale = (current: SupportedLocale): SupportedLocale => {
  */
 export function AuthLayout() {
     const [darkMode, setDarkMode] = useState(false)
-    const [uiScale, setUiScale] = useState<number>(1)
+    const [uiScale, setUiScale] = useState<number>(0.7)
     const { i18n, t } = useTranslation()
 
     const currentLocale = (SUPPORTED_LOCALES.includes(i18n.language as SupportedLocale))
@@ -78,12 +78,10 @@ export function AuthLayout() {
 
         // Initialize UI scale
         const storedScale = localStorage.getItem("ui-scale")
-        if (storedScale) {
-            const scale = parseFloat(storedScale)
-            setUiScale(scale)
-            ;(document.documentElement.style as any).zoom = ""
-            document.documentElement.style.fontSize = `${16 * scale}px`
-        }
+        const scale = storedScale ? parseFloat(storedScale) : 0.7
+        setUiScale(scale)
+        ;(document.documentElement.style as any).zoom = ""
+        document.documentElement.style.fontSize = `${16 * scale}px`
     }, [])
 
     // Toggle dark mode

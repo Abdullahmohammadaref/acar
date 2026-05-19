@@ -10,12 +10,21 @@ Provides REST API endpoints for:
 from ninja import Router, Schema, File
 from ninja.security import django_auth
 from ninja.files import UploadedFile
-from django.http import HttpRequest
+from django.http import HttpRequest, HttpResponse
 from typing import Optional, List
 from pydantic import Field
 from django.conf import settings as django_settings
+from django.core.serializers.json import DjangoJSONEncoder
+import zipfile
+import json
+import io
+import os
 
-from .models import User, Business, Branch, AuthActionRequest
+from .models import (
+    User, Business, Branch, AuthActionRequest, LegalEntity, Vehicle, Transaction,
+    Make, VehicleModel, VehicleType, BodyType, Color, FuelType, DamageType,
+    DoorsChoice, TaxPercentage, PaymentMethod, Currency, Category, Subcategory, KeyNumber
+)
 
 # Create router with session authentication
 settings_router = Router(auth=django_auth, tags=["Settings"])
@@ -649,3 +658,226 @@ def request_backup_email_change(request: HttpRequest, payload: BackupEmailChange
         "message": "Verification email sent to your official email. Check your inbox.",
         "request_id": auth_request.request_id
     }
+
+
+@settings_router.get("/business/export-data")
+def export_business_data(request: HttpRequest):
+    """
+    Export all business data as a downloadable ZIP file.
+    Manager only. Scoped strictly to request.user.business.
+    
+    ZIP contains:
+    - data/business.json
+    - data/legal_entities.json
+    - data/vehicles.json
+    - data/transactions.json
+    - data/choices.json
+    - media/images/vehicles/* (all uploaded vehicle images)
+    - media/logo/* (business logo if it exists)
+    """
+    if not request.user.is_manager:
+        return HttpResponse(status=403)
+    
+    business = get_user_business(request)
+    if not business:
+        return HttpResponse("No business associated with user.", status=400)
+    
+    # Build the ZIP in memory
+    zip_buffer = io.BytesIO()
+    
+    with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zf:
+        
+        # --- data/business.json ---
+        business_data = {
+            "name": business.name,
+            "address_country": business.address_country,
+            "address_city": business.address_city,
+            "address_street": business.address_street,
+            "address_street_number": business.address_street_number,
+            "address_postal_code": business.address_postal_code,
+            "telephone_number": business.telephone_number,
+            "fax_number": business.fax_number,
+            "email": business.email,
+            "bank_name": business.bank_name,
+            "bank_bic_swift": business.bank_bic_swift,
+            "bank_iban": business.bank_iban,
+            "managing_director": business.managing_director,
+            "tax_id": business.tax_id,
+            "eori_number": business.eori_number,
+            "ust_id_nr": business.ust_id_nr,
+            "headquarters_city": business.headquarters_city,
+            "court_district": business.court_district,
+            "court_registration_number": business.court_registration_number,
+            "target_annual_return": str(business.target_annual_return) if business.target_annual_return else None,
+            "target_days_on_stock": business.target_days_on_stock,
+            "branches": list(
+                Branch.objects.filter(business=business).values(
+                    'id', 'name', 'address', 'is_active'
+                )
+            ),
+        }
+        zf.writestr(
+            "data/business.json",
+            json.dumps(business_data, indent=2, cls=DjangoJSONEncoder)
+        )
+        
+        # --- data/legal_entities.json ---
+        entities = list(
+            LegalEntity.objects.filter(business=business).values(
+                'internal_id', 'name', 'address_street', 'address_street_number',
+                'address_postal_code', 'address_city', 'address_country',
+                'status', 'email', 'phone_number', 'type',
+                'tax_identification_number', 'date_created'
+            )
+        )
+        zf.writestr(
+            "data/legal_entities.json",
+            json.dumps(entities, indent=2, cls=DjangoJSONEncoder)
+        )
+        
+        # --- data/vehicles.json ---
+        vehicles_qs = Vehicle.objects.filter(business=business).select_related(
+            'make', 'model', 'vehicle_type', 'body_type', 'color',
+            'fuel_type', 'damage_type', 'doors', 'buy_tax', 'sale_tax',
+            'buy_payment_method', 'sale_payment_method', 'seller', 'buyer',
+            'branch'
+        )
+        vehicles_data = []
+        for v in vehicles_qs:
+            vehicles_data.append({
+                "internal_id": v.internal_id,
+                "status": v.status,
+                "description": v.description,
+                "internal_comments": v.internal_comments,
+                "chassis_number": v.chassis_number,
+                "motor_vehicle_registration_number": v.motor_vehicle_registration_number,
+                "official_license_plate": v.official_license_plate,
+                "make": v.make.name if v.make else None,
+                "model": v.model.name if v.model else None,
+                "vehicle_type": v.vehicle_type.name if v.vehicle_type else None,
+                "body_type": v.body_type.name if v.body_type else None,
+                "color": v.color.name if v.color else None,
+                "fuel_type": v.fuel_type.name if v.fuel_type else None,
+                "damage_type": v.damage_type.name if v.damage_type else None,
+                "doors": v.doors.name if v.doors else None,
+                "year_of_construction": v.year_of_construction,
+                "kilometer": v.kilometer,
+                "power_kw": v.power_kw,
+                "branch": v.branch.name if v.branch else None,
+                "first_registration_date": v.first_registration_date.isoformat() if v.first_registration_date else None,
+                # Buy details
+                "buy_date": v.buy_date.isoformat() if v.buy_date else None,
+                "buy_price": str(v.buy_price) if v.buy_price else None,
+                "buy_tax_percentage": str(v.buy_tax.percentage) if v.buy_tax else None,
+                "buy_payment_method": v.buy_payment_method.name if v.buy_payment_method else None,
+                "buy_delivery_collection_date": v.buy_delivery_collection_date.isoformat() if v.buy_delivery_collection_date else None,
+                "seller_internal_id": v.seller.internal_id if v.seller else None,
+                "buyer_internal_id": v.buyer.internal_id if v.buyer else None,
+                # Sale details
+                "sale_date": v.sale_date.isoformat() if v.sale_date else None,
+                "sale_price": str(v.sale_price) if v.sale_price else None,
+                "sale_tax_percentage": str(v.sale_tax.percentage) if v.sale_tax else None,
+                "sale_payment_method": v.sale_payment_method.name if v.sale_payment_method else None,
+                "sale_commission": str(v.sale_commission) if v.sale_commission else None,
+                "sale_delivery_collection_date": v.sale_delivery_collection_date.isoformat() if v.sale_delivery_collection_date else None,
+                "sale_invoice_number": v.sale_invoice_number,
+                # Image path (relative)
+                "image": v.image.name if v.image else None,
+                "date_created": v.date_created.isoformat() if v.date_created else None,
+            })
+        zf.writestr(
+            "data/vehicles.json",
+            json.dumps(vehicles_data, indent=2, cls=DjangoJSONEncoder)
+        )
+        
+        # --- data/transactions.json ---
+        transactions_qs = Transaction.objects.filter(business=business).select_related(
+            'vehicle', 'category_fk', 'subcategory_fk', 'currency_fk', 'payment_method'
+        )
+        transactions_data = []
+        for t in transactions_qs:
+            transactions_data.append({
+                "internal_id": t.internal_id,
+                "date": t.date.isoformat() if t.date else None,
+                "datetime": t.datetime,
+                "status": t.status,
+                "description": t.description,
+                "amount": str(t.amount) if t.amount else None,
+                "currency": t.currency_fk.name if t.currency_fk else None,
+                "payment_method": t.payment_method.name if t.payment_method else None,
+                "tax_percentage": str(t.tax) if t.tax is not None else None,
+                "category": t.category_fk.name if t.category_fk else None,
+                "subcategory": t.subcategory_fk.name if t.subcategory_fk else None,
+                "vehicle_internal_id": t.vehicle.internal_id if t.vehicle else None,
+                "from_or_to": t.from_or_to,
+                "internal_comments": t.internal_comments,
+            })
+        zf.writestr(
+            "data/transactions.json",
+            json.dumps(transactions_data, indent=2, cls=DjangoJSONEncoder)
+        )
+        
+        # --- data/choices.json ---
+        choices_data = {
+            "makes": list(Make.objects.filter(business=business).values('name', 'is_active')),
+            "vehicle_models": [
+                {"make": m.make.name, "name": m.name, "is_active": m.is_active}
+                for m in VehicleModel.objects.filter(business=business).select_related('make')
+            ],
+            "vehicle_types": list(VehicleType.objects.filter(business=business).values('name', 'is_active')),
+            "body_types": list(BodyType.objects.filter(business=business).values('name', 'is_active')),
+            "colors": list(Color.objects.filter(business=business).values('name', 'is_active')),
+            "fuel_types": list(FuelType.objects.filter(business=business).values('name', 'is_active')),
+            "damage_types": list(DamageType.objects.filter(business=business).values('name', 'is_active')),
+            "doors": list(DoorsChoice.objects.filter(business=business).values('name', 'is_active')),
+            "tax_percentages": list(TaxPercentage.objects.filter(business=business).values('name', 'percentage', 'is_active')),
+            "payment_methods": list(PaymentMethod.objects.filter(business=business).values('name', 'is_active')),
+            "currencies": list(Currency.objects.filter(business=business).values('name', 'code', 'is_active')),
+            "categories": list(Category.objects.filter(business=business).values('name', 'is_active')),
+            "subcategories": [
+                {"category": s.category.name, "name": s.name, "is_active": s.is_active}
+                for s in Subcategory.objects.filter(business=business).select_related('category')
+            ],
+            "key_numbers": [
+                {
+                    "number": k.number,
+                    "is_active": k.is_active,
+                    "assigned_to_vehicle_internal_id": k.vehicle.internal_id if k.vehicle else None
+                }
+                for k in KeyNumber.objects.filter(business=business).select_related('vehicle')
+            ],
+        }
+        zf.writestr(
+            "data/choices.json",
+            json.dumps(choices_data, indent=2, cls=DjangoJSONEncoder)
+        )
+        
+        # --- media/images/vehicles/* ---
+        # Include all uploaded vehicle images
+        media_root = django_settings.MEDIA_ROOT
+        vehicle_images_dir = os.path.join(media_root, 'images', 'vehicles')
+        
+        if os.path.exists(vehicle_images_dir):
+            for filename in os.listdir(vehicle_images_dir):
+                file_path = os.path.join(vehicle_images_dir, filename)
+                if os.path.isfile(file_path):
+                    zf.write(file_path, f"media/images/vehicles/{filename}")
+        
+        # Also include business logo if it exists
+        if business.logo:
+            try:
+                logo_path = business.logo.path
+                if os.path.exists(logo_path):
+                    logo_filename = os.path.basename(logo_path)
+                    zf.write(logo_path, f"media/logo/{logo_filename}")
+            except Exception:
+                pass
+    
+    # Prepare response
+    zip_buffer.seek(0)
+    date_str = __import__('datetime').date.today().isoformat()
+    filename = f"acar_export_{business.name.lower().replace(' ', '_')}_{date_str}.zip"
+    
+    response = HttpResponse(zip_buffer.read(), content_type='application/zip')
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+    return response

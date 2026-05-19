@@ -21,7 +21,7 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table"
-import { FilterSelect } from "@/components/ui/filter-select"
+
 import {
     useLegalEntities,
     useCreateLegalEntity,
@@ -33,6 +33,12 @@ import {
     type LegalEntityCreatePayload,
 } from "@/hooks/useLegalEntities"
 import { EntityForm } from "@/components/legal-entities/EntityForm"
+import { LegalEntityFiltersSidebar } from "@/components/legal-entities/LegalEntityFilters"
+import { StickyFooter } from "@/components/StickyFooter"
+import { PerPageInput } from "@/components/PerPageInput"
+import { PageInput } from "@/components/PageInput"
+import { getPagePref, savePagePref, getSplitWidth, saveSplitWidth } from "@/lib/paginationPrefs"
+import { SplitViewDivider } from "@/components/SplitViewDivider"
 
 
 /**
@@ -43,24 +49,25 @@ export function LegalEntitiesPage() {
     const { t } = useTranslation()
     const [searchParams] = useSearchParams()
 
-    // Get type from URL query param (for sidebar nav filtering)
     const typeFromUrl = searchParams.get("type") as "individual" | "company" | null
+    const statusFromUrl = searchParams.get("status") as "active" | "inactive" | null
 
     // Filter state
     const [filters, setFilters] = useState<LegalEntityFilters>({
         page: 1,
-        per_page: 20,
+        per_page: getPagePref("acar_entities_per_page", 20),
         type: typeFromUrl || undefined,
+        status: statusFromUrl || undefined,
     })
 
-    // Update filters when URL changes
     useEffect(() => {
         setFilters(prev => ({
             ...prev,
             type: typeFromUrl || undefined,
+            status: statusFromUrl || undefined,
             page: 1, // Reset page when type filter changes
         }))
-    }, [typeFromUrl])
+    }, [typeFromUrl, statusFromUrl])
 
     // Search state
     const [searchValue, setSearchValue] = useState("")
@@ -79,28 +86,51 @@ export function LegalEntitiesPage() {
     // Fetch legal entities
     const { data, isLoading, isFetching } = useLegalEntities(filters)
 
+    // Split view preferences
+    const [panelWidth, setPanelWidth] = useState(() => 
+        getSplitWidth("acar_legalentities_filter_width", 260, 200, 500)
+    )
+    const [isDragging, setIsDragging] = useState(false)
+
+    const handleDrag = (deltaX: number) => {
+        setPanelWidth(prev => {
+            const next = prev + deltaX // Positive deltaX increases left panel width
+            return Math.min(500, Math.max(200, next))
+        })
+    }
+
+    const handleDragEnd = () => {
+        setIsDragging(false)
+        saveSplitWidth("acar_legalentities_filter_width", panelWidth, 200, 500)
+    }
+
     // Mutations
     const createMutation = useCreateLegalEntity()
     const updateMutation = useUpdateLegalEntity()
     const deactivateMutation = useDeactivateLegalEntity()
     const activateMutation = useActivateLegalEntity()
 
-    // Handle search
-    const handleSearch = useCallback(() => {
-        setFilters(prev => ({
-            ...prev,
-            search: searchValue || undefined,
-            page: 1,
-        }))
+    // Handle search debounce
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setFilters(prev => ({
+                ...prev,
+                search: searchValue.trim() || undefined,
+                page: 1,
+            }))
+        }, 400)
+        return () => clearTimeout(timer)
     }, [searchValue])
+
 
     const handleClearSearch = useCallback(() => {
         setSearchValue("")
-        setFilters(prev => ({
-            ...prev,
-            search: undefined,
-            page: 1,
-        }))
+        // The effect will handle resetting the filter
+    }, [])
+
+    const handlePerPageChange = useCallback((newPerPage: number) => {
+        savePagePref("acar_entities_per_page", newPerPage)
+        setFilters(prev => ({ ...prev, per_page: newPerPage, page: 1 }))
     }, [])
 
     // Handle type filter change
@@ -230,7 +260,7 @@ export function LegalEntitiesPage() {
     return (
         <div className="flex flex-col h-[calc(100vh-4rem)]">
             {/* Main Content Area - Scrollable */}
-            <div className="flex-1 overflow-auto p-6 space-y-6">
+            <div className="flex-1 overflow-auto p-6 pb-24 space-y-6">
                 {/* Page Header */}
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <div>
@@ -245,8 +275,58 @@ export function LegalEntitiesPage() {
                     </Button>
                 </div>
 
-                {/* Toolbar */}
-                <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+                {/* Main Layout */}
+                <div className="flex flex-col lg:flex-row relative lg:items-start">
+                    {/* Left Sidebar (Mobile) */}
+                    <div className="w-full lg:hidden shrink-0 order-2 mb-6">
+                        <LegalEntityFiltersSidebar
+                            filters={filters}
+                            onTypeFilterChange={handleTypeFilter}
+                            onStatusFilterChange={handleStatusFilter}
+                            onResetFilters={() => {
+                                setFilters({
+                                    page: 1,
+                                    per_page: filters.per_page,
+                                    type: typeFromUrl || undefined,
+                                    status: statusFromUrl || undefined,
+                                })
+                            }}
+                        />
+                    </div>
+
+                    {/* Left Sidebar (Desktop) */}
+                    <div 
+                        className={`hidden lg:block shrink-0 order-1 ${isDragging ? 'pointer-events-none' : ''}`}
+                        style={{ width: `${panelWidth}px` }}
+                    >
+                        <LegalEntityFiltersSidebar
+                            filters={filters}
+                            onTypeFilterChange={handleTypeFilter}
+                            onStatusFilterChange={handleStatusFilter}
+                            onResetFilters={() => {
+                                setFilters({
+                                    page: 1,
+                                    per_page: filters.per_page,
+                                    type: typeFromUrl || undefined,
+                                    status: statusFromUrl || undefined,
+                                })
+                            }}
+                        />
+                    </div>
+
+                    {/* Draggable Divider */}
+                    <SplitViewDivider 
+                        onDrag={handleDrag}
+                        onDragStart={() => setIsDragging(true)}
+                        onDragEnd={handleDragEnd}
+                        className="hidden lg:flex order-2"
+                        handlePosition="top"
+                    />
+
+                    {/* Right Content */}
+                    <div className={`flex-1 min-w-0 order-1 lg:order-3 flex flex-col gap-6 mb-6 lg:mb-0 ${isDragging ? 'pointer-events-none' : ''}`}>
+                        {/* Toolbar */}
+                        <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
                     {/* Search bar */}
                     <div className="relative flex-1 group">
                         <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground transition-colors group-focus-within:text-primary" />
@@ -255,7 +335,6 @@ export function LegalEntitiesPage() {
                             className="pl-10 pr-10 hover:border-primary/50 focus:border-primary transition-all shadow-sm h-11"
                             value={searchValue}
                             onChange={(e) => setSearchValue(e.target.value)}
-                            onKeyDown={(e) => e.key === "Enter" && handleSearch()}
                         />
                         {searchValue && (
                             <button
@@ -267,56 +346,7 @@ export function LegalEntitiesPage() {
                         )}
                     </div>
 
-                    <div className="flex flex-wrap items-center gap-2">
-                        {/* Type Filter */}
-                        <div className="w-[180px]">
-                            <FilterSelect
-                                options={[
-                                    { value: "individual", label: t("legalEntities.individual", "Individual") },
-                                    { value: "company", label: t("legalEntities.company", "Company") },
-                                ]}
-                                value={filters.type || undefined}
-                                onChange={(value) => handleTypeFilter(value || "all")}
-                                placeholder={t("legalEntities.allTypes", "All Types")}
-                                allLabel={t("legalEntities.allTypes", "All Types")}
-                                searchPlaceholder={t("legalEntities.searchTypes", "Search types...")}
-                            />
-                        </div>
 
-                        {/* Status Filter */}
-                        <div className="w-[180px]">
-                            <FilterSelect
-                                options={[
-                                    { value: "active", label: t("legalEntities.active", "Active") },
-                                    { value: "inactive", label: t("legalEntities.inactive", "Inactive") },
-                                ]}
-                                value={filters.status || undefined}
-                                onChange={(value) => handleStatusFilter(value || "all")}
-                                placeholder={t("legalEntities.allStatuses", "All Statuses")}
-                                allLabel={t("legalEntities.allStatuses", "All Statuses")}
-                                searchPlaceholder={t("legalEntities.searchStatuses", "Search statuses...")}
-                            />
-                        </div>
-
-                        {(filters.search || filters.type || filters.status) && (
-                            <Button
-                                variant="ghost"
-                                size="sm"
-                                className="h-10 text-muted-foreground hover:text-foreground group"
-                                onClick={() => {
-                                    setSearchValue("")
-                                    setFilters({
-                                        page: 1,
-                                        per_page: 20,
-                                        type: typeFromUrl || undefined,
-                                    })
-                                }}
-                            >
-                                <RefreshCw className="mr-2 h-4 w-4 transition-transform group-hover:rotate-180" />
-                                {t("common.reset", "Reset")}
-                            </Button>
-                        )}
-                    </div>
                 </div>
 
                 {/* Table */}
@@ -421,7 +451,7 @@ export function LegalEntitiesPage() {
                                             )}
                                         </TableCell>
                                         <TableCell className="text-right">
-                                            <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <div className="flex items-center justify-end gap-1">
                                                 {entity.status === "active" ? (
                                                     <Button
                                                         variant="ghost"
@@ -459,12 +489,6 @@ export function LegalEntitiesPage() {
                                         <div className="flex flex-col items-center gap-2">
                                             <Search className="h-10 w-10 opacity-10 mb-2" />
                                             <p>{t("legalEntities.noEntities", "No legal entities found.")}</p>
-                                            <button
-                                                onClick={handleAddClick}
-                                                className="text-primary hover:underline font-medium"
-                                            >
-                                                {t("legalEntities.addFirst", "Add your first legal entity")}
-                                            </button>
                                         </div>
                                     </TableCell>
                                 </TableRow>
@@ -473,52 +497,57 @@ export function LegalEntitiesPage() {
                     </Table>
                 </div>
             </div>
+            </div>
+            </div>
 
             {/* Sticky Footer Pagination */}
-            {data && data.pages > 1 && (
-                <div className="sticky bottom-0 z-10 border-t border-border bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/60 px-6 py-3">
-                    <div className="flex items-center justify-between">
-                        <p className="text-sm text-muted-foreground font-medium">
-                            {t("common.showing", "Showing")} <span className="text-foreground">{((data.page - 1) * (filters.per_page || 20)) + 1}</span> - <span className="text-foreground">{Math.min(data.page * (filters.per_page || 20), data.total)}</span> {t("common.of", "of")} <span className="text-foreground">{data.total}</span>
-                        </p>
-                        <div className="flex items-center gap-2">
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                disabled={data.page <= 1 || isFetching}
-                                onClick={() => handlePageChange(data.page - 1)}
-                                className="h-9"
-                            >
-                                <ChevronLeft className="h-4 w-4 mr-1" />
-                                {t("common.previous", "Previous")}
-                            </Button>
-                            <span className="text-sm text-muted-foreground px-3 font-medium">
-                                {t("common.page", "Page")} <span className="text-foreground">{data.page}</span> {t("common.of", "of")} <span className="text-foreground">{data.pages}</span>
-                            </span>
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                disabled={data.page >= data.pages || isFetching}
-                                onClick={() => handlePageChange(data.page + 1)}
-                                className="h-9"
-                            >
-                                {t("common.next", "Next")}
-                                <ChevronRight className="h-4 w-4 ml-1" />
-                            </Button>
-                        </div>
-                    </div>
+            <StickyFooter>
+                <div className="flex items-center gap-1.5 text-sm text-muted-foreground font-medium">
+                    {t("common.showing", "Showing")}
+                    <PerPageInput
+                        value={filters.per_page || 20}
+                        onChange={handlePerPageChange}
+                        label=""
+                    />
+                    {t("common.of", "of")}
+                    <span className="text-foreground">{data?.total || 0}</span>
+                    {t("legalEntities.entities", "entities")}
                 </div>
-            )}
 
-            {/* Loading overlay */}
-            {isFetching && !isLoading && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/50 backdrop-blur-[1px]">
-                    <div className="flex items-center gap-2 bg-card border border-border shadow-lg rounded-full px-4 py-2 text-sm font-medium animate-in fade-in zoom-in duration-300">
-                        <RefreshCw className="h-4 w-4 animate-spin text-primary" />
-                        <span className="text-muted-foreground">{t("common.updating", "Updating...")}</span>
-                    </div>
+                <div className="flex items-center gap-2">
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        disabled={!data || data.page <= 1 || isFetching}
+                        onClick={() => handlePageChange((data?.page ?? 1) - 1)}
+                        className="h-9"
+                    >
+                        <ChevronLeft className="h-4 w-4 mr-1" />
+                        {t("common.previous", "Previous")}
+                    </Button>
+                    <span className="text-sm text-muted-foreground px-2 font-medium flex items-center gap-1.5">
+                        {t("common.page", "Page")}{" "}
+                        <PageInput
+                            currentPage={data?.page ?? 1}
+                            totalPages={data?.pages ?? 1}
+                            onPageChange={handlePageChange}
+                            disabled={isFetching}
+                        />
+                        {" "}{t("common.of", "of")}{" "}
+                        <span className="text-foreground">{data?.pages ?? 1}</span>
+                    </span>
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        disabled={!data || data.page >= data.pages || isFetching}
+                        onClick={() => handlePageChange((data?.page ?? 1) + 1)}
+                        className="h-9"
+                    >
+                        {t("common.next", "Next")}
+                        <ChevronRight className="h-4 w-4 ml-1" />
+                    </Button>
                 </div>
-            )}
+            </StickyFooter>
 
             {/* Add Dialog */}
             <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>

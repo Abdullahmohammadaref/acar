@@ -13,6 +13,18 @@ from pydantic import field_validator, model_validator
 
 
 # =============================================================================
+# Choice Update Schema (for PATCH /choices/{type}/{id})
+# =============================================================================
+
+class ChoiceUpdatePayload(Schema):
+    """Payload for updating a choice via PATCH. Accepts JSON body."""
+    name: str
+    percentage: Optional[float] = None
+    vehicle_id: Optional[int] = None  # Only used for key_number type
+
+
+
+# =============================================================================
 # Base Choice Schemas (for dynamic dropdown options)
 # =============================================================================
 
@@ -62,6 +74,32 @@ class VehicleModelCreate(Schema):
     """Schema for creating a vehicle model"""
     name: str = Field(..., min_length=1, max_length=100)
     make_id: int
+
+
+class KeyNumberOut(Schema):
+    """Key number for vehicle dropdown"""
+    id: int
+    name: str
+
+
+class CategoryOut(Schema):
+    """Transaction category"""
+    id: int
+    name: str
+
+
+class SubcategoryOut(Schema):
+    """Transaction subcategory"""
+    id: int
+    name: str
+    category_id: int
+
+
+class CurrencyOut(Schema):
+    """Currency option"""
+    id: int
+    name: str
+    code: str
 
 
 # =============================================================================
@@ -166,6 +204,7 @@ class LegalEntityFilters(Schema):
     search: Optional[str] = None
     type: Optional[str] = Field(default=None, pattern="^(individual|company)$")
     status: Optional[str] = Field(default=None, pattern="^(active|inactive)$")
+    city: Optional[str] = None
     page: int = Field(default=1, ge=1)
     per_page: int = Field(default=20, ge=1, le=100)
     sort: Optional[str] = Field(default="name", pattern="^(name|internal_id|type|address_city|status)$")
@@ -332,6 +371,14 @@ class VehicleDetailOut(Schema):
     prev_vehicle_internal_id: Optional[int] = None
     next_vehicle_internal_id: Optional[int] = None
 
+    # Key Number
+    key_number_id: Optional[int] = None
+    key_number_value: Optional[int] = None
+
+    # Contract availability flags
+    can_generate_buy_contract: bool = False
+    can_generate_sale_contract: bool = False
+
 
 class VehicleCreate(Schema):
     """
@@ -375,6 +422,9 @@ class VehicleCreate(Schema):
     # Optional fields
     description: Optional[str] = None
     internal_comments: Optional[str] = None
+    key_number_id: int
+
+
     
     @field_validator('chassis_number')
     @classmethod
@@ -401,6 +451,7 @@ class VehicleUpdate(Schema):
     description: Optional[str] = None
     internal_comments: Optional[str] = None
     branch_id: Optional[int] = None
+    key_number_id: Optional[int] = None
     
     # Official details
     chassis_number: Optional[str] = Field(default=None, max_length=17)
@@ -439,6 +490,9 @@ class VehicleUpdate(Schema):
     sale_delivery_collection_date: Optional[date] = None
     sale_payment_method_id: Optional[int] = None
     buyer_id: Optional[int] = None
+
+    # Key Number
+    key_number_id: Optional[int] = None
 
 
 # =============================================================================
@@ -563,6 +617,12 @@ class AllChoices(Schema):
     payment_methods: List[ChoiceBase]
     tax_percentages: List[TaxPercentageOut]
     legal_entities: List[LegalEntityOut]
+    categories: List[CategoryOut] = []
+    subcategories: List[SubcategoryOut] = []
+    currencies: List[CurrencyOut] = []
+    
+    # Key numbers (unassigned only)
+    key_numbers: List[KeyNumberOut] = []
     
     # Status choices (static)
     status_choices: List[dict] = [

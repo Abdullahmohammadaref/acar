@@ -45,7 +45,7 @@
   --foreground: #101828;
 
   /* Card */
-  --card: #ffffff;
+  --card: #f7f9fc;
   --card-foreground: #101828;
 
   /* Popover */
@@ -76,9 +76,9 @@
   --destructive-foreground: #ffffff;
 
   /* Border & Input */
-  --border: #e4e7ec;
-  /* gray-200 */
-  --input: #e4e7ec;
+  --border: #b0bed2;
+  /* gray-300 tinted */
+  --input: #b0bed2;
   --ring: #465fff;
 
   /* Chart colors */

@@ -1,4 +1,4 @@
-import { Link, useParams } from "react-router-dom"
+import { Link, useParams, useNavigate } from "react-router-dom"
 import { FileText, Trash2, RotateCcw, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { cn } from "@/lib/utils"
@@ -29,6 +29,8 @@ interface TransactionTableProps {
     showEmptyTable?: boolean
     // Max height for the table body container (enables vertical scrolling)
     maxHeight?: string | number
+    // Use compact two-line badges for long statuses
+    compactBadges?: boolean
 }
 
 /**
@@ -45,9 +47,11 @@ export function TransactionTable({
     highlightedRowId,
     showEmptyTable,
     maxHeight,
+    compactBadges,
 }: TransactionTableProps) {
     const { business_slug, locale } = useParams<{ business_slug: string; locale?: string }>()
     const { t, i18n } = useTranslation()
+    const navigate = useNavigate()
     const rowLinkClass = "block h-full px-2 py-2 text-inherit no-underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
     const getTransactionHref = (internalId: number | null) =>
         locale
@@ -128,6 +132,21 @@ export function TransactionTable({
             inactive: {
                 class: "bg-muted text-muted-foreground",
             },
+        }
+
+        if (compactBadges && (status === "review_required" || status === "under_review")) {
+            return (
+                <Badge
+                    variant="outline"
+                    className={cn(
+                        "flex flex-col items-center gap-0 leading-tight text-[10px] px-1.5 py-0.5 font-medium border-0",
+                        variants[status]?.class || "bg-muted text-muted-foreground"
+                    )}
+                >
+                    <span>Review</span>
+                    <span>Required</span>
+                </Badge>
+            )
         }
 
         return (
@@ -219,6 +238,13 @@ export function TransactionTable({
                                         tx.status === "inactive" && "opacity-50",
                                         highlightedRowId === tx.internal_id && "bg-primary/10 ring-1 ring-primary ring-inset"
                                     )}
+                                    onClick={(e) => {
+                                        const target = e.target as HTMLElement
+                                        if (target.closest('button') || target.closest('a')) {
+                                            return
+                                        }
+                                        navigate(transactionHref)
+                                    }}
                                 >
                                 {/* Transaction Info */}
                                 <TableCell className="p-0">

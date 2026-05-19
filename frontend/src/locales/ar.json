@@ -16,10 +16,17 @@
         "in_review": "قيد المراجعة",
         "private": "خاص",
         "companies": "شركات",
+        "inactive_entities": "غير نشط",
         "choices_management": "إدارة الخيارات",
         "colors": "الألوان",
-        "makes": "الماركات",
         "models": "الموديلات"
+    },
+    "vehicles": {
+        "editTitle": "تعديل"
+    },
+    "ui": {
+        "splitView": "عرض مقسم",
+        "stackView": "عرض مكدس"
     },
     "user": {
         "logout": "تسجيل الخروج",

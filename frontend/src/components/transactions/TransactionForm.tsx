@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from "react"
 import { useNavigate, useParams } from "react-router-dom"
 import { Loader2, CalendarDays, FileText, CheckCircle, AlertCircle, XCircle, Download, RotateCcw, Trash2 } from "lucide-react"
 import { useTranslation } from "react-i18next"
+import { cn } from "@/lib/utils"
 
 import { StickyFooter } from "@/components/StickyFooter"
 import { AutoSaveIndicator } from "@/components/AutoSaveIndicator"
@@ -15,6 +16,8 @@ import { RelatedTransactionsTable } from "@/components/transactions/RelatedTrans
 import { RecordNavigation } from "@/components/RecordNavigation"
 import { useTransactionChoices, useSubcategories, useDeleteTransaction, useActivateTransaction } from "@/hooks/useTransactions"
 import { useChoices } from "@/hooks/useVehicles"  // For tax_percentages
+import { SplitViewDivider } from "@/components/SplitViewDivider"
+import { SPLIT_MIN, SPLIT_MAX } from "@/lib/paginationPrefs"
 import type { AutoSaveStatus } from "@/hooks/useAutoSave"
 import type { TransactionFormData, TransactionDetail } from "@/types/transaction"
 
@@ -30,6 +33,13 @@ interface TransactionFormProps {
     // Auto-save status (for footer indicator)
     autoSaveStatus?: AutoSaveStatus
     autoSaveErrorMessage?: string | null
+    // Layout toggles
+    isSplitView?: boolean
+    splitViewToggle?: React.ReactNode
+    splitViewWidth?: number
+    onSplitViewWidthChange?: (width: number) => void
+    onSplitViewWidthStart?: () => void
+    onSplitViewWidthSave?: () => void
 }
 
 /**
@@ -99,6 +109,12 @@ export function TransactionForm({
     onAutoSaveDebounced,
     autoSaveStatus = "idle",
     autoSaveErrorMessage,
+    isSplitView,
+    splitViewToggle,
+    splitViewWidth,
+    onSplitViewWidthChange,
+    onSplitViewWidthStart,
+    onSplitViewWidthSave,
 }: TransactionFormProps) {
     const { t } = useTranslation()
 
@@ -111,6 +127,7 @@ export function TransactionForm({
     const [statusToggleLoading, setStatusToggleLoading] = useState(false)
 
     // Form state
+    const [isDragging, setIsDragging] = useState(false)
     const [formData, setFormData] = useState<TransactionFormData>({
         category: "",
         subcategory: "",
@@ -172,6 +189,9 @@ export function TransactionForm({
     })) ?? []
     const { data: subcategoriesData } = useSubcategories(categoryId ?? undefined)
 
+    // Layout logic
+    const showSplitView = mode === "edit" && isSplitView;
+
     // Populate form with initial data for edit mode
     useEffect(() => {
         if (mode === "edit" && initialData) {
@@ -225,22 +245,36 @@ export function TransactionForm({
         }
     }, [mode, initialData, choices, categoryOptions, methodOptions, currencyOptions])
 
-    // Separate useEffect for tax initialization - runs after vehicleChoices loads
-    // This ensures taxOptions is populated before we try to match
+    // Initialize tax - runs after vehicleChoices loads
+    // Sets to matched tax in edit mode, or defaults to the "No Tax" option if not set or in create mode
     useEffect(() => {
-        if (mode === "edit" && initialData && vehicleChoices?.tax_percentages && vehicleChoices.tax_percentages.length > 0) {
-            // Match tax by percentage value
-            // IMPORTANT: API returns percentage as string (e.g., "19.00"), so we must parse both sides
-            if (initialData.tax !== undefined && initialData.tax !== null) {
-                const taxPercent = parseFloat(String(initialData.tax))
-                // Use parseFloat on t.percentage to handle string-to-number comparison
-                const matchedTax = vehicleChoices.tax_percentages.find(t => parseFloat(String(t.percentage)) === taxPercent)
-                if (matchedTax) {
-                    setTaxId(matchedTax.id)
+        if (vehicleChoices?.tax_percentages && vehicleChoices.tax_percentages.length > 0) {
+            const noTax = vehicleChoices.tax_percentages.find(t => t.is_no_tax)
+            if (mode === "edit" && initialData) {
+                if (initialData.tax !== undefined && initialData.tax !== null) {
+                    const taxPercent = parseFloat(String(initialData.tax))
+                    const matchedTax = vehicleChoices.tax_percentages.find(t => parseFloat(String(t.percentage)) === taxPercent)
+                    if (matchedTax) {
+                        setTaxId(matchedTax.id)
+                    }
+                } else if (noTax) {
+                    setTaxId(noTax.id)
+                    setFormData(prev => ({
+                        ...prev,
+                        tax: parseFloat(String(noTax.percentage)),
+                    }))
+                }
+            } else if (mode === "create") {
+                if (taxId === null && noTax) {
+                    setTaxId(noTax.id)
+                    setFormData(prev => ({
+                        ...prev,
+                        tax: parseFloat(String(noTax.percentage)),
+                    }))
                 }
             }
         }
-    }, [mode, initialData, vehicleChoices])
+    }, [mode, initialData, vehicleChoices, taxId])
 
     // Initialize subcategoryId for edit mode (after subcategories are loaded for the selected category)
     useEffect(() => {
@@ -419,380 +453,420 @@ export function TransactionForm({
 
     return (
         <form onSubmit={handleSubmit} noValidate className="space-y-6">
-            <div className="grid gap-6 lg:grid-cols-2">
-                {/* Column 1: Transaction Details & Usage Details */}
-                <div className="space-y-6">
-                    {/* Transaction Details Section */}
-                    <div className="rounded-xl border border-border bg-card">
-                        <div className="border-b border-border px-5 py-4 flex items-center justify-between">
-                            <h3 className="text-base font-medium">Transaction Details</h3>
-                            {/* Auto-computed Status Badge */}
-                            {mode === "edit" && initialData?.status && (
-                                <span
-                                    className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold ${initialData.status === "confirmed"
-                                        ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 ring-1 ring-inset ring-emerald-500/25"
-                                        : initialData.status === "inactive"
-                                            ? "bg-muted text-muted-foreground ring-1 ring-inset ring-border"
-                                            : "bg-red-500/15 text-red-600 dark:text-red-400 ring-1 ring-inset ring-red-500/25"
-                                        }`}
-                                >
-                                    {initialData.status === "confirmed" ? (
-                                        <CheckCircle className="h-3.5 w-3.5" />
-                                    ) : initialData.status === "inactive" ? (
-                                        <XCircle className="h-3.5 w-3.5" />
-                                    ) : (
-                                        <AlertCircle className="h-3.5 w-3.5" />
+            <div className={cn(
+                "gap-4 2xl:gap-0",
+                showSplitView ? "flex flex-col 2xl:flex-row 2xl:items-start relative" : "space-y-6"
+            )}>
+                {/* LEFT COLUMN */}
+                <div className={cn("space-y-5", showSplitView ? "min-w-0 flex-1" : "w-full", isDragging && "pointer-events-none")}>
+                    <div className={cn("gap-5", showSplitView ? "space-y-5" : "grid lg:grid-cols-2")}>
+                        {/* Inner Column 1: Transaction Details */}
+                        <div className="space-y-6">
+                            {/* Transaction Details Section */}
+                            <div className="rounded-xl border border-border bg-card">
+                                <div className="border-b border-border px-5 py-4 flex items-center justify-between">
+                                    <h3 className="text-base font-medium">Transaction Details</h3>
+                                    {/* Auto-computed Status Badge */}
+                                    {mode === "edit" && initialData?.status && (
+                                        <span
+                                            className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold ${initialData.status === "confirmed"
+                                                ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 ring-1 ring-inset ring-emerald-500/25"
+                                                : initialData.status === "inactive"
+                                                    ? "bg-muted text-muted-foreground ring-1 ring-inset ring-border"
+                                                    : "bg-red-500/15 text-red-600 dark:text-red-400 ring-1 ring-inset ring-red-500/25"
+                                                }`}
+                                        >
+                                            {initialData.status === "confirmed" ? (
+                                                <CheckCircle className="h-3.5 w-3.5" />
+                                            ) : initialData.status === "inactive" ? (
+                                                <XCircle className="h-3.5 w-3.5" />
+                                            ) : (
+                                                <AlertCircle className="h-3.5 w-3.5" />
+                                            )}
+                                            {t(`status.${initialData.status}`) || initialData.status_display || initialData.status}
+                                        </span>
                                     )}
-                                    {t(`status.${initialData.status}`) || initialData.status_display || initialData.status}
-                                </span>
-                            )}
-                        </div>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-5">
-                            {/* Category - DynamicSelect with Add New */}
-                            <div className="space-y-2">
-                                <Label htmlFor="category">Category <span className="text-red-500">*</span></Label>
-                                <DynamicSelect
-                                    choiceType="category"
-                                    options={categoryOptions}
-                                    value={categoryId}
-                                    onChange={(id) => {
-                                        setCategoryId(id)
-                                        clearError("category")
-                                        // Reset subcategory when category changes
-                                        setSubcategoryId(null)
-                                        // Also update formData with category name for backend
-                                        const category = categoryOptions.find(c => c.id === id)
-                                        const categoryName = category?.name || ""
-                                        setFormData(prev => ({
-                                            ...prev,
-                                            category: categoryName,
-                                            subcategory: "",
-                                        }))
-                                        // Trigger immediate auto-save for dropdown
-                                        if (mode === "edit" && onAutoSave) {
-                                            onAutoSave({ category: categoryName, subcategory: "" })
-                                        }
-                                    }}
-                                    placeholder="Select category"
-                                    allowCreate={true}
-                                    createLabel="Category"
-                                />
-                                {validationErrors.category && (
-                                    <p className="text-sm text-red-500">{validationErrors.category}</p>
-                                )}
-                            </div>
-
-                            {/* Subcategory - DynamicSelect with Add New, dependent on Category */}
-                            <div className="space-y-2">
-                                <SubcategorySelect
-                                    categoryId={categoryId ?? undefined}
-                                    value={subcategoryId}
-                                    onChange={(id, name) => {
-                                        setSubcategoryId(id)
-                                        clearError("subcategory")
-                                        // Update formData with subcategory name for backend
-                                        const subcategoryName = name || ""
-                                        setFormData(prev => ({
-                                            ...prev,
-                                            subcategory: subcategoryName,
-                                        }))
-                                        // Trigger immediate auto-save for dropdown
-                                        if (mode === "edit" && onAutoSave) {
-                                            onAutoSave({ subcategory: subcategoryName })
-                                        }
-                                    }}
-                                />
-                                {validationErrors.subcategory && (
-                                    <p className="text-sm text-red-500">{validationErrors.subcategory}</p>
-                                )}
-                            </div>
-
-                            {/* Vehicle - Searchable */}
-                            <div className="space-y-2">
-                                <Label htmlFor="vehicle">Vehicle</Label>
-                                <SearchableSelect
-                                    options={vehicleOptions}
-                                    value={formData.vehicle_id?.toString() || ""}
-                                    onChange={(v) => {
-                                        const vehicleId = v ? parseInt(v) : undefined
-                                        handleChange("vehicle_id", vehicleId)
-                                        // Trigger immediate auto-save for dropdown
-                                        if (mode === "edit" && onAutoSave) {
-                                            onAutoSave({ vehicle_id: vehicleId })
-                                        }
-                                    }}
-                                    placeholder="Search vehicles..."
-                                    searchPlaceholder="Type to search..."
-                                />
-                            </div>
-                        </div>
-                    </div>
-                    {/* Column 3: Additional Information */}
-                    <div className="space-y-6">
-                        <div className="rounded-xl border border-border bg-card">
-                            <div className="border-b border-border px-5 py-4">
-                                <h3 className="text-base font-medium">Additional Information</h3>
-                            </div>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-5">
-                                {/* Description */}
-                                <div className="space-y-2">
-                                    <Label htmlFor="description">Description</Label>
-                                    <Textarea
-                                        id="description"
-                                        value={formData.description}
-                                        onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => handleChange("description", e.target.value)}
-                                        placeholder="Transaction description..."
-                                        rows={4}
-                                    />
                                 </div>
-
-                                {/* Internal Comments */}
-                                <div className="space-y-2">
-                                    <Label htmlFor="internal_comments">Internal Comments</Label>
-                                    <Textarea
-                                        id="internal_comments"
-                                        value={formData.internal_comments}
-                                        onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => handleChange("internal_comments", e.target.value)}
-                                        placeholder="Internal notes..."
-                                        rows={4}
-                                    />
-                                </div>
-
-                                {/* Status is auto-computed by the backend based on category + subcategory + tax */}
-                            </div>
-                        </div>
-                    </div>
-
-                </div>
-
-                {/* Column 2: Price Breakdown & Purchase Details */}
-                <div className="space-y-6">
-                    {/* Usage Details Section */}
-                    <div className="rounded-xl border border-border bg-card">
-                        <div className="border-b border-border px-5 py-4">
-                            <h3 className="text-base font-medium">Usage Details</h3>
-                        </div>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-5">
-                            {/* Date */}
-                            <div className="space-y-2">
-                                <Label htmlFor="date">Date <span className="text-red-500">*</span></Label>
-                                <div className="relative">
-                                    <CalendarDays className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                                    <Input
-                                        id="date"
-                                        type="date"
-                                        value={formData.date}
-                                        onChange={(e) => {
-                                            const dateValue = e.target.value
-                                            handleChange("date", dateValue)
-                                            clearError("date")
-                                            // Trigger immediate auto-save for date (not debounced)
-                                            if (mode === "edit" && onAutoSave) {
-                                                onAutoSave({ date: dateValue })
-                                            }
-                                        }}
-                                        className="pl-10"
-                                    />
-                                </div>
-                                {validationErrors.date && (
-                                    <p className="text-sm text-red-500">{validationErrors.date}</p>
-                                )}
-                            </div>
-
-                            {/* Method - DynamicSelect with Add New */}
-                            <div className="space-y-2">
-                                <Label htmlFor="method">Method <span className="text-red-500">*</span></Label>
-                                <DynamicSelect
-                                    choiceType="method"
-                                    options={methodOptions}
-                                    value={methodId}
-                                    onChange={(id) => {
-                                        setMethodId(id)
-                                        clearError("method")
-                                        // Update formData with method name for backend
-                                        const method = methodOptions.find(m => m.id === id)
-                                        const methodName = method?.name || ""
-                                        setFormData(prev => ({
-                                            ...prev,
-                                            method: methodName,
-                                        }))
-                                        // Trigger immediate auto-save for dropdown
-                                        if (mode === "edit" && onAutoSave) {
-                                            onAutoSave({ method: methodName })
-                                        }
-                                    }}
-                                    placeholder="Select method"
-                                    allowCreate={true}
-                                    createLabel="Method"
-                                />
-                                {validationErrors.method && (
-                                    <p className="text-sm text-red-500">{validationErrors.method}</p>
-                                )}
-                            </div>
-
-                            {/* From/To */}
-                            <div className="space-y-2">
-                                <Label htmlFor="from_or_to">From/To <span className="text-red-500">*</span></Label>
-                                <Input
-                                    id="from_or_to"
-                                    type="text"
-                                    value={formData.from_or_to}
-                                    onChange={(e) => {
-                                        handleChange("from_or_to", e.target.value)
-                                        if (e.target.value.trim()) {
-                                            clearError("from_or_to")
-                                        }
-                                    }}
-                                    placeholder="Sender or recipient name"
-                                />
-                                {validationErrors.from_or_to && (
-                                    <p className="text-sm text-red-500">{validationErrors.from_or_to}</p>
-                                )}
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Purchase Details Section */}
-                    <div className="rounded-xl border border-border bg-card">
-                        <div className="border-b border-border px-5 py-4">
-                            <h3 className="text-base font-medium">Purchase Details</h3>
-                        </div>
-                        <div className="px-5 pt-5 pb-0">
-                            <div className="flex flex-row flex-wrap items-center gap-x-4 gap-y-1 min-w-0 rounded-md border p-2 shadow-sm transition-colors bg-background border-border/40 hover:border-border/80 w-full mb-2">
-                                <div className="flex items-center gap-1.5">
-                                    <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold whitespace-nowrap">Gross:</span>
-                                    <span className={`text-sm font-bold ${getAmountColor(grossAmount)} whitespace-nowrap`}>
-                                        {formatMoney(grossAmount)}
-                                    </span>
-                                </div>
-                                <div className="text-[10px] text-muted-foreground/50 font-medium whitespace-nowrap">
-                                    Net ({formatMoney(netAmount)}) + Tax {taxRate}% ({formatMoney(taxAmount)})
-                                </div>
-                            </div>
-                        </div>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-5 pt-2">
-                            {/* Amount */}
-                            <div className="space-y-2">
-                                <Label htmlFor="amount">Amount <span className="text-red-500">*</span></Label>
-                                <div className="relative">
-                                    <Input
-                                        id="amount"
-                                        type="number"
-                                        step="0.01"
-                                        value={formData.amount ?? ""}
-                                        placeholder="Enter amount"
-                                        onChange={(e) => {
-                                            const inputVal = e.target.value
-                                            // Allow empty string (undefined) or any valid number
-                                            if (inputVal === "") {
-                                                handleChange("amount", undefined)
-                                            } else {
-                                                const val = parseFloat(inputVal)
-                                                if (!isNaN(val)) {
-                                                    handleChange("amount", val)
-                                                    clearError("amount")
+                                <div className={cn("grid gap-4 p-5", showSplitView ? "grid-cols-3" : "grid-cols-1 md:grid-cols-3")}>
+                                    {/* Category - DynamicSelect with Add New */}
+                                    <div className="space-y-2">
+                                        <Label htmlFor="category">Category <span className="text-red-500">*</span></Label>
+                                        <DynamicSelect
+                                            choiceType="category"
+                                            options={categoryOptions}
+                                            value={categoryId}
+                                            onChange={(id) => {
+                                                setCategoryId(id)
+                                                clearError("category")
+                                                // Reset subcategory when category changes
+                                                setSubcategoryId(null)
+                                                // Also update formData with category name for backend
+                                                const category = categoryOptions.find(c => c.id === id)
+                                                const categoryName = category?.name || ""
+                                                setFormData(prev => ({
+                                                    ...prev,
+                                                    category: categoryName,
+                                                    subcategory: "",
+                                                }))
+                                                // Trigger immediate auto-save for dropdown
+                                                if (mode === "edit" && onAutoSave) {
+                                                    onAutoSave({ category: categoryName, subcategory: "" })
                                                 }
-                                            }
-                                        }}
-                                    />
+                                            }}
+                                            placeholder="Select category"
+                                            allowCreate={true}
+                                            createLabel="Category"
+                                        />
+                                        {validationErrors.category && (
+                                            <p className="text-sm text-red-500">{validationErrors.category}</p>
+                                        )}
+                                    </div>
+
+                                    {/* Subcategory - DynamicSelect with Add New, dependent on Category */}
+                                    <div className="space-y-2">
+                                        <SubcategorySelect
+                                            categoryId={categoryId ?? undefined}
+                                            value={subcategoryId}
+                                            onChange={(id, name) => {
+                                                setSubcategoryId(id)
+                                                clearError("subcategory")
+                                                // Update formData with subcategory name for backend
+                                                const subcategoryName = name || ""
+                                                setFormData(prev => ({
+                                                    ...prev,
+                                                    subcategory: subcategoryName,
+                                                }))
+                                                // Trigger immediate auto-save for dropdown
+                                                if (mode === "edit" && onAutoSave) {
+                                                    onAutoSave({ subcategory: subcategoryName })
+                                                }
+                                            }}
+                                        />
+                                        {validationErrors.subcategory && (
+                                            <p className="text-sm text-red-500">{validationErrors.subcategory}</p>
+                                        )}
+                                    </div>
+
+                                    {/* Vehicle - Rendered inline only when not in split view */}
+                                    <div className="space-y-2">
+                                        <Label htmlFor="vehicle">{t("transactions.vehicle") || "Vehicle"}</Label>
+                                        <SearchableSelect
+                                            options={vehicleOptions}
+                                            value={formData.vehicle_id?.toString() || ""}
+                                            onChange={(v) => {
+                                                const vehicleId = v ? parseInt(v) : undefined
+                                                handleChange("vehicle_id", vehicleId)
+                                                // Trigger immediate auto-save for dropdown
+                                                if (mode === "edit" && onAutoSave) {
+                                                    onAutoSave({ vehicle_id: vehicleId })
+                                                }
+                                            }}
+                                            placeholder="Search vehicles..."
+                                            searchPlaceholder="Type to search..."
+                                        />
+                                    </div>
+
+                                    {/* Date */}
+                                    <div className="space-y-2">
+                                        <Label htmlFor="date">Date <span className="text-red-500">*</span></Label>
+                                        <div className="relative">
+                                            <CalendarDays className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                            <Input
+                                                id="date"
+                                                type="date"
+                                                value={formData.date}
+                                                onChange={(e) => {
+                                                    const dateValue = e.target.value
+                                                    handleChange("date", dateValue)
+                                                    clearError("date")
+                                                    // Trigger immediate auto-save for date (not debounced)
+                                                    if (mode === "edit" && onAutoSave) {
+                                                        onAutoSave({ date: dateValue })
+                                                    }
+                                                }}
+                                                onClick={(e) => { try { e.currentTarget.showPicker(); } catch (err) { } }}
+                                                className="pl-10"
+                                            />
+                                        </div>
+                                        {validationErrors.date && (
+                                            <p className="text-sm text-red-500">{validationErrors.date}</p>
+                                        )}
+                                    </div>
+
+                                    {/* Method - DynamicSelect with Add New */}
+                                    <div className="space-y-2">
+                                        <Label htmlFor="method">Method <span className="text-red-500">*</span></Label>
+                                        <DynamicSelect
+                                            choiceType="method"
+                                            options={methodOptions}
+                                            value={methodId}
+                                            onChange={(id) => {
+                                                setMethodId(id)
+                                                clearError("method")
+                                                // Update formData with method name for backend
+                                                const method = methodOptions.find(m => m.id === id)
+                                                const methodName = method?.name || ""
+                                                setFormData(prev => ({
+                                                    ...prev,
+                                                    method: methodName,
+                                                }))
+                                                // Trigger immediate auto-save for dropdown
+                                                if (mode === "edit" && onAutoSave) {
+                                                    onAutoSave({ method: methodName })
+                                                }
+                                            }}
+                                            placeholder="Select method"
+                                            allowCreate={true}
+                                            createLabel="Method"
+                                        />
+                                        {validationErrors.method && (
+                                            <p className="text-sm text-red-500">{validationErrors.method}</p>
+                                        )}
+                                    </div>
+
+                                    {/* From/To */}
+                                    <div className="space-y-2">
+                                        <Label htmlFor="from_or_to">From/To <span className="text-red-500">*</span></Label>
+                                        <Input
+                                            id="from_or_to"
+                                            type="text"
+                                            value={formData.from_or_to}
+                                            onChange={(e) => {
+                                                handleChange("from_or_to", e.target.value)
+                                                if (e.target.value.trim()) {
+                                                    clearError("from_or_to")
+                                                }
+                                            }}
+                                            placeholder="Sender or recipient name"
+                                        />
+                                        {validationErrors.from_or_to && (
+                                            <p className="text-sm text-red-500">{validationErrors.from_or_to}</p>
+                                        )}
+                                    </div>
+
+                                    {/* Description */}
+                                    <div className="space-y-2">
+                                        <Label htmlFor="description">Description</Label>
+                                        <Textarea
+                                            id="description"
+                                            value={formData.description}
+                                            onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => handleChange("description", e.target.value)}
+                                            placeholder="Transaction description..."
+                                            rows={4}
+                                        />
+                                    </div>
+
+                                    {/* Internal Comments */}
+                                    <div className="space-y-2">
+                                        <Label htmlFor="internal_comments">Internal Comments</Label>
+                                        <Textarea
+                                            id="internal_comments"
+                                            value={formData.internal_comments}
+                                            onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => handleChange("internal_comments", e.target.value)}
+                                            placeholder="Internal notes..."
+                                            rows={4}
+                                        />
+                                    </div>
                                 </div>
-                                {validationErrors.amount && (
-                                    <p className="text-sm text-red-500">{validationErrors.amount}</p>
-                                )}
                             </div>
 
-                            {/* Tax - DynamicSelect with Add New */}
-                            <div className="space-y-2">
-                                <Label htmlFor="tax">Tax <span className="text-red-500">*</span></Label>
-                                <DynamicSelect
-                                    choiceType="tax_percentage"
-                                    options={taxOptions}
-                                    value={taxId}
-                                    onChange={(id) => {
-                                        setTaxId(id)
-                                        clearError("tax")
 
-                                        // Note: For newly created items, taxOptions won't contain the new tax yet
-                                        // In that case, onCreated callback will handle setting the percentage
-                                        const taxOption = taxOptions.find(t => t.id === id)
-                                        const taxValue = taxOption !== undefined ? taxOption.percentage : undefined
+                        </div>
 
-                                        // Only update form data if we actually found the option or it was cleared
-                                        // When handling "Create New", id is null initially until onCreated fires
-                                        if (taxOption !== undefined || id === null) {
-                                            setFormData(prev => ({
-                                                ...prev,
-                                                tax: taxValue,
-                                            }))
-                                            // Trigger immediate auto-save for dropdown
-                                            if (mode === "edit" && onAutoSave) {
-                                                onAutoSave({ tax: taxValue })
-                                            }
-                                        }
-                                    }}
-                                    onCreated={(item) => {
-                                        // Immediately update formData with the new tax percentage
-                                        // This fixes the Price Breakdown not updating when creating a new tax
-                                        if (item.percentage !== undefined) {
-                                            setFormData(prev => ({
-                                                ...prev,
-                                                tax: item.percentage,
-                                            }))
-                                            // Also trigger auto-save if in edit mode
-                                            if (mode === "edit" && onAutoSave) {
-                                                onAutoSave({ tax: item.percentage })
-                                            }
-                                        }
-                                    }}
-                                    placeholder="Select tax"
-                                    allowCreate={true}
-                                    createLabel="Tax Rate"
-                                    showPercentage
-                                />
-                                {validationErrors.tax && (
-                                    <p className="text-sm text-red-500">{validationErrors.tax}</p>
-                                )}
-                            </div>
+                        {/* Column 2: Price Breakdown & Purchase Details */}
+                        <div className="space-y-6">
 
-                            {/* Currency - DynamicSelect with Add New */}
-                            <div className="space-y-2">
-                                <Label htmlFor="currency">Currency <span className="text-red-500">*</span></Label>
-                                <DynamicSelect
-                                    choiceType="currency"
-                                    options={currencyOptions}
-                                    value={currencyId}
-                                    onChange={(id) => {
-                                        setCurrencyId(id)
-                                        clearError("currency")
-                                        // Update formData with currency code/name for backend
-                                        const currency = currencyOptions.find(c => c.id === id)
-                                        const currencyName = currency?.name || ""
-                                        setFormData(prev => ({
-                                            ...prev,
-                                            currency: currencyName,
-                                        }))
-                                        // Trigger immediate auto-save for dropdown
-                                        if (mode === "edit" && onAutoSave) {
-                                            onAutoSave({ currency: currencyName })
-                                        }
-                                    }}
-                                    placeholder="Select currency"
-                                    allowCreate={true}
-                                    createLabel="Currency"
-                                />
-                                {validationErrors.currency && (
-                                    <p className="text-sm text-red-500">{validationErrors.currency}</p>
-                                )}
+
+                            {/* Purchase Details Section */}
+                            <div className="rounded-xl border border-border bg-card">
+                                <div className="border-b border-border px-5 py-4">
+                                    <h3 className="text-base font-medium">Purchase Details</h3>
+                                </div>
+                                <div className="px-5 pt-5 pb-0">
+                                    <div className="flex flex-row flex-wrap items-center gap-x-4 gap-y-1 min-w-0 rounded-md border p-2 shadow-sm transition-colors bg-background border-border/40 hover:border-border/80 w-full mb-2">
+                                        <div className="flex items-center gap-1.5">
+                                            <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold whitespace-nowrap">Gross:</span>
+                                            <span className={`text-sm font-bold ${getAmountColor(grossAmount)} whitespace-nowrap`}>
+                                                {formatMoney(grossAmount)}
+                                            </span>
+                                        </div>
+                                        <div className="text-[10px] text-muted-foreground/50 font-medium whitespace-nowrap">
+                                            Net ({formatMoney(netAmount)}) + Tax {taxRate}% ({formatMoney(taxAmount)})
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className={cn("grid gap-4 p-5 pt-2", showSplitView ? "grid-cols-3" : "grid-cols-1 md:grid-cols-3")}>
+                                    {/* Amount */}
+                                    <div className="space-y-2">
+                                        <Label htmlFor="amount">Amount <span className="text-red-500">*</span></Label>
+                                        <div className="relative">
+                                            <Input
+                                                id="amount"
+                                                type="number"
+                                                step="0.01"
+                                                value={formData.amount ?? ""}
+                                                placeholder="Enter amount"
+                                                onChange={(e) => {
+                                                    const inputVal = e.target.value
+                                                    // Allow empty string (undefined) or any valid number
+                                                    if (inputVal === "") {
+                                                        handleChange("amount", undefined)
+                                                    } else {
+                                                        const val = parseFloat(inputVal)
+                                                        if (!isNaN(val)) {
+                                                            handleChange("amount", val)
+                                                            clearError("amount")
+                                                        }
+                                                    }
+                                                }}
+                                            />
+                                        </div>
+                                        {validationErrors.amount && (
+                                            <p className="text-sm text-red-500">{validationErrors.amount}</p>
+                                        )}
+                                    </div>
+
+                                    {/* Tax - DynamicSelect with Add New */}
+                                    <div className="space-y-2">
+                                        <Label htmlFor="tax">Tax <span className="text-red-500">*</span></Label>
+                                        <DynamicSelect
+                                            choiceType="tax_percentage"
+                                            options={taxOptions}
+                                            value={taxId}
+                                            onChange={(id) => {
+                                                setTaxId(id)
+                                                clearError("tax")
+
+                                                // Note: For newly created items, taxOptions won't contain the new tax yet
+                                                // In that case, onCreated callback will handle setting the percentage
+                                                const taxOption = taxOptions.find(t => t.id === id)
+                                                const taxValue = taxOption !== undefined ? taxOption.percentage : undefined
+
+                                                // Only update form data if we actually found the option or it was cleared
+                                                // When handling "Create New", id is null initially until onCreated fires
+                                                if (taxOption !== undefined || id === null) {
+                                                    setFormData(prev => ({
+                                                        ...prev,
+                                                        tax: taxValue,
+                                                    }))
+                                                    // Trigger immediate auto-save for dropdown
+                                                    if (mode === "edit" && onAutoSave) {
+                                                        onAutoSave({ tax: taxValue })
+                                                    }
+                                                }
+                                            }}
+                                            onCreated={(item) => {
+                                                // Immediately update formData with the new tax percentage
+                                                // This fixes the Price Breakdown not updating when creating a new tax
+                                                if (item.percentage !== undefined) {
+                                                    setFormData(prev => ({
+                                                        ...prev,
+                                                        tax: item.percentage,
+                                                    }))
+                                                    // Also trigger auto-save if in edit mode
+                                                    if (mode === "edit" && onAutoSave) {
+                                                        onAutoSave({ tax: item.percentage })
+                                                    }
+                                                }
+                                            }}
+                                            placeholder="Select tax"
+                                            allowCreate={true}
+                                            createLabel="Tax Rate"
+                                            showPercentage
+                                        />
+                                        {validationErrors.tax && (
+                                            <p className="text-sm text-red-500">{validationErrors.tax}</p>
+                                        )}
+                                    </div>
+
+                                    {/* Currency - DynamicSelect with Add New */}
+                                    <div className="space-y-2">
+                                        <Label htmlFor="currency">Currency <span className="text-red-500">*</span></Label>
+                                        <DynamicSelect
+                                            choiceType="currency"
+                                            options={currencyOptions}
+                                            value={currencyId}
+                                            onChange={(id) => {
+                                                setCurrencyId(id)
+                                                clearError("currency")
+                                                // Update formData with currency code/name for backend
+                                                const currency = currencyOptions.find(c => c.id === id)
+                                                const currencyName = currency?.name || ""
+                                                setFormData(prev => ({
+                                                    ...prev,
+                                                    currency: currencyName,
+                                                }))
+                                                // Trigger immediate auto-save for dropdown
+                                                if (mode === "edit" && onAutoSave) {
+                                                    onAutoSave({ currency: currencyName })
+                                                }
+                                            }}
+                                            placeholder="Select currency"
+                                            allowCreate={true}
+                                            createLabel="Currency"
+                                        />
+                                        {validationErrors.currency && (
+                                            <p className="text-sm text-red-500">{validationErrors.currency}</p>
+                                        )}
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
 
+                {/* Draggable Divider */}
+                {showSplitView && onSplitViewWidthChange && (
+                    <SplitViewDivider
+                        onDrag={(deltaX) => {
+                            const next = (splitViewWidth || 450) - deltaX
+                            const clamped = Math.min(SPLIT_MAX, Math.max(SPLIT_MIN, next))
+                            onSplitViewWidthChange(clamped)
+                        }}
+                        onDragStart={() => {
+                            setIsDragging(true)
+                            onSplitViewWidthStart?.()
+                        }}
+                        onDragEnd={() => {
+                            setIsDragging(false)
+                            onSplitViewWidthSave?.()
+                        }}
+                    />
+                )}
 
+                {/* RIGHT COLUMN (Split View Only) */}
+                {showSplitView && (
+                    <div
+                        style={{ width: splitViewWidth ? `${splitViewWidth}px` : '450px' }}
+                        className={cn(
+                            "hidden 2xl:flex 2xl:flex-shrink-0 flex flex-col gap-4 2xl:sticky 2xl:top-5 2xl:self-start",
+                            isDragging && "pointer-events-none"
+                        )}
+                    >
+                        {formData.vehicle_id && (
+                            <div className="overflow-y-auto max-h-[calc(100vh-220px)]">
+                                <RelatedTransactionsTable
+                                    vehicleId={formData.vehicle_id}
+                                    vehicleName={vehicleOptions.find(v => v.value === String(formData.vehicle_id))?.label}
+                                    highlightedTransactionId={highlightedTransactionId}
+                                />
+                            </div>
+                        )}
+                    </div>
+                )}
+                {showSplitView && formData.vehicle_id && (
+                    <div className="2xl:hidden w-full">
+                        <RelatedTransactionsTable
+                            vehicleId={formData.vehicle_id}
+                            vehicleName={vehicleOptions.find(v => v.value === String(formData.vehicle_id))?.label}
+                            highlightedTransactionId={highlightedTransactionId}
+                        />
+                    </div>
+                )}
             </div>
 
-            {/* Related Transactions Table - Dynamic based on selected vehicle */}
-            {formData.vehicle_id && (
+            {/* Related Transactions Table - Original location (only when NOT in split view) */}
+            {!showSplitView && formData.vehicle_id && (
                 <div className="mt-6">
                     <RelatedTransactionsTable
                         vehicleId={formData.vehicle_id}
@@ -893,6 +967,12 @@ export function TransactionForm({
                     ) : (
                         // Edit mode: Show autosave indicator, PDF button, and navigation
                         <div className="flex items-center gap-3">
+                            {/* Layout Toggle */}
+                            {splitViewToggle}
+
+                            {/* Separator */}
+                            {splitViewToggle && <div className="h-6 w-px bg-border" />}
+
                             {/* Auto-save status indicator */}
                             <AutoSaveIndicator status={autoSaveStatus} errorMessage={autoSaveErrorMessage} />
 
