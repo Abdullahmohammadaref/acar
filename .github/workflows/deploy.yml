@@ -2,7 +2,7 @@ name: Deploy to Production
 
 on:
   push:
-    branches: [main]
+    branches: [master]
   workflow_dispatch:
 
 jobs:
@@ -21,35 +21,35 @@ jobs:
           key: ${{ secrets.SERVER_SSH_KEY }}
           script: |
             set -e
-            cd /home/ubuntu/acar
-
+            
             echo "=== Pulling latest code ==="
-            git pull origin main
-
+            cd /home/ubuntu/acar
+            git pull origin master
+            
             echo "=== Pulling private files ==="
             cd /home/ubuntu/acar-private
-            git pull origin main
-            cp -r backend/manager/pdf_generators/*.py /home/ubuntu/acar/backend/manager/pdf_generators/ 2>/dev/null || true
-            cp -r backend/manager/templates/ /home/ubuntu/acar/backend/manager/ 2>/dev/null || true
-            cd /home/ubuntu/acar
-
+            git pull  # Automatically pulls whatever the default branch is for your private repo
+            cp -r pdf_generators/ /home/ubuntu/acar/backend/manager/
+            
             echo "=== Building React frontend ==="
-            cd frontend
+            cd /home/ubuntu/acar/frontend
             npm ci --prefer-offline
-            npm run build
-            cd ..
-
-            echo "=== Rebuilding Django container ==="
-            docker compose build django
-
-            echo "=== Restarting ==="
-            docker compose up -d --no-deps django
-            sleep 5
-
+            NODE_OPTIONS=--max-old-space-size=4096 npm run build
+            
+            echo "=== Moving Frontend Dist to Staticfiles ==="
+            # Remove the old dist folder to prevent junk buildup, then copy the new one over
+            rm -rf /home/ubuntu/acar/backend/staticfiles/dist
+            cp -r dist /home/ubuntu/acar/backend/staticfiles/
+            
+            echo "=== Rebuilding and Restarting Docker Containers ==="
+            cd /home/ubuntu/acar
+            docker compose down
+            docker compose up -d --build
+            
             echo "=== Running migrations ==="
             docker compose exec -T django python manage.py migrate --noinput --settings=acar.settings_prod
-
+            
             echo "=== Collecting static ==="
             docker compose exec -T django python manage.py collectstatic --noinput --settings=acar.settings_prod
-
+            
             echo "=== Deploy complete ==="
