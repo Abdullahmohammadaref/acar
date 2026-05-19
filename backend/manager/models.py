@@ -81,6 +81,11 @@ class User(AbstractUser):
     legal_entities_access = models.BooleanField(_('legal entities access'), default=False)
 
     backup_email = models.EmailField(_('backup email address'), blank=True, null=True)
+    last_activity_viewed_at = models.DateTimeField(
+        _('last activity viewed at'),
+        default=timezone.now,
+        help_text=_('Tracks when the user last opened the notifications dropdown.')
+    )
 
     def __str__(self):
         return f"{self.username}"
