@@ -36,11 +36,12 @@ jobs:
             cd /home/ubuntu/acar/frontend
             npm ci --prefer-offline
             NODE_OPTIONS=--max-old-space-size=4096 npm run build
-            
+
             echo "=== Moving Frontend Dist to Staticfiles ==="
             # Remove the old dist folder to prevent junk buildup, then copy the new one over
             rm -rf /home/ubuntu/acar/backend/staticfiles/dist
-            cp -r dist /home/ubuntu/acar/backend/staticfiles/
+            # Copy the newly built folder from where Vite actually put it
+            cp -r /home/ubuntu/acar/backend/static/dist /home/ubuntu/acar/backend/staticfiles/
             
             echo "=== Rebuilding and Restarting Docker Containers ==="
             cd /home/ubuntu/acar
