@@ -61,10 +61,13 @@ export default function BusinessSettingsPage() {
     const [newBranch, setNewBranch] = useState({ name: "", address: "" })
 
     // Users state
-    const [, setEditingEmployee] = useState<Record<number, Partial<Employee & { password: string }>>>({})
+    const [editingEmployee, setEditingEmployee] = useState<Record<number, Partial<Employee & { password?: string }>>>({})
     const [showPasswords, setShowPasswords] = useState<Record<number, boolean>>({})
     const [newEmployee, setNewEmployee] = useState({ username: "", password: "" })
     const [showNewPassword, setShowNewPassword] = useState(false)
+    const [saveSuccess, setSaveSuccess] = useState(false)
+    const [saveError, setSaveError] = useState<string | null>(null)
+    const [isSaving, setIsSaving] = useState(false)
 
     // Logo upload state
     const [logoFile, setLogoFile] = useState<File | null>(null)
@@ -151,15 +154,81 @@ export default function BusinessSettingsPage() {
         },
     })
 
+    // Update branch mutation
+    const updateBranchMutation = useMutation({
+        mutationFn: async (branch: Branch) => {
+            const response = await api.put(`/settings/branches/${branch.id}`, {
+                name: branch.name,
+                address: branch.address,
+                is_active: branch.is_active,
+            })
+            return response.data
+        },
+    })
+
+    // Update employee mutation
+    const updateEmployeeMutation = useMutation({
+        mutationFn: async (employee: Partial<Employee & { password?: string }> & { id: number }) => {
+            const { id, ...data } = employee
+            const response = await api.put(`/settings/users/${id}`, data)
+            return response.data
+        },
+    })
+
     const handleFieldChange = (field: string, value: string) => {
         setFormData((prev) => ({ ...prev, [field]: value }))
     }
 
-    const handleSave = () => {
-        // Here we just trigger business info update. Later, the logic will be enhanced as per user.
-        updateMutation.mutate(formData)
-        if (logoFile) {
-            logoUploadMutation.mutate(logoFile)
+    const handleSave = async () => {
+        setIsSaving(true)
+        setSaveSuccess(false)
+        setSaveError(null)
+        try {
+            // 1. Save business details
+            await updateMutation.mutateAsync(formData)
+
+            // 2. Save business logo if selected
+            if (logoFile) {
+                await logoUploadMutation.mutateAsync(logoFile)
+            }
+
+            // 3. Save modified branches
+            const modifiedBranches = editableBranches.filter((eb) => {
+                const original = business?.branches.find((ob) => ob.id === eb.id)
+                if (!original) return false
+                return (
+                    original.name !== eb.name ||
+                    original.address !== eb.address ||
+                    original.is_active !== eb.is_active
+                )
+            })
+            for (const branch of modifiedBranches) {
+                await updateBranchMutation.mutateAsync(branch)
+            }
+
+            // 4. Save modified employees
+            const employeeIds = Object.keys(editingEmployee).map(Number)
+            for (const empId of employeeIds) {
+                const edits = editingEmployee[empId]
+                await updateEmployeeMutation.mutateAsync({
+                    id: empId,
+                    ...edits,
+                })
+            }
+
+            // Clear editing states on success
+            setEditingEmployee({})
+            setSaveSuccess(true)
+            setTimeout(() => setSaveSuccess(false), 5000)
+            
+            // Re-fetch all queries to ensure fresh UI state
+            queryClient.invalidateQueries({ queryKey: ["business-settings"] })
+            queryClient.invalidateQueries({ queryKey: ["employees"] })
+        } catch (error: any) {
+            console.error("Failed to save changes:", error)
+            setSaveError(error.response?.data?.detail || "Failed to save changes. Please try again.")
+        } finally {
+            setIsSaving(false)
         }
     }
 
@@ -262,6 +331,17 @@ export default function BusinessSettingsPage() {
                     <p className="text-sm text-muted-foreground">Manage your business information, branches, and users</p>
                 </div>
             </div>
+
+            {saveSuccess && (
+                <div className="rounded-xl border border-green-500/50 bg-green-500/10 p-4">
+                    <p className="text-sm text-green-600 font-medium">All settings and changes saved successfully!</p>
+                </div>
+            )}
+            {saveError && (
+                <div className="rounded-xl border border-destructive/50 bg-destructive/10 p-4">
+                    <p className="text-sm text-destructive font-medium">{saveError}</p>
+                </div>
+            )}
 
             {/* Business Details Form */}
             <div className="rounded-xl border border-border bg-card">
@@ -661,10 +741,10 @@ export default function BusinessSettingsPage() {
                     <button
                         type="button"
                         onClick={handleSave}
-                        disabled={updateMutation.isPending || logoUploadMutation.isPending}
+                        disabled={isSaving}
                         className="inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-primary px-6 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50"
                     >
-                        {updateMutation.isPending || logoUploadMutation.isPending ? (
+                        {isSaving ? (
                             <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary-foreground border-r-transparent" />
                         ) : (
                             <Save className="h-4 w-4" />
