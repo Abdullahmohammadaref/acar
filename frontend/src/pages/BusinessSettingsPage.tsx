@@ -224,6 +224,7 @@ export default function BusinessSettingsPage() {
             // Re-fetch all queries to ensure fresh UI state
             queryClient.invalidateQueries({ queryKey: ["business-settings"] })
             queryClient.invalidateQueries({ queryKey: ["employees"] })
+            queryClient.invalidateQueries({ queryKey: ["choices"] })
         } catch (error: any) {
             console.error("Failed to save changes:", error)
             setSaveError(error.response?.data?.detail || "Failed to save changes. Please try again.")

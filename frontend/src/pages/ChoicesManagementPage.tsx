@@ -134,6 +134,7 @@ export default function ChoicesManagementPage() {
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["choices-management"] })
+            queryClient.invalidateQueries({ queryKey: ["choices"] })
             closeModal()
         },
         onError: (error: any) => {
@@ -158,6 +159,7 @@ export default function ChoicesManagementPage() {
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["choices-management"] })
+            queryClient.invalidateQueries({ queryKey: ["choices"] })
             closeModal()
         },
         onError: (error: any) => {
@@ -174,6 +176,7 @@ export default function ChoicesManagementPage() {
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["choices-management"] })
+            queryClient.invalidateQueries({ queryKey: ["choices"] })
         },
         onError: (error) => {
             console.error("Deactivation failed:", error)
@@ -188,6 +191,7 @@ export default function ChoicesManagementPage() {
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["choices-management"] })
+            queryClient.invalidateQueries({ queryKey: ["choices"] })
         },
         onError: (error) => {
             console.error("Reactivation failed:", error)
