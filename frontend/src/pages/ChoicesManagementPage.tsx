@@ -213,6 +213,16 @@ export default function ChoicesManagementPage() {
                 const valB = b.percentage ?? 0
                 return sortOrder === "asc" ? valA - valB : valB - valA
             }
+            
+            // Numeric sorting for key numbers to prevent e.g. "10" coming before "2"
+            if (activeTab === "key_number") {
+                const numA = parseInt(a.name, 10)
+                const numB = parseInt(b.name, 10)
+                if (!isNaN(numA) && !isNaN(numB)) {
+                    return sortOrder === "asc" ? numA - numB : numB - numA
+                }
+            }
+
             return sortOrder === "asc"
                 ? a.name.localeCompare(b.name)
                 : b.name.localeCompare(a.name)
@@ -235,7 +245,12 @@ export default function ChoicesManagementPage() {
 
     const getSortOptions = () => {
         const options = [
-            { value: "name", label: t("choices.sortName", "Name") },
+            { 
+                value: "name", 
+                label: activeTab === "key_number" 
+                    ? t("choices.sortNumber", "Number") 
+                    : t("choices.sortName", "Name") 
+            },
             { value: "status", label: t("choices.sortStatus", "Status") },
         ]
         if (activeTab === "tax_percentage") {
@@ -919,7 +934,9 @@ export default function ChoicesManagementPage() {
                             <form onSubmit={handleAddChoice}>
                                 <div className="mb-4">
                                     <label className="mb-1.5 block text-sm font-medium text-muted-foreground">
-                                        {t("choices.name", "Name")}
+                                        {modalChoiceType === "key_number"
+                                            ? t("choices.number", "Number")
+                                            : t("choices.name", "Name")}
                                     </label>
                                     <input
                                         type="text"
@@ -930,7 +947,9 @@ export default function ChoicesManagementPage() {
                                         }}
                                         required
                                         className={`w-full rounded-lg border border-input bg-transparent px-4 py-2.5 text-sm text-foreground focus:border-primary focus:ring-2 focus:ring-primary/20 ${modalError ? 'border-destructive' : ''}`}
-                                        placeholder={t("choices.enterName", "Enter name...")}
+                                        placeholder={modalChoiceType === "key_number"
+                                            ? t("choices.enterNumber", "Enter number...")
+                                            : t("choices.enterName", "Enter name...")}
                                         autoFocus
                                     />
                                 </div>

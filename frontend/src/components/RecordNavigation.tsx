@@ -51,9 +51,9 @@ export function RecordNavigation({
                 onClick={handlePrev}
                 disabled={prevId === null || prevId === undefined}
                 title={`Previous ${label}`}
-                className="h-9 w-9 p-0"
+                className="h-10 w-10 p-0"
             >
-                <ChevronLeft className="h-4 w-4" />
+                <ChevronLeft className="h-5 w-5" />
                 <span className="sr-only">Previous {label}</span>
             </Button>
 
@@ -63,9 +63,9 @@ export function RecordNavigation({
                 onClick={handleNext}
                 disabled={nextId === null || nextId === undefined}
                 title={`Next ${label}`}
-                className="h-9 w-9 p-0"
+                className="h-10 w-10 p-0"
             >
-                <ChevronRight className="h-4 w-4" />
+                <ChevronRight className="h-5 w-5" />
                 <span className="sr-only">Next {label}</span>
             </Button>
         </div>
@@ -118,9 +118,9 @@ export function ReviewQueueNavigation({
                 onClick={handlePrev}
                 disabled={prevReviewId === null || prevReviewId === undefined}
                 title="Previous review item"
-                className="h-8 w-8 p-0 border-amber-500/50 text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950"
+                className="h-10 w-10 p-0 border-amber-500/50 text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950"
             >
-                <ChevronLeft className="h-4 w-4" />
+                <ChevronLeft className="h-5 w-5" />
                 <span className="sr-only">Previous review item</span>
             </Button>
 
@@ -130,9 +130,9 @@ export function ReviewQueueNavigation({
                 onClick={handleNext}
                 disabled={nextReviewId === null || nextReviewId === undefined}
                 title="Next review item"
-                className="h-8 w-8 p-0 border-amber-500/50 text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950"
+                className="h-10 w-10 p-0 border-amber-500/50 text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950"
             >
-                <ChevronRight className="h-4 w-4" />
+                <ChevronRight className="h-5 w-5" />
                 <span className="sr-only">Next review item</span>
             </Button>
         </div>

@@ -894,7 +894,7 @@ def upload_vehicle_image(request, internal_id: int, image: UploadedFile = File(.
 # =============================================================================
 
 @router.get("/choices", response=AllChoices)
-def get_all_choices(request):
+def get_all_choices(request, vehicle_id: Optional[int] = Query(None)):
     """
     Get all form dropdown options.
     Called once when the vehicle form loads.
@@ -904,6 +904,14 @@ def get_all_choices(request):
     # Generate year choices (current year + 2 down to 1900)
     current_year = datetime.now().year
     year_choices = list(range(current_year + 2, 1899, -1))
+    
+    # Determine available key numbers
+    # Exclude keys assigned to non-inactive vehicles, UNLESS it's the current vehicle
+    taken_keys_q = Q(vehicle__isnull=False) & ~Q(vehicle__status="inactive")
+    if vehicle_id:
+        taken_keys_q = taken_keys_q & ~Q(vehicle__id=vehicle_id)
+        
+    available_keys = KeyNumber.objects.filter(business=business, is_active=True).exclude(taken_keys_q)
     
     return {
         "branches": list(Branch.objects.filter(business=business, is_active=True).values('id', 'name', 'address', 'is_active')),
@@ -925,7 +933,7 @@ def get_all_choices(request):
         "categories": list(Category.objects.filter(business=business, is_active=True).values('id', 'name')),
         "subcategories": list(Subcategory.objects.filter(business=business, is_active=True).values('id', 'name', 'category_id')),
         "currencies": list(Currency.objects.filter(business=business, is_active=True).values('id', 'name', 'code')),
-        "key_numbers": [{"id": k.id, "name": str(k.number)} for k in KeyNumber.objects.filter(business=business, is_active=True)],
+        "key_numbers": [{"id": k.id, "name": str(k.number)} for k in available_keys],
         "status_choices": [
             {"value": "purchased", "label": "Purchased"},
             {"value": "ready_for_sale", "label": "Ready for Sale"},
@@ -957,6 +965,89 @@ def get_models_for_make(request, make_id: int):
         }
         for m in models
     ]
+
+
+@router.get("/choices/key-numbers/next-available")
+def get_next_available_key(request):
+    """
+    Returns the next available key number for a new vehicle.
+
+    Logic:
+    1. Find all active KeyNumber records for this business.
+    2. Find all key numbers currently assigned to non-inactive vehicles.
+    3. Determine the smallest integer >= 1 not in the taken set.
+    4. If that integer exists as an active KeyNumber → return it.
+    5. If not → create a new KeyNumber → return it.
+
+    Response: { "id": int, "number": int, "name": str }
+    """
+    from django.db import transaction as db_transaction
+
+    business = get_user_business(request)
+
+    # Step 1: All active key numbers for this business
+    all_keys = KeyNumber.objects.filter(business=business, is_active=True)
+
+    # Step 2: Key numbers currently taken by non-inactive vehicles
+    taken_key_ids = set(
+        KeyNumber.objects.filter(
+            business=business,
+            is_active=True,
+            vehicle__isnull=False,
+        )
+        .exclude(vehicle__status="inactive")
+        .values_list("id", flat=True)
+    )
+
+    # Step 3: Build a set of taken numbers from the taken keys
+    taken_numbers = set()
+    for key in all_keys.filter(id__in=taken_key_ids):
+        try:
+            taken_numbers.add(key.number)
+        except (ValueError, TypeError):
+            pass  # Safety: skip any unexpected values
+
+    # Step 4: Find the smallest integer >= 1 not in taken_numbers
+    candidate = 1
+    while candidate in taken_numbers:
+        candidate += 1
+
+    # Step 5: Check if candidate exists as an active KeyNumber
+    existing = KeyNumber.objects.filter(
+        business=business,
+        number=candidate,
+        is_active=True,
+    ).first()
+
+    if existing:
+        return {"id": existing.id, "number": existing.number, "name": str(existing.number)}
+
+    # Step 6: Create new KeyNumber with race condition handling
+    max_retries = 5
+    for attempt in range(max_retries):
+        try:
+            with db_transaction.atomic():
+                new_key = KeyNumber.objects.create(
+                    business=business,
+                    number=candidate,
+                    is_active=True,
+                )
+            return {"id": new_key.id, "number": new_key.number, "name": str(new_key.number)}
+        except Exception:
+            # Key was created by another request — increment and retry
+            candidate += 1
+            while candidate in taken_numbers:
+                candidate += 1
+
+    # Fallback: try to return whatever exists for the last candidate
+    fallback = KeyNumber.objects.filter(
+        business=business,
+        number=candidate,
+    ).first()
+    if fallback:
+        return {"id": fallback.id, "number": fallback.number, "name": str(fallback.number)}
+
+    return {"id": 0, "number": candidate, "name": str(candidate)}
 
 
 @router.get("/choices/management")

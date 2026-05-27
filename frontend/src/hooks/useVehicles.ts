@@ -99,7 +99,10 @@ export function useChoices(vehicleId?: number) {
 }
 
 /**
- * Fetch and/or create the next available key number
+ * Fetch and/or create the next available key number.
+ * Only runs when `enabled` is true (i.e., on the Add New Vehicle page).
+ * staleTime: 0 — always refetch fresh when the page loads.
+ * gcTime: 0 — don't keep in cache after component unmounts.
  */
 export function useNextAvailableKey(enabled: boolean = false) {
     return useQuery({
@@ -110,6 +113,8 @@ export function useNextAvailableKey(enabled: boolean = false) {
         },
         enabled,
         staleTime: 0,
+        gcTime: 0,
+        retry: 1,
     })
 }
 

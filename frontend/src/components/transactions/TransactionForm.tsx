@@ -13,7 +13,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { SearchableSelect } from "@/components/ui/searchable-select"
 import { DynamicSelect } from "@/components/ui/dynamic-select"
 import { RelatedTransactionsTable } from "@/components/transactions/RelatedTransactionsTable"
-import { RecordNavigation } from "@/components/RecordNavigation"
+import { RecordNavigation, ReviewQueueNavigation } from "@/components/RecordNavigation"
 import { useTransactionChoices, useSubcategories, useDeleteTransaction, useActivateTransaction } from "@/hooks/useTransactions"
 import { useChoices } from "@/hooks/useVehicles"  // For tax_percentages
 import { SplitViewDivider } from "@/components/SplitViewDivider"
@@ -40,6 +40,7 @@ interface TransactionFormProps {
     onSplitViewWidthChange?: (width: number) => void
     onSplitViewWidthStart?: () => void
     onSplitViewWidthSave?: () => void
+    header?: React.ReactNode
 }
 
 /**
@@ -115,6 +116,7 @@ export function TransactionForm({
     onSplitViewWidthChange,
     onSplitViewWidthStart,
     onSplitViewWidthSave,
+    header,
 }: TransactionFormProps) {
     const { t } = useTranslation()
 
@@ -459,6 +461,7 @@ export function TransactionForm({
             )}>
                 {/* LEFT COLUMN */}
                 <div className={cn("space-y-5", showSplitView ? "min-w-0 flex-1" : "w-full", isDragging && "pointer-events-none")}>
+                    {header}
                     <div className={cn("gap-5", showSplitView ? "space-y-5" : "grid lg:grid-cols-2")}>
                         {/* Inner Column 1: Transaction Details */}
                         <div className="space-y-6">
@@ -1024,6 +1027,13 @@ export function TransactionForm({
                                 nextId={initialData?.next_transaction_internal_id}
                                 pathSuffix="/edit"
                                 label="Transaction"
+                            />
+                            
+                            <ReviewQueueNavigation
+                                basePath={`/${business_slug}/transactions`}
+                                prevReviewId={initialData?.prev_review_required_internal_id}
+                                nextReviewId={initialData?.next_review_required_internal_id}
+                                pathSuffix="/edit"
                             />
                         </div>
                     )}

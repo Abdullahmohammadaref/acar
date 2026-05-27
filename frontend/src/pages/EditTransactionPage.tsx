@@ -7,6 +7,7 @@ import { useTransaction, transactionKeys } from "@/hooks/useTransactions"
 import { useAutoSave } from "@/hooks/useAutoSave"
 import { getSplitWidth, saveSplitWidth } from "@/lib/paginationPrefs"
 import type { TransactionFormData, TransactionUpdateData } from "@/types/transaction"
+import { RecordNavigation, ReviewQueueNavigation } from "@/components/RecordNavigation"
 
 /**
  * Edit Transaction Page
@@ -128,11 +129,10 @@ export function EditTransactionPage() {
 
 
 
-    return (
-        <div className="space-y-6">
-            {/* Page Header */}
+    const headerNode = (
+        <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
             <div className="flex items-center gap-4">
-                <Button variant="ghost" size="icon" onClick={handleBack}>
+                <Button variant="ghost" size="icon" onClick={handleBack} type="button">
                     <ArrowLeft className="h-5 w-5" />
                 </Button>
                 <div>
@@ -143,9 +143,28 @@ export function EditTransactionPage() {
                 </div>
             </div>
 
-            <div className={isDragging ? 'pointer-events-none' : ''}>
-                {/* Transaction Form (includes Related Transactions Table) */}
-                <TransactionForm
+            <div className="flex items-center gap-2">
+                <RecordNavigation
+                    basePath={`/${business_slug}/transactions`}
+                    prevId={transaction.prev_transaction_internal_id}
+                    nextId={transaction.next_transaction_internal_id}
+                    pathSuffix="/edit"
+                    label="Transaction"
+                />
+                <ReviewQueueNavigation
+                    basePath={`/${business_slug}/transactions`}
+                    prevReviewId={transaction.prev_review_required_internal_id}
+                    nextReviewId={transaction.next_review_required_internal_id}
+                    pathSuffix="/edit"
+                />
+            </div>
+        </div>
+    )
+
+    return (
+        <div className={isDragging ? 'pointer-events-none' : ''}>
+            {/* Transaction Form (includes Related Transactions Table) */}
+            <TransactionForm
                 mode="edit"
                 initialData={transaction}
                 onSubmit={handleSubmit}
@@ -161,8 +180,8 @@ export function EditTransactionPage() {
                 onSplitViewWidthChange={setPanelWidth}
                 onSplitViewWidthSave={handleWidthSave}
                 onSplitViewWidthStart={() => setIsDragging(true)}
+                header={headerNode}
             />
-            </div>
         </div>
     )
 }

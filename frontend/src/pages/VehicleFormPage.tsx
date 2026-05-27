@@ -14,6 +14,7 @@ import type { VehicleUpdateInput } from "@/lib/validations"
 import { useTranslation } from "react-i18next"
 import { SplitViewDivider } from "@/components/SplitViewDivider"
 import { getSplitWidth, saveSplitWidth, SPLIT_MIN, SPLIT_MAX } from "@/lib/paginationPrefs"
+import { RecordNavigation } from "@/components/RecordNavigation"
 
 const SPLIT_VIEW_KEY = "acar_vehicle_split_view"
 
@@ -129,16 +130,26 @@ export function VehicleFormPage() {
     const formContent = (
         <div className={splitView && showTransactions ? "min-w-0 flex-1" : "w-full"}>
             {isEditing && vehicle && (
-                <div className="flex items-center gap-4 mb-6">
-                    <Button variant="ghost" size="icon" onClick={handleBack}>
-                        <ArrowLeft className="h-5 w-5" />
-                    </Button>
-                    <div>
-                        <h1 className="text-2xl font-bold text-foreground">
-                            {t("vehicles.editTitle") || "Edit"} — {vehicle.make_name} {vehicle.model_name}{" "}
-                            <span className="text-muted-foreground">#{vehicle.internal_id}</span>
-                        </h1>
+                <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
+                    <div className="flex items-center gap-4">
+                        <Button variant="ghost" size="icon" onClick={handleBack}>
+                            <ArrowLeft className="h-5 w-5" />
+                        </Button>
+                        <div>
+                            <h1 className="text-2xl font-bold text-foreground">
+                                {t("vehicles.editTitle") || "Edit"} — {vehicle.make_name} {vehicle.model_name}{" "}
+                                <span className="text-muted-foreground">#{vehicle.internal_id}</span>
+                            </h1>
+                        </div>
                     </div>
+                    
+                    <RecordNavigation
+                        basePath={`/${business_slug}/vehicles`}
+                        prevId={prevVehicleId}
+                        nextId={nextVehicleId}
+                        pathSuffix="/edit"
+                        label="Vehicle"
+                    />
                 </div>
             )}
 
@@ -240,17 +251,27 @@ export function VehicleFormPage() {
     // Standard stacked layout
     return (
         <div className="space-y-8">
-            {isEditing && vehicle && !splitView && (
-                <div className="flex items-center gap-4">
-                    <Button variant="ghost" size="icon" onClick={handleBack}>
-                        <ArrowLeft className="h-5 w-5" />
-                    </Button>
-                    <div>
-                        <h1 className="text-2xl font-bold text-foreground">
-                            {t("vehicles.editTitle") || "Edit"} — {vehicle.make_name} {vehicle.model_name}{" "}
-                            <span className="text-muted-foreground">#{vehicle.internal_id}</span>
-                        </h1>
+            {isEditing && vehicle && (
+                <div className="flex flex-wrap items-center justify-between gap-4">
+                    <div className="flex items-center gap-4">
+                        <Button variant="ghost" size="icon" onClick={handleBack}>
+                            <ArrowLeft className="h-5 w-5" />
+                        </Button>
+                        <div>
+                            <h1 className="text-2xl font-bold text-foreground">
+                                {t("vehicles.editTitle") || "Edit"} — {vehicle.make_name} {vehicle.model_name}{" "}
+                                <span className="text-muted-foreground">#{vehicle.internal_id}</span>
+                            </h1>
+                        </div>
                     </div>
+                    
+                    <RecordNavigation
+                        basePath={`/${business_slug}/vehicles`}
+                        prevId={prevVehicleId}
+                        nextId={nextVehicleId}
+                        pathSuffix="/edit"
+                        label="Vehicle"
+                    />
                 </div>
             )}
 
