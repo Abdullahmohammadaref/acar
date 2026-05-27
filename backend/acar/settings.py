@@ -31,6 +31,8 @@ SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-fallback-key-for-developme
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
+BACKEND_URL = os.getenv('BACKEND_URL', 'http://localhost:8000')
+
 ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
 
 # CSRF & Session Settings (CRITICAL FIX for React SPA)
