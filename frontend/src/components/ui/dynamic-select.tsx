@@ -25,7 +25,7 @@ import { transactionKeys } from "@/hooks/useTransactions"
 interface Choice {
     id: number
     name: string
-    [key: string]: unknown
+    [key: string]: any
 }
 
 interface DynamicSelectProps {
@@ -55,6 +55,8 @@ interface DynamicSelectProps {
     onCreated?: (item: { id: number; name: string; percentage?: number }) => void
     /** Custom handler for Add new button. If provided, skips the built-in dialog */
     onAddClick?: () => void
+    /** Optional styling flag to indicate error state */
+    hasError?: boolean
 }
 
 export function DynamicSelect({
@@ -71,6 +73,7 @@ export function DynamicSelect({
     allowDeselect = false,
     onCreated,
     onAddClick,
+    hasError = false,
 }: DynamicSelectProps) {
     const [open, setOpen] = useState(false)
     const [dialogOpen, setDialogOpen] = useState(false)
@@ -93,7 +96,7 @@ export function DynamicSelect({
 
     // Create mutation
     const createMutation = useMutation({
-        mutationFn: async (data: { name: string; percentage?: number; make_id?: number; category_id?: number; code?: string }) => {
+        mutationFn: async (data: { name: string; percentage?: number; make_id?: number; category_id?: number; country_id?: number; code?: string }) => {
             const formData = new FormData()
             formData.append("name", data.name)
             if (data.percentage !== undefined) {
@@ -104,6 +107,9 @@ export function DynamicSelect({
             }
             if (data.category_id !== undefined) {
                 formData.append("category_id", String(data.category_id))
+            }
+            if (data.country_id !== undefined) {
+                formData.append("country_id", String(data.country_id))
             }
             if (data.code !== undefined) {
                 formData.append("code", data.code)
@@ -198,7 +204,7 @@ export function DynamicSelect({
         // Currency requires code
         if (choiceType === "currency" && !newCode.trim()) return
 
-        const data: { name: string; percentage?: number; make_id?: number; category_id?: number; code?: string } = {
+        const data: { name: string; percentage?: number; make_id?: number; category_id?: number; country_id?: number; code?: string } = {
             name: newName.trim(),
         }
 
@@ -211,6 +217,8 @@ export function DynamicSelect({
             data.make_id = parentId
         } else if (choiceType === "subcategory" && parentId) {
             data.category_id = parentId
+        } else if (choiceType === "city" && parentId) {
+            data.country_id = parentId
         }
 
         // Currency requires code
@@ -236,7 +244,10 @@ export function DynamicSelect({
                         variant="outline"
                         role="combobox"
                         aria-expanded={open}
-                        className="w-full justify-between text-foreground"
+                        className={cn(
+                            "w-full justify-between text-foreground",
+                            hasError && "border-red-500 focus-visible:ring-red-500 dark:border-red-500/50"
+                        )}
                         disabled={disabled}
                     >
                         <span className="truncate text-left font-normal">

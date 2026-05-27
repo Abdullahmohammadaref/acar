@@ -29,7 +29,7 @@ from .models import (
     VehicleType, BodyType, Make, VehicleModel,
     Color, FuelType, DamageType, DoorsChoice,
     PaymentMethod, TaxPercentage, Currency, Category, Subcategory,
-    ActivityLog, KeyNumber
+    ActivityLog, KeyNumber, Country, City
 )
 from .schemas import (
     VehicleListOut, VehicleDetailOut, VehicleCreate, VehicleUpdate,
@@ -924,15 +924,20 @@ def get_all_choices(request, vehicle_id: Optional[int] = Query(None)):
         "doors": list(DoorsChoice.objects.filter(business=business, is_active=True).values('id', 'name')),
         "payment_methods": list(PaymentMethod.objects.filter(business=business, is_active=True).values('id', 'name')),
         "tax_percentages": list(TaxPercentage.objects.filter(business=business, is_active=True).values('id', 'name', 'percentage', 'is_no_tax')),
-        "legal_entities": list(LegalEntity.objects.filter(business=business).exclude(status='inactive').values(
+        "legal_entities": list(LegalEntity.objects.filter(business=business).exclude(status='inactive').annotate(
+            address_city_name=F('address_city__name'),
+            address_country_name=F('address_country__name')
+        ).values(
             'id', 'internal_id', 'name', 'type', 
             'address_street', 'address_street_number', 'address_postal_code',
-            'address_city', 'address_country', 'email', 'phone_number',
+            'address_city_id', 'address_city_name', 'address_country_id', 'address_country_name', 'email', 'phone_number',
             'tax_identification_number'
         )),
         "categories": list(Category.objects.filter(business=business, is_active=True).values('id', 'name')),
         "subcategories": list(Subcategory.objects.filter(business=business, is_active=True).values('id', 'name', 'category_id')),
         "currencies": list(Currency.objects.filter(business=business, is_active=True).values('id', 'name', 'code')),
+        "countries": list(Country.objects.filter(business=business, is_active=True).values('id', 'name')),
+        "cities": list(City.objects.filter(business=business, is_active=True).values('id', 'name', 'country_id')),
         "key_numbers": [{"id": k.id, "name": str(k.number)} for k in available_keys],
         "status_choices": [
             {"value": "purchased", "label": "Purchased"},
@@ -1126,6 +1131,12 @@ def get_choices_for_management(request):
             'active': list(Category.objects.filter(business=business, is_active=True).values('id', 'name')),
             'inactive': list(Category.objects.filter(business=business, is_active=False).values('id', 'name')),
         },
+        'country': {
+            'name': 'Countries',
+            'displayName': 'Länder',
+            'active': list(Country.objects.filter(business=business, is_active=True).values('id', 'name')),
+            'inactive': list(Country.objects.filter(business=business, is_active=False).values('id', 'name')),
+        },
         'key_number': {
             'name': 'Key Numbers',
             'displayName': 'Schlüsselnummern',
@@ -1158,11 +1169,24 @@ def get_choices_for_management(request):
             'subs_inactive': subs_inactive,
         })
     
+    # Get countries with their cities for parent-child management
+    countries_with_cities = []
+    for country in Country.objects.filter(business=business, is_active=True).order_by('name'):
+        cities_active = list(City.objects.filter(country=country, is_active=True).values('id', 'name'))
+        cities_inactive = list(City.objects.filter(country=country, is_active=False).values('id', 'name'))
+        countries_with_cities.append({
+            'id': country.id,
+            'name': country.name,
+            'cities_active': cities_active,
+            'cities_inactive': cities_inactive,
+        })
+    
     return {
         'choice_types': choice_types,
         'makes_with_models': makes_with_models,
         'manufacturers_with_models': makes_with_models,
         'categories_with_subcategories': categories_with_subcategories,
+        'countries_with_cities': countries_with_cities,
     }
 
 
@@ -1174,6 +1198,7 @@ def create_choice(
     percentage: Optional[Decimal] = Form(None),
     make_id: Optional[int] = Form(None),
     category_id: Optional[int] = Form(None),
+    country_id: Optional[int] = Form(None),
 ):
     """
     Create a new dynamic choice option (managers only).
@@ -1206,6 +1231,7 @@ def create_choice(
         'doors': DoorsChoice,
         'payment_method': PaymentMethod,
         'category': Category,
+        'country': Country,
     }
     
     name = name.strip()
@@ -1281,6 +1307,30 @@ def create_choice(
             "id": obj.id,
             "name": obj.name,
             "message": f"Subcategory '{name}' created successfully"
+        }
+    
+    elif choice_type == 'city':
+        if not country_id:
+            return 400, {"detail": "country_id is required for city"}
+
+        country = get_object_or_404(Country, id=country_id, business=business)
+
+        if City.objects.filter(
+            business=business, country=country, name=name
+        ).exists():
+            return 400, {"detail": f"City '{name}' already exists for this country"}
+
+        obj = City.objects.create(
+            business=business,
+            country=country,
+            name=name,
+            is_active=True
+        )
+        return 201, {
+            "success": True,
+            "id": obj.id,
+            "name": obj.name,
+            "message": f"City '{name}' created successfully"
         }
     
     elif choice_type in choice_models:
@@ -1553,8 +1603,8 @@ def create_legal_entity(request, payload: LegalEntityCreate):
         address_street=payload.address_street,
         address_street_number=payload.address_street_number,
         address_postal_code=payload.address_postal_code,
-        address_city=payload.address_city,
-        address_country=payload.address_country,
+        address_city_id=payload.address_city_id,
+        address_country_id=payload.address_country_id,
         email=payload.email,
         phone_number=payload.phone_number,
         tax_identification_number=payload.tax_identification_number,
@@ -1578,8 +1628,10 @@ def create_legal_entity(request, payload: LegalEntityCreate):
         "address_street": entity.address_street,
         "address_street_number": entity.address_street_number,
         "address_postal_code": entity.address_postal_code,
-        "address_city": entity.address_city,
-        "address_country": entity.address_country,
+        "address_city_id": entity.address_city_id,
+        "address_city_name": entity.address_city.name if entity.address_city else None,
+        "address_country_id": entity.address_country_id,
+        "address_country_name": entity.address_country.name if entity.address_country else None,
         "email": entity.email,
         "phone_number": entity.phone_number,
         "tax_identification_number": entity.tax_identification_number,
@@ -1595,7 +1647,7 @@ def list_legal_entities(request, filters: LegalEntityFilters = Query(...)):
     business = get_user_business(request)
     
     # Base queryset
-    qs = LegalEntity.objects.filter(business=business).order_by('name')
+    qs = LegalEntity.objects.filter(business=business).select_related('address_city', 'address_country').order_by('name')
     
     # Apply filters
     if filters.type:
@@ -1607,8 +1659,11 @@ def list_legal_entities(request, filters: LegalEntityFilters = Query(...)):
         # By default, exclude inactive unless specifically requested
         qs = qs.exclude(status='inactive')
         
-    if filters.city:
-        qs = qs.filter(address_city__icontains=filters.city)
+    if filters.city_id:
+        qs = qs.filter(address_city_id=filters.city_id)
+        
+    if filters.country_id:
+        qs = qs.filter(address_country_id=filters.country_id)
     
     if filters.search:
         search_term = filters.search
@@ -1619,8 +1674,8 @@ def list_legal_entities(request, filters: LegalEntityFilters = Query(...)):
             Q(address_street__icontains=search_term) |
             Q(address_street_number__icontains=search_term) |
             Q(address_postal_code__icontains=search_term) |
-            Q(address_city__icontains=search_term) |
-            Q(address_country__icontains=search_term) |
+            Q(address_city__name__icontains=search_term) |
+            Q(address_country__name__icontains=search_term) |
             Q(email__icontains=search_term) |
             Q(phone_number__icontains=search_term) |
             Q(tax_identification_number__icontains=search_term)
@@ -1656,8 +1711,10 @@ def list_legal_entities(request, filters: LegalEntityFilters = Query(...)):
             "address_street": e.address_street,
             "address_street_number": e.address_street_number,
             "address_postal_code": e.address_postal_code,
-            "address_city": e.address_city,
-            "address_country": e.address_country,
+            "address_city_id": e.address_city_id,
+            "address_city_name": e.address_city.name if e.address_city else None,
+            "address_country_id": e.address_country_id,
+            "address_country_name": e.address_country.name if e.address_country else None,
             "email": e.email,
             "phone_number": e.phone_number,
             "tax_identification_number": e.tax_identification_number,
@@ -1679,7 +1736,7 @@ def get_legal_entity(request, internal_id: int):
     """Get single legal entity details by internal ID"""
     business = get_user_business(request)
     
-    entity = get_object_or_404(LegalEntity, business=business, internal_id=internal_id)
+    entity = get_object_or_404(LegalEntity.objects.select_related('address_city', 'address_country'), business=business, internal_id=internal_id)
     
     return {
         "id": entity.id,
@@ -1690,8 +1747,10 @@ def get_legal_entity(request, internal_id: int):
         "address_street": entity.address_street,
         "address_street_number": entity.address_street_number,
         "address_postal_code": entity.address_postal_code,
-        "address_city": entity.address_city,
-        "address_country": entity.address_country,
+        "address_city_id": entity.address_city_id,
+        "address_city_name": entity.address_city.name if entity.address_city else None,
+        "address_country_id": entity.address_country_id,
+        "address_country_name": entity.address_country.name if entity.address_country else None,
         "email": entity.email,
         "phone_number": entity.phone_number,
         "tax_identification_number": entity.tax_identification_number,
@@ -1703,7 +1762,7 @@ def update_legal_entity(request, internal_id: int, payload: LegalEntityUpdate):
     """Update legal entity details. Only provided fields will be updated."""
     business = get_user_business(request)
     
-    entity = get_object_or_404(LegalEntity, business=business, internal_id=internal_id)
+    entity = get_object_or_404(LegalEntity.objects.select_related('address_city', 'address_country'), business=business, internal_id=internal_id)
     
     # Get the payload as a dict, excluding None values
     update_data = payload.dict(exclude_unset=True, exclude_none=True)
@@ -1743,8 +1802,10 @@ def update_legal_entity(request, internal_id: int, payload: LegalEntityUpdate):
         "address_street": entity.address_street,
         "address_street_number": entity.address_street_number,
         "address_postal_code": entity.address_postal_code,
-        "address_city": entity.address_city,
-        "address_country": entity.address_country,
+        "address_city_id": entity.address_city_id,
+        "address_city_name": entity.address_city.name if entity.address_city else None,
+        "address_country_id": entity.address_country_id,
+        "address_country_name": entity.address_country.name if entity.address_country else None,
         "email": entity.email,
         "phone_number": entity.phone_number,
         "tax_identification_number": entity.tax_identification_number,

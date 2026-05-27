@@ -82,6 +82,7 @@ export function LegalEntitiesPage() {
     const [formData, setFormData] = useState<Partial<LegalEntityCreatePayload>>({
         type: "individual",
     })
+    const [validationErrors, setValidationErrors] = useState<Record<string, string>>({})
 
     // Fetch legal entities
     const { data, isLoading, isFetching } = useLegalEntities(filters)
@@ -176,6 +177,7 @@ export function LegalEntitiesPage() {
     // Open add dialog
     const handleAddClick = useCallback(() => {
         setFormData({ type: "individual" })
+        setValidationErrors({})
         setAddDialogOpen(true)
     }, [])
 
@@ -188,12 +190,13 @@ export function LegalEntitiesPage() {
             address_street: entity.address_street || "",
             address_street_number: entity.address_street_number?.toString() || "",
             address_postal_code: entity.address_postal_code || "",
-            address_city: entity.address_city || "",
-            address_country: entity.address_country || "",
+            address_city_id: entity.address_city_id || null,
+            address_country_id: entity.address_country_id || null,
             email: entity.email || "",
             phone_number: entity.phone_number || "",
             tax_identification_number: entity.tax_identification_number || "",
         })
+        setValidationErrors({})
         setEditDialogOpen(true)
     }, [])
 
@@ -203,8 +206,44 @@ export function LegalEntitiesPage() {
         setDeleteDialogOpen(true)
     }, [])
 
+    // Validate form fields helper
+    const validateForm = useCallback((data: Partial<LegalEntityCreatePayload>) => {
+        const errors: Record<string, string> = {}
+        if (!data.name?.trim()) {
+            errors.name = t("errors.fieldRequired", "This field is required")
+        }
+        if (!data.type) {
+            errors.type = t("errors.fieldRequired", "This field is required")
+        }
+        if (data.type === "company" && !data.tax_identification_number?.trim()) {
+            errors.tax_identification_number = t("errors.fieldRequired", "This field is required")
+        }
+        if (!data.address_street?.trim()) {
+            errors.address_street = t("errors.fieldRequired", "This field is required")
+        }
+        if (!data.address_street_number?.trim()) {
+            errors.address_street_number = t("errors.fieldRequired", "This field is required")
+        }
+        if (!data.address_postal_code?.trim()) {
+            errors.address_postal_code = t("errors.fieldRequired", "This field is required")
+        }
+        if (!data.address_country_id) {
+            errors.address_country_id = t("errors.fieldRequired", "This field is required")
+        }
+        if (!data.address_city_id) {
+            errors.address_city_id = t("errors.fieldRequired", "This field is required")
+        }
+        return errors
+    }, [t])
+
     // Create entity
     const handleCreate = useCallback(async () => {
+        const errors = validateForm(formData)
+        if (Object.keys(errors).length > 0) {
+            setValidationErrors(errors)
+            return
+        }
+        setValidationErrors({})
         try {
             await createMutation.mutateAsync(formData as LegalEntityCreatePayload)
             setAddDialogOpen(false)
@@ -212,11 +251,17 @@ export function LegalEntitiesPage() {
         } catch (error) {
             console.error("Failed to create:", error)
         }
-    }, [formData, createMutation])
+    }, [formData, createMutation, validateForm])
 
     // Update entity
     const handleUpdate = useCallback(async () => {
         if (!selectedEntity) return
+        const errors = validateForm(formData)
+        if (Object.keys(errors).length > 0) {
+            setValidationErrors(errors)
+            return
+        }
+        setValidationErrors({})
         try {
             await updateMutation.mutateAsync({
                 internalId: selectedEntity.internal_id,
@@ -227,7 +272,7 @@ export function LegalEntitiesPage() {
         } catch (error) {
             console.error("Failed to update:", error)
         }
-    }, [selectedEntity, formData, updateMutation])
+    }, [selectedEntity, formData, updateMutation, validateForm])
 
     // Deactivate entity
     const handleDeactivate = useCallback(async () => {
@@ -283,6 +328,8 @@ export function LegalEntitiesPage() {
                             filters={filters}
                             onTypeFilterChange={handleTypeFilter}
                             onStatusFilterChange={handleStatusFilter}
+                            onCountryFilterChange={(value) => setFilters(prev => ({ ...prev, country_id: value, city_id: undefined, page: 1 }))}
+                            onCityFilterChange={(value) => setFilters(prev => ({ ...prev, city_id: value, page: 1 }))}
                             onResetFilters={() => {
                                 setFilters({
                                     page: 1,
@@ -303,6 +350,8 @@ export function LegalEntitiesPage() {
                             filters={filters}
                             onTypeFilterChange={handleTypeFilter}
                             onStatusFilterChange={handleStatusFilter}
+                            onCountryFilterChange={(value) => setFilters(prev => ({ ...prev, country_id: value, city_id: undefined, page: 1 }))}
+                            onCityFilterChange={(value) => setFilters(prev => ({ ...prev, city_id: value, page: 1 }))}
                             onResetFilters={() => {
                                 setFilters({
                                     page: 1,
@@ -383,11 +432,11 @@ export function LegalEntitiesPage() {
                                 </TableHead>
                                 <TableHead
                                     className="cursor-pointer hover:text-foreground transition-colors"
-                                    onClick={() => handleSort('address_city')}
+                                    onClick={() => handleSort('address_city_id')}
                                 >
                                     <span className="flex items-center">
                                         {t("legalEntities.city", "City")}
-                                        {getSortIndicator("address_city")}
+                                        {getSortIndicator("address_city_id")}
                                     </span>
                                 </TableHead>
                                 <TableHead
@@ -438,7 +487,7 @@ export function LegalEntitiesPage() {
                                                 </Badge>
                                             )}
                                         </TableCell>
-                                        <TableCell className="text-muted-foreground">{entity.address_city || "-"}</TableCell>
+                                        <TableCell className="text-muted-foreground">{entity.address_city_name || "-"}</TableCell>
                                         <TableCell>
                                             {entity.status === "active" ? (
                                                 <Badge className="bg-emerald-50 text-emerald-700 border-emerald-100 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20">
@@ -562,9 +611,13 @@ export function LegalEntitiesPage() {
                         data={formData}
                         onChange={setFormData}
                         isNew
+                        errors={validationErrors}
                     />
                     <DialogFooter className="gap-2 sm:gap-0">
-                        <Button variant="ghost" onClick={() => setAddDialogOpen(false)}>
+                        <Button variant="ghost" onClick={() => {
+                            setAddDialogOpen(false)
+                            setValidationErrors({})
+                        }}>
                             {t("common.cancel", "Cancel")}
                         </Button>
                         <Button onClick={handleCreate} disabled={createMutation.isPending} className="shadow-sm">
@@ -575,7 +628,10 @@ export function LegalEntitiesPage() {
             </Dialog>
 
             {/* Edit Dialog */}
-            <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+            <Dialog open={editDialogOpen} onOpenChange={(open) => {
+                setEditDialogOpen(open)
+                if (!open) setValidationErrors({})
+            }}>
                 <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
                     <DialogHeader>
                         <DialogTitle className="text-xl">{t("legalEntities.editTitle", "Edit Legal Entity")}</DialogTitle>
@@ -586,9 +642,13 @@ export function LegalEntitiesPage() {
                     <EntityForm
                         data={formData}
                         onChange={setFormData}
+                        errors={validationErrors}
                     />
                     <DialogFooter className="gap-2 sm:gap-0">
-                        <Button variant="ghost" onClick={() => setEditDialogOpen(false)}>
+                        <Button variant="ghost" onClick={() => {
+                            setEditDialogOpen(false)
+                            setValidationErrors({})
+                        }}>
                             {t("common.cancel", "Cancel")}
                         </Button>
                         <Button onClick={handleUpdate} disabled={updateMutation.isPending} className="shadow-sm">

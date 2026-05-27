@@ -276,6 +276,7 @@ export function VehicleForm({
     const [createEntityTarget, setCreateEntityTarget] = useState<"seller_id" | "buyer_id">("seller_id")
     const [entityFormData, setEntityFormData] = useState<Partial<LegalEntityCreatePayload>>({ type: "individual" })
     const [entityFormError, setEntityFormError] = useState<string | null>(null)
+    const [entityValidationErrors, setEntityValidationErrors] = useState<Record<string, string>>({})
     const [contractModalOpen, setContractModalOpen] = useState(false)
     const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null)
     const [imageUploadError, setImageUploadError] = useState<string | null>(null)
@@ -336,11 +337,47 @@ export function VehicleForm({
         setCreateEntityTarget(target)
         setEntityFormData({ type: "individual" })
         setEntityFormError(null)
+        setEntityValidationErrors({})
         setEntityModalOpen(true)
+    }, [])
+
+    const validateEntityForm = useCallback((data: Partial<LegalEntityCreatePayload>) => {
+        const errors: Record<string, string> = {}
+        if (!data.name?.trim()) {
+            errors.name = "This field is required"
+        }
+        if (!data.type) {
+            errors.type = "This field is required"
+        }
+        if (data.type === "company" && !data.tax_identification_number?.trim()) {
+            errors.tax_identification_number = "This field is required"
+        }
+        if (!data.address_street?.trim()) {
+            errors.address_street = "This field is required"
+        }
+        if (!data.address_street_number?.trim()) {
+            errors.address_street_number = "This field is required"
+        }
+        if (!data.address_postal_code?.trim()) {
+            errors.address_postal_code = "This field is required"
+        }
+        if (!data.address_country_id) {
+            errors.address_country_id = "This field is required"
+        }
+        if (!data.address_city_id) {
+            errors.address_city_id = "This field is required"
+        }
+        return errors
     }, [])
 
     const handleCreateEntity = useCallback(async () => {
         setEntityFormError(null)
+        const errors = validateEntityForm(entityFormData)
+        if (Object.keys(errors).length > 0) {
+            setEntityValidationErrors(errors)
+            return
+        }
+        setEntityValidationErrors({})
         try {
             const newEntity = await createEntityMutation.mutateAsync(entityFormData as LegalEntityCreatePayload)
             handleDropdownChange(createEntityTarget, newEntity.id)
@@ -351,7 +388,7 @@ export function VehicleForm({
             const err = error as Error
             setEntityFormError(err.message || "Failed to create legal entity")
         }
-    }, [entityFormData, createEntityMutation, createEntityTarget, queryClient, handleDropdownChange])
+    }, [entityFormData, createEntityMutation, createEntityTarget, queryClient, handleDropdownChange, validateEntityForm])
 
     // --- Data Fetching ---
     const { data: choices, isLoading: choicesLoading } = useChoices(vehicle?.id)
@@ -1332,6 +1369,7 @@ export function VehicleForm({
                         data={entityFormData}
                         onChange={setEntityFormData}
                         isNew
+                        errors={entityValidationErrors}
                     />
 
                     {entityFormError && (

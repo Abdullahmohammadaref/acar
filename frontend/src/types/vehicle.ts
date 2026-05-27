@@ -213,8 +213,10 @@ export interface LegalEntity {
     address_street: string | null
     address_street_number: string | null
     address_postal_code: string | null
-    address_city: string | null
-    address_country: string | null
+    address_city_id: number | null
+    address_country_id: number | null
+    address_city_name: string | null
+    address_country_name: string | null
     email: string | null
     phone_number: string | null
     tax_identification_number: string | null
@@ -237,6 +239,11 @@ export interface AllChoices {
     payment_methods: Choice[]
     tax_percentages: TaxPercentage[]
     legal_entities: LegalEntity[]
+    categories: Choice[]
+    subcategories: (Choice & { category_id: number })[]
+    currencies: Choice[]
+    countries: Choice[]
+    cities: (Choice & { country_id: number })[]
     key_numbers: KeyNumber[]
     status_choices: StatusChoice[]
     year_choices: number[]

@@ -90,6 +90,52 @@ class User(AbstractUser):
     def __str__(self):
         return f"{self.username}"
 
+class Country(models.Model):
+    name = models.CharField(_('name'), max_length=100)
+    business = models.ForeignKey(
+        Business,
+        on_delete=models.CASCADE,
+        related_name='countries',
+        verbose_name=_('business')
+    )
+    is_active = models.BooleanField(_('is active'), default=True)
+
+    class Meta:
+        ordering = ['name']
+        unique_together = ['name', 'business']
+        verbose_name = _('Country')
+        verbose_name_plural = _('Countries')
+
+    def __str__(self):
+        return self.name
+
+
+class City(models.Model):
+    name = models.CharField(_('name'), max_length=100)
+    country = models.ForeignKey(
+        'Country',
+        on_delete=models.CASCADE,
+        related_name='cities',
+        verbose_name=_('country')
+    )
+    business = models.ForeignKey(
+        Business,
+        on_delete=models.CASCADE,
+        related_name='cities',
+        verbose_name=_('business')
+    )
+    is_active = models.BooleanField(_('is active'), default=True)
+
+    class Meta:
+        ordering = ['name']
+        unique_together = ['name', 'country', 'business']
+        verbose_name = _('City')
+        verbose_name_plural = _('Cities')
+
+    def __str__(self):
+        return self.name
+
+
 class LegalEntity(models.Model):
     TYPE_CHOICES = [
         ('individual', _('Individual')),
@@ -101,8 +147,22 @@ class LegalEntity(models.Model):
     address_street = models.CharField(_('street'), max_length=200)
     address_street_number = models.PositiveIntegerField(_('street number'))
     address_postal_code = models.CharField(_('postal code'), max_length=20)
-    address_city = models.CharField(_('city'), max_length=100)
-    address_country = models.CharField(_('country'), max_length=100)
+    address_country = models.ForeignKey(
+        'Country',
+        on_delete=models.SET_NULL,
+        blank=True,
+        null=True,
+        related_name='legal_entities',
+        verbose_name=_('country')
+    )
+    address_city = models.ForeignKey(
+        'City',
+        on_delete=models.SET_NULL,
+        blank=True,
+        null=True,
+        related_name='legal_entities',
+        verbose_name=_('city')
+    )
 
 
     STATE_CHOICES = [

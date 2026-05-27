@@ -70,6 +70,14 @@ class VehicleModelOut(Schema):
     make_name: Optional[str] = None
 
 
+class CityOut(Schema):
+    """City linked to a country"""
+    id: int
+    name: str
+    country_id: int
+    country_name: Optional[str] = None
+
+
 class VehicleModelCreate(Schema):
     """Schema for creating a vehicle model"""
     name: str = Field(..., min_length=1, max_length=100)
@@ -113,8 +121,8 @@ class LegalEntityBase(Schema):
     address_street: Optional[str] = None
     address_street_number: Optional[str] = None
     address_postal_code: Optional[str] = None
-    address_city: Optional[str] = None
-    address_country: Optional[str] = None
+    address_city_id: Optional[int] = None
+    address_country_id: Optional[int] = None
     email: Optional[str] = None
     phone_number: Optional[str] = None
     tax_identification_number: Optional[str] = None
@@ -129,8 +137,10 @@ class LegalEntityOut(Schema):
     address_street: Optional[str] = None
     address_street_number: Optional[int] = None  # Model uses PositiveIntegerField
     address_postal_code: Optional[str] = None
-    address_city: Optional[str] = None
-    address_country: Optional[str] = None
+    address_city_id: Optional[int] = None
+    address_city_name: Optional[str] = None
+    address_country_id: Optional[int] = None
+    address_country_name: Optional[str] = None
     email: Optional[str] = None
     phone_number: Optional[str] = None
     tax_identification_number: Optional[str] = None
@@ -147,8 +157,8 @@ class LegalEntityCreate(Schema):
     address_street: str = Field(..., min_length=1)
     address_street_number: str = Field(..., min_length=1)
     address_postal_code: str = Field(..., min_length=1)
-    address_city: str = Field(..., min_length=1)
-    address_country: str = Field(..., min_length=1)
+    address_city_id: Optional[int] = None
+    address_country_id: Optional[int] = None
     email: Optional[str] = None
     phone_number: Optional[str] = None
     tax_identification_number: Optional[str] = None
@@ -171,8 +181,10 @@ class LegalEntityListOut(Schema):
     address_street: Optional[str] = None
     address_street_number: Optional[int] = None
     address_postal_code: Optional[str] = None
-    address_city: Optional[str] = None
-    address_country: Optional[str] = None
+    address_city_id: Optional[int] = None
+    address_city_name: Optional[str] = None
+    address_country_id: Optional[int] = None
+    address_country_name: Optional[str] = None
     email: Optional[str] = None
     phone_number: Optional[str] = None
     tax_identification_number: Optional[str] = None
@@ -185,8 +197,8 @@ class LegalEntityUpdate(Schema):
     address_street: Optional[str] = None
     address_street_number: Optional[str] = None
     address_postal_code: Optional[str] = None
-    address_city: Optional[str] = None
-    address_country: Optional[str] = None
+    address_city_id: Optional[int] = None
+    address_country_id: Optional[int] = None
     email: Optional[str] = None
     phone_number: Optional[str] = None
     tax_identification_number: Optional[str] = None
@@ -204,7 +216,8 @@ class LegalEntityFilters(Schema):
     search: Optional[str] = None
     type: Optional[str] = Field(default=None, pattern="^(individual|company)$")
     status: Optional[str] = Field(default=None, pattern="^(active|inactive)$")
-    city: Optional[str] = None
+    country_id: Optional[int] = None
+    city_id: Optional[int] = None
     page: int = Field(default=1, ge=1)
     per_page: int = Field(default=20, ge=1, le=100)
     sort: Optional[str] = Field(default="name", pattern="^(name|internal_id|type|address_city|status)$")
@@ -620,6 +633,8 @@ class AllChoices(Schema):
     categories: List[CategoryOut] = []
     subcategories: List[SubcategoryOut] = []
     currencies: List[CurrencyOut] = []
+    countries: List[ChoiceBase] = []
+    cities: List[CityOut] = []
     
     # Key numbers (unassigned only)
     key_numbers: List[KeyNumberOut] = []

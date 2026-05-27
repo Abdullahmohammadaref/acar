@@ -21,8 +21,10 @@ export interface LegalEntity {
     address_street: string | null
     address_street_number: number | null
     address_postal_code: string | null
-    address_city: string | null
-    address_country: string | null
+    address_city_id: number | null
+    address_city_name: string | null
+    address_country_id: number | null
+    address_country_name: string | null
     email: string | null
     phone_number: string | null
     tax_identification_number: string | null
@@ -32,6 +34,8 @@ export interface LegalEntityFilters {
     search?: string
     type?: "individual" | "company"
     status?: "active" | "inactive"
+    city_id?: number
+    country_id?: number
     page?: number
     per_page?: number
     sort?: string
@@ -52,8 +56,8 @@ export interface LegalEntityCreatePayload {
     address_street: string
     address_street_number: string
     address_postal_code: string
-    address_city: string
-    address_country: string
+    address_city_id?: number | null
+    address_country_id?: number | null
     email?: string
     phone_number?: string
     tax_identification_number?: string
@@ -65,8 +69,8 @@ export interface LegalEntityUpdatePayload {
     address_street?: string
     address_street_number?: string
     address_postal_code?: string
-    address_city?: string
-    address_country?: string
+    address_city_id?: number | null
+    address_country_id?: number | null
     email?: string
     phone_number?: string
     tax_identification_number?: string
@@ -79,6 +83,8 @@ async function fetchLegalEntities(filters: LegalEntityFilters): Promise<LegalEnt
     if (filters.search) params.set("search", filters.search)
     if (filters.type) params.set("type", filters.type)
     if (filters.status) params.set("status", filters.status)
+    if (filters.city_id) params.set("city_id", String(filters.city_id))
+    if (filters.country_id) params.set("country_id", String(filters.country_id))
     if (filters.page) params.set("page", String(filters.page))
     if (filters.per_page) params.set("per_page", String(filters.per_page))
     if (filters.sort) params.set("sort", filters.sort)

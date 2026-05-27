@@ -35,11 +35,19 @@ interface CategoryWithSubcategories {
     subs_inactive: ChoiceItem[]
 }
 
+interface CountryWithCities {
+    id: number
+    name: string
+    cities_active: ChoiceItem[]
+    cities_inactive: ChoiceItem[]
+}
+
 interface ChoicesManagementData {
     choice_types: Record<string, ChoiceType>
     makes_with_models: MakeWithModels[]
     manufacturers_with_models?: MakeWithModels[]
     categories_with_subcategories: CategoryWithSubcategories[]
+    countries_with_cities: CountryWithCities[]
 }
 
 type StatusFilterValue = "all" | "active" | "inactive"
@@ -49,6 +57,8 @@ const TAB_ORDER = [
     "vehicle_model",
     "category",
     "subcategory",
+    "country",
+    "city",
     "vehicle_type",
     "body_type",
     "color",
@@ -80,6 +90,7 @@ export default function ChoicesManagementPage() {
     const [activeTab, setActiveTab] = useState<string>("make")
     const [expandedMakes, setExpandedMakes] = useState<Set<number>>(new Set())
     const [expandedCategories, setExpandedCategories] = useState<Set<number>>(new Set())
+    const [expandedCountries, setExpandedCountries] = useState<Set<number>>(new Set())
     const [searchValue, setSearchValue] = useState("")
     const [statusFilter, setStatusFilter] = useState<StatusFilterValue>("all")
     const [sortBy, setSortBy] = useState<SortValue>("name")
@@ -106,6 +117,7 @@ export default function ChoicesManagementPage() {
     const choiceTypes = data?.choice_types ?? {}
     const makesWithModels = data?.makes_with_models ?? data?.manufacturers_with_models ?? []
     const categoriesWithSubcategories = data?.categories_with_subcategories ?? []
+    const countriesWithCities = data?.countries_with_cities ?? []
 
     const addMutation = useMutation({
         mutationFn: async (params: {
@@ -125,6 +137,9 @@ export default function ChoicesManagementPage() {
             }
             if (params.choiceType === "subcategory" && params.parentId) {
                 formData.append("category_id", params.parentId.toString())
+            }
+            if (params.choiceType === "city" && params.parentId) {
+                formData.append("country_id", params.parentId.toString())
             }
 
             const response = await api.post(`/choices/${params.choiceType}`, formData, {
@@ -239,6 +254,8 @@ export default function ChoicesManagementPage() {
         if (key === "make") return t("choices.manufacturers", "Manufacturers")
         if (key === "vehicle_model") return t("choices.manufacturerModels", "Manufacturer Models")
         if (key === "subcategory") return t("choices.subcategories", "Subcategories")
+        if (key === "country") return t("choices.countries", "Countries")
+        if (key === "city") return t("choices.cities", "Cities")
         if (key === "key_number") return t("choices.keyNumbers", "Key Numbers")
         return choiceTypes[key]?.name || key
     }
@@ -344,6 +361,7 @@ export default function ChoicesManagementPage() {
         (key) => {
             if (key === "vehicle_model") return true
             if (key === "subcategory") return true
+            if (key === "city") return true
             return Boolean(choiceTypes[key])
         }
     )
@@ -393,6 +411,29 @@ export default function ChoicesManagementPage() {
             }
         })
         .filter((categoryGroup) => categoryGroup.isVisible)
+
+    const filteredCountriesWithCities = sortItems(countriesWithCities)
+        .map((countryGroup) => {
+            const parentMatches = normalizedSearch
+                ? matchesSearch(countryGroup.name, normalizedSearch)
+                : true
+
+            const activeCitiesBase = statusFilter === "inactive" ? [] : sortItems(countryGroup.cities_active)
+            const inactiveCitiesBase = statusFilter === "active" ? [] : sortItems(countryGroup.cities_inactive)
+
+            const activeCities = parentMatches ? activeCitiesBase : filterItems(activeCitiesBase)
+            const inactiveCities = parentMatches ? inactiveCitiesBase : filterItems(inactiveCitiesBase)
+
+            const isVisible = !normalizedSearch || parentMatches || activeCities.length > 0 || inactiveCities.length > 0
+
+            return {
+                ...countryGroup,
+                filteredActive: activeCities,
+                filteredInactive: inactiveCities,
+                isVisible,
+            }
+        })
+        .filter((countryGroup) => countryGroup.isVisible)
 
     const renderChoiceTypeContent = (typeKey: string, typeData: ChoiceType | undefined) => {
         if (!typeData) return null
@@ -805,6 +846,158 @@ export default function ChoicesManagementPage() {
         </div>
     )
 
+    const renderCitiesContent = () => (
+        <div className="space-y-4">
+            <div className="mb-4 flex items-center justify-between">
+                <h3 className="text-lg font-medium text-foreground">{t("choices.countriesAndCities", "Countries & Cities")}</h3>
+                <button
+                    onClick={() => openAddModal("country", t("choices.addNewCountry", "Add New Country"))}
+                    className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 shadow-sm transition-colors"
+                >
+                    <Plus className="h-4 w-4" />
+                    {t("choices.addCountry", "Add Country")}
+                </button>
+            </div>
+
+            {filteredCountriesWithCities.length > 0 ? (
+                <div className="rounded-lg border border-border bg-card shadow-sm p-4">
+                    {filteredCountriesWithCities.map((countryGroup) => {
+                        const isExpanded = expandedCountries.has(countryGroup.id)
+                        const activeCities = countryGroup.filteredActive || []
+                        const inactiveCities = countryGroup.filteredInactive || []
+                        const visibleChildrenCount = activeCities.length + inactiveCities.length
+
+                        return (
+                            <div key={`country-${countryGroup.id}`} className="mb-4 rounded-lg border border-border">
+                                <button
+                                    onClick={() =>
+                                        setExpandedCountries((previous) => {
+                                            const next = new Set(previous)
+                                            if (next.has(countryGroup.id)) {
+                                                next.delete(countryGroup.id)
+                                            } else {
+                                                next.add(countryGroup.id)
+                                            }
+                                            return next
+                                        })
+                                    }
+                                    className="flex w-full items-center justify-between rounded-lg bg-muted/50 px-4 py-3 text-left hover:bg-muted"
+                                >
+                                    <div className="flex flex-1 items-center gap-4">
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation()
+                                                openEditModal("country", countryGroup as any)
+                                            }}
+                                            className="font-medium text-foreground hover:text-primary transition-colors text-left"
+                                        >
+                                            {countryGroup.name}
+                                        </button>
+                                    </div>
+                                    <div className="flex items-center gap-3">
+                                        <span className="text-xs text-muted-foreground">
+                                            {visibleChildrenCount} {t("choices.visibleCities", "visible")}
+                                        </span>
+                                        <button
+                                            type="button"
+                                            onClick={(e) => {
+                                                e.stopPropagation()
+                                                handleDeactivate("country", countryGroup.id)
+                                            }}
+                                            disabled={deactivateMutation.isPending}
+                                            className="h-7 w-7 flex items-center justify-center rounded-md text-rose-500 hover:bg-rose-500/10 transition-colors"
+                                        >
+                                            <Trash2 className="h-3.5 w-3.5" />
+                                        </button>
+                                        {isExpanded ? (
+                                            <ChevronDown className="h-5 w-5" />
+                                        ) : (
+                                            <ChevronRight className="h-5 w-5" />
+                                        )}
+                                    </div>
+                                </button>
+
+                                {isExpanded && (
+                                    <div className="border-t border-border px-4 py-3">
+                                        <div className="mb-3 flex justify-end">
+                                            <button
+                                                onClick={() =>
+                                                    openAddModal(
+                                                        "city",
+                                                        `${t("choices.addCityFor", "Add City for")} ${countryGroup.name}`,
+                                                        countryGroup.id
+                                                    )
+                                                }
+                                                className="inline-flex items-center gap-1 rounded-lg bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90"
+                                            >
+                                                <Plus className="h-3 w-3" />
+                                                {t("choices.addCity", "Add City")}
+                                            </button>
+                                        </div>
+
+                                        <div className="space-y-2">
+                                            {statusFilter !== "inactive" &&
+                                                activeCities.map((city) => (
+                                                    <div key={`active-city-${city.id}`} className={ACTIVE_ITEM_CLASS}>
+                                                        <button
+                                                            onClick={() => openEditModal("city", city as any)}
+                                                            className="text-sm font-medium text-foreground hover:text-primary transition-colors text-left flex-1"
+                                                        >
+                                                            {city.name}
+                                                        </button>
+                                                        <button
+                                                            onClick={() => handleDeactivate("city", city.id)}
+                                                            disabled={deactivateMutation.isPending}
+                                                            className="text-xs font-semibold text-rose-500 hover:text-rose-600 dark:text-rose-400 dark:hover:text-rose-300 disabled:opacity-50 transition-colors"
+                                                        >
+                                                            {t("choices.deactivate", "Deactivate")}
+                                                        </button>
+                                                    </div>
+                                                ))}
+
+                                            {statusFilter !== "active" &&
+                                                inactiveCities.map((city) => (
+                                                    <div key={`inactive-city-${city.id}`} className={INACTIVE_ITEM_CLASS}>
+                                                        <button
+                                                            onClick={() => openEditModal("city", city as any)}
+                                                            className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors text-left flex-1"
+                                                        >
+                                                            <span className="line-through">{city.name}</span>
+                                                        </button>
+                                                        <button
+                                                            onClick={() => handleReactivate("city", city.id)}
+                                                            disabled={reactivateMutation.isPending}
+                                                            className="text-xs font-medium text-emerald-600 hover:text-emerald-700 dark:text-emerald-500 dark:hover:text-emerald-400 disabled:opacity-50 transition-colors"
+                                                        >
+                                                            {t("choices.activate", "Activate")}
+                                                        </button>
+                                                    </div>
+                                                ))}
+                                                
+                                            {visibleChildrenCount === 0 && (
+                                                <p className="text-sm italic text-muted-foreground py-2 text-center">
+                                                    {normalizedSearch
+                                                        ? t("choices.noMatchingCities", "No matching cities found for this country.")
+                                                        : t("choices.noCitiesInCountry", "No cities found in this country.")}
+                                                </p>
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        )
+                    })}
+                </div>
+            ) : (
+                <p className="text-sm italic text-muted-foreground">
+                    {normalizedSearch
+                        ? t("choices.noMatchingItems", "No matching items found.")
+                        : t("choices.noCountries", "No countries found. Please add countries first.")}
+                </p>
+            )}
+        </div>
+    )
+
     if (isLoading) {
         return (
             <div className="flex h-64 items-center justify-center">
@@ -910,9 +1103,11 @@ export default function ChoicesManagementPage() {
                             ? renderVehicleModelContent()
                             : activeTab === "subcategory"
                                 ? renderSubcategoriesContent()
-                                : choiceTypes[activeTab]
-                                    ? renderChoiceTypeContent(activeTab, choiceTypes[activeTab])
-                                    : null}
+                                : activeTab === "city"
+                                    ? renderCitiesContent()
+                                    : choiceTypes[activeTab]
+                                        ? renderChoiceTypeContent(activeTab, choiceTypes[activeTab])
+                                        : null}
                     </div>
                 </div>
             </div>
