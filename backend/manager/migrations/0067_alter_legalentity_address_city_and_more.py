@@ -10,30 +10,4 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.AlterField(
-            model_name='legalentity',
-            name='address_city',
-            field=models.CharField(default='hi', max_length=100, verbose_name='city'),
-            preserve_default=False,
-        ),
-        migrations.AlterUniqueTogether(
-            name='country',
-            unique_together=None,
-        ),
-        migrations.RemoveField(
-            model_name='country',
-            name='business',
-        ),
-        migrations.AlterField(
-            model_name='legalentity',
-            name='address_country',
-            field=models.CharField(default='bye', max_length=100, verbose_name='country'),
-            preserve_default=False,
-        ),
-        migrations.DeleteModel(
-            name='City',
-        ),
-        migrations.DeleteModel(
-            name='Country',
-        ),
     ]
