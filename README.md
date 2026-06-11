@@ -35,6 +35,7 @@ The system is **multi-tenant**: each business operates in its own isolated data 
 
 ### Vehicle Management
 - Full vehicle lifecycle tracking: **Purchased → Ready for Sale → Reserved → Sold → Inactive**
+- Auto-assignment of next available physical key numbers
 - Detailed vehicle records: VIN, license plates, registration numbers, mileage, year of construction
 - Buy & sale pricing with configurable tax percentages and payment methods
 - Auto-generated internal IDs per business
@@ -68,7 +69,7 @@ All PDFs generated server-side using ReportLab with business logo, address, bank
 
 ### Business Configuration
 - Customize dropdown choices: vehicle types, body types, makes & models, colors, fuel types, damage types, door options, tax percentages, categories, subcategories, currencies, and payment methods
-- Business profile settings (address, bank details, tax IDs, court registration)
+- Real-time business profile settings updates (address, bank details, tax IDs, court registration) that reflect immediately across the application
 - Branch management
 
 ### User Management & Security
@@ -83,6 +84,7 @@ All PDFs generated server-side using ReportLab with business logo, address, bank
 ### Activity Logging
 - Track user actions across the system (create, update, delete, status change)
 - Full audit trail for compliance
+- Per-user persistent notification tracking for unread activities
 
 ### Internationalization (i18n)
 - Full UI translation support: **German** (default), **English**, **Turkish**, **Arabic**
@@ -98,7 +100,7 @@ All PDFs generated server-side using ReportLab with business logo, address, bank
 
 | Technology | Version | Purpose |
 |---|---|---|
-| Python | 3.10+ | Runtime |
+| Python | 3.12 | Runtime |
 | Django | 5.2 | Web framework |
 | Django Ninja | 1.3 | REST API framework (Pydantic schemas) |
 | Pydantic | 2.12 | Request/response validation |
@@ -110,6 +112,15 @@ All PDFs generated server-side using ReportLab with business logo, address, bank
 | django-cors-headers | 4.9 | CORS for SPA frontend |
 | django-ratelimit | 4.1 | API rate limiting |
 | django-rosetta | 0.10 | Translation management UI |
+
+### Infrastructure & Deployment
+
+| Technology | Purpose |
+|---|---|
+| Docker | Application containerization |
+| Nginx | Reverse proxy, static file serving, SSL termination |
+| GitHub Actions | Automated CI/CD pipeline |
+| Oracle Cloud | Production hosting environment |
 
 ### Frontend
 
@@ -243,6 +254,7 @@ Create a `.env` file in the `backend/` directory:
 |---|---|---|
 | `SECRET_KEY` | Django secret key | `django-insecure-your-unique-key-here` |
 | `ALLOWED_HOSTS` | Comma-separated allowed hosts | `localhost,127.0.0.1` |
+| `BACKEND_URL` | Global backend URL for absolute links | `https://api.yourdomain.com` |
 | `EMAIL_FROM` | Sender email address | `noreply@yourdomain.com` |
 | `EMAIL_HOST_USER` | SMTP email username | `your-email@gmail.com` |
 | `EMAIL_HOST_PASSWORD` | SMTP app password | `xxxx xxxx xxxx xxxx` |
@@ -356,6 +368,17 @@ Key features:
 - Business logo, address, bank details, tax IDs in header
 - German price-in-words via `num2words` library
 - Auto-generated invoice numbers (`Rng-0001`, `Rng-0002`, etc.)
+
+---
+
+## Deployment
+
+The application is containerized and configured for automated deployment:
+
+- **Environment**: Oracle Cloud VM
+- **Containerization**: Docker (Python 3.12 image)
+- **Web Server**: Nginx handles reverse proxying to the backend API, serves React static files from `/frontend/dist`, and manages SSL termination.
+- **CI/CD**: A GitHub Actions workflow (`.github/workflows/deploy.yml`) automatically builds the frontend, synchronizes code to the production server, and restarts the Docker containers upon pushing to the `master` branch.
 
 ---
 
