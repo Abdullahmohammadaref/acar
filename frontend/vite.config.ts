@@ -27,13 +27,12 @@ export default defineConfig({
         changeOrigin: true,
         secure: false,
       },
-      // Proxy Django Admin requests to bypass React SPA routing
-      '/admin': {
+      // Proxy Django Admin, Rosetta, and i18n requests (including optional language prefix and trailing slash)
+      '^/([a-z]{2}/)?(admin|rosetta|i18n)($|/)': {
         target: 'http://127.0.0.1:8000',
         changeOrigin: true,
         secure: false,
       },
-
       // Also proxy media files if needed
       '/media': {
         target: 'http://127.0.0.1:8000',

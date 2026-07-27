@@ -321,6 +321,7 @@ export interface CalcVehicleFinancialsInput {
     transactions?: TransactionForCalc[] | null
     annualTargetRate?: number
     targetDaysOnStock?: number
+    status?: string | null
 }
 
 /**
@@ -332,9 +333,16 @@ export function calcVehicleFinancials(input: CalcVehicleFinancialsInput): Vehicl
     const buyTax = calcBuyTaxAmount(buyGross, input.buyTaxPercentage)
     const buyNet = calcBuyNetFromPercentage(buyGross, input.buyTaxPercentage)
 
-    const saleGross = safeNum(input.saleGross)
-    const saleTax = calcSaleTaxAmount(saleGross, input.saleTaxPercentage)
-    const saleNet = calcSaleNetFromPercentage(saleGross, input.saleTaxPercentage)
+    let { saleGross: rawSaleGross, saleTaxPercentage: rawSaleTaxPct, saleDate: rawSaleDate } = input;
+    if (input.status === "purchased" || input.status === "inactive") {
+        rawSaleGross = null;
+        rawSaleTaxPct = null;
+        rawSaleDate = null;
+    }
+
+    const saleGross = safeNum(rawSaleGross)
+    const saleTax = calcSaleTaxAmount(saleGross, rawSaleTaxPct)
+    const saleNet = calcSaleNetFromPercentage(saleGross, rawSaleTaxPct)
 
     const totalTxnCost = calcTotalTxnCost(input.transactions)
     const txnCount = countLinkedTransactions(input.transactions)
@@ -346,7 +354,7 @@ export function calcVehicleFinancials(input: CalcVehicleFinancialsInput): Vehicl
     const revenue = calcRevenue(saleNet)
     const profitMargin = calcProfitMargin(totalProfit, revenue)
     const roi = calcROI(totalProfit, cogs)
-    const daysOnStock = calcDaysOnStock(input.buyDate, input.saleDate)
+    const daysOnStock = calcDaysOnStock(input.buyDate, rawSaleDate)
     const holdingCost = calcHoldingCost(cogs, daysOnStock, input.annualTargetRate)
     const adjustedProfit = calcAdjustedProfit(totalProfit, holdingCost)
     const breakEvenPrice = calcBreakEvenPrice(cogs)

@@ -7,6 +7,7 @@ services:
       - ./backend/db.sqlite3:/app/db.sqlite3
       - ./backend/media:/app/media
       - ./backend/locale:/app/locale
+      - ./backend/staticfiles:/app/staticfiles
     expose:
       - "8000"
     healthcheck:

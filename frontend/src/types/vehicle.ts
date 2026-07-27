@@ -43,6 +43,9 @@ export interface VehicleListItem {
     // Contract availability flags
     can_generate_buy_contract: boolean
     can_generate_sale_contract: boolean
+
+    // Pipeline
+    can_move_to: string[]
 }
 
 export interface VehicleDetail extends VehicleListItem {

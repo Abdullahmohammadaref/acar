@@ -391,6 +391,9 @@ class VehicleDetailOut(Schema):
     # Contract availability flags
     can_generate_buy_contract: bool = False
     can_generate_sale_contract: bool = False
+    
+    # Pipeline availability
+    can_move_to: List[str] = Field(default_factory=list)
 
 
 class VehicleCreate(Schema):

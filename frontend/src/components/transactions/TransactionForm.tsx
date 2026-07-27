@@ -30,6 +30,7 @@ interface TransactionFormProps {
     // Auto-save callbacks (only used in edit mode)
     onAutoSave?: (data: Partial<TransactionFormData>) => void
     onAutoSaveDebounced?: (data: Partial<TransactionFormData>) => void
+    onAutoSaveFailedMandatory?: () => void
     // Auto-save status (for footer indicator)
     autoSaveStatus?: AutoSaveStatus
     autoSaveErrorMessage?: string | null
@@ -108,6 +109,7 @@ export function TransactionForm({
     highlightedTransactionId,
     onAutoSave,
     onAutoSaveDebounced,
+    onAutoSaveFailedMandatory,
     autoSaveStatus = "idle",
     autoSaveErrorMessage,
     isSplitView,
@@ -290,6 +292,38 @@ export function TransactionForm({
     }, [mode, initialData, subcategoriesData, categoryId, subcategoryId])
 
 
+    // Wrapper for auto-save that blocks if a mandatory field is emptied
+    const handleAutoSave = useCallback((dataToSave: Partial<TransactionFormData>, isDebounced = false) => {
+        if (mode !== "edit" || isInitializingRef.current) return
+
+        // Check if any mandatory field in the payload is empty
+        // Mandatory fields: category, subcategory, date, method, from_or_to, amount, tax, currency
+        const mandatoryFields = ["category", "subcategory", "date", "method", "from_or_to", "amount", "tax", "currency"]
+        
+        let hasEmptyMandatory = false
+        for (const [key, value] of Object.entries(dataToSave)) {
+            if (mandatoryFields.includes(key)) {
+                if (value === undefined || value === null || String(value).trim() === "") {
+                    hasEmptyMandatory = true
+                    break
+                }
+            }
+        }
+
+        if (hasEmptyMandatory) {
+            if (onAutoSaveFailedMandatory) {
+                onAutoSaveFailedMandatory()
+            }
+            return
+        }
+
+        if (isDebounced && onAutoSaveDebounced) {
+            onAutoSaveDebounced(dataToSave)
+        } else if (!isDebounced && onAutoSave) {
+            onAutoSave(dataToSave)
+        }
+    }, [mode, onAutoSave, onAutoSaveDebounced, onAutoSaveFailedMandatory])
+
     // Handle field changes - with auto-save support for edit mode
     const handleChange = useCallback((field: keyof TransactionFormData, value: string | number | undefined) => {
         setFormData((prev) => {
@@ -302,12 +336,9 @@ export function TransactionForm({
             return newData
         })
 
-        // Trigger auto-save in edit mode (debounced for text inputs)
-        // Skip during initialization to prevent false "Failed to save" errors
-        if (mode === "edit" && onAutoSaveDebounced && !isInitializingRef.current) {
-            onAutoSaveDebounced({ [field]: value })
-        }
-    }, [mode, onAutoSaveDebounced])
+        // Trigger debounced auto-save for text inputs
+        handleAutoSave({ [field]: value }, true)
+    }, [handleAutoSave])
 
     // Calculate price breakdown
     const netAmount = formData.amount || 0
@@ -512,9 +543,7 @@ export function TransactionForm({
                                                     subcategory: "",
                                                 }))
                                                 // Trigger immediate auto-save for dropdown
-                                                if (mode === "edit" && onAutoSave) {
-                                                    onAutoSave({ category: categoryName, subcategory: "" })
-                                                }
+                                                handleAutoSave({ category: categoryName, subcategory: "" })
                                             }}
                                             placeholder="Select category"
                                             allowCreate={true}
@@ -540,9 +569,7 @@ export function TransactionForm({
                                                     subcategory: subcategoryName,
                                                 }))
                                                 // Trigger immediate auto-save for dropdown
-                                                if (mode === "edit" && onAutoSave) {
-                                                    onAutoSave({ subcategory: subcategoryName })
-                                                }
+                                                handleAutoSave({ subcategory: subcategoryName })
                                             }}
                                         />
                                         {validationErrors.subcategory && (
@@ -560,9 +587,7 @@ export function TransactionForm({
                                                 const vehicleId = v ? parseInt(v) : undefined
                                                 handleChange("vehicle_id", vehicleId)
                                                 // Trigger immediate auto-save for dropdown
-                                                if (mode === "edit" && onAutoSave) {
-                                                    onAutoSave({ vehicle_id: vehicleId })
-                                                }
+                                                handleAutoSave({ vehicle_id: vehicleId })
                                             }}
                                             placeholder="Search vehicles..."
                                             searchPlaceholder="Type to search..."
@@ -583,9 +608,7 @@ export function TransactionForm({
                                                     handleChange("date", dateValue)
                                                     clearError("date")
                                                     // Trigger immediate auto-save for date (not debounced)
-                                                    if (mode === "edit" && onAutoSave) {
-                                                        onAutoSave({ date: dateValue })
-                                                    }
+                                                    handleAutoSave({ date: dateValue })
                                                 }}
                                                 onClick={(e) => { try { e.currentTarget.showPicker(); } catch (err) { } }}
                                                 className="pl-10"
@@ -614,9 +637,7 @@ export function TransactionForm({
                                                     method: methodName,
                                                 }))
                                                 // Trigger immediate auto-save for dropdown
-                                                if (mode === "edit" && onAutoSave) {
-                                                    onAutoSave({ method: methodName })
-                                                }
+                                                handleAutoSave({ method: methodName })
                                             }}
                                             placeholder="Select method"
                                             allowCreate={true}
@@ -753,9 +774,7 @@ export function TransactionForm({
                                                         tax: taxValue,
                                                     }))
                                                     // Trigger immediate auto-save for dropdown
-                                                    if (mode === "edit" && onAutoSave) {
-                                                        onAutoSave({ tax: taxValue })
-                                                    }
+                                                    handleAutoSave({ tax: taxValue })
                                                 }
                                             }}
                                             onCreated={(item) => {
@@ -767,9 +786,7 @@ export function TransactionForm({
                                                         tax: item.percentage,
                                                     }))
                                                     // Also trigger auto-save if in edit mode
-                                                    if (mode === "edit" && onAutoSave) {
-                                                        onAutoSave({ tax: item.percentage })
-                                                    }
+                                                    handleAutoSave({ tax: item.percentage })
                                                 }
                                             }}
                                             placeholder="Select tax"
@@ -800,9 +817,7 @@ export function TransactionForm({
                                                     currency: currencyName,
                                                 }))
                                                 // Trigger immediate auto-save for dropdown
-                                                if (mode === "edit" && onAutoSave) {
-                                                    onAutoSave({ currency: currencyName })
-                                                }
+                                                handleAutoSave({ currency: currencyName })
                                             }}
                                             placeholder="Select currency"
                                             allowCreate={true}

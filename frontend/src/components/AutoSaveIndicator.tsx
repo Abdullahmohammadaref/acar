@@ -45,6 +45,12 @@ export function AutoSaveIndicator({ status, errorMessage, className }: AutoSaveI
                     <span>{errorMessage || "Error saving"}</span>
                 </>
             )}
+            {status === "failed_mandatory" && (
+                <>
+                    <AlertCircle className="h-3.5 w-3.5 text-orange-500" />
+                    <span className="text-orange-500">Not saved — required field is empty</span>
+                </>
+            )}
         </div>
     )
 }
@@ -68,6 +74,7 @@ export function AutoSaveIndicatorCompact({ status, className }: Omit<AutoSaveInd
                 status === "idle" ? "Auto-save enabled" :
                     status === "saving" ? "Saving..." :
                         status === "saved" ? "All changes saved" :
+                            status === "failed_mandatory" ? "Not saved — required field is empty" :
                             "Error saving"
             }
         >
@@ -75,6 +82,7 @@ export function AutoSaveIndicatorCompact({ status, className }: Omit<AutoSaveInd
             {status === "saving" && <Loader2 className="h-4 w-4 animate-spin" />}
             {status === "saved" && <Check className="h-4 w-4" />}
             {status === "error" && <AlertCircle className="h-4 w-4" />}
+            {status === "failed_mandatory" && <AlertCircle className="h-4 w-4 text-orange-500" />}
         </div>
     )
 }

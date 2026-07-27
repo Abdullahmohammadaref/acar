@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom"
 import { Car, FileText } from "lucide-react"
-import { Badge } from "@/components/ui/badge"
+
 import { Button } from "@/components/ui/button"
 import { withMediaCacheKey, formatCurrency } from "@/lib/utils"
 import {
@@ -13,31 +13,13 @@ import {
     formatDays,
 } from "@/lib/vehicleFinancials"
 import type { VehicleListItem } from "@/types/vehicle"
+import { VehiclePipeline, VehicleStatus } from "./VehiclePipeline"
 
 interface VehicleCardProps {
     vehicle: VehicleListItem
     onStatusChange?: (vehicle: VehicleListItem, newStatus: string) => void
     onDelete?: (vehicle: VehicleListItem) => void
     onGenerateContract?: (vehicle: VehicleListItem) => void
-}
-
-/**
- * Status badge colors mapping
- */
-const statusColors: Record<string, string> = {
-    purchased: "bg-green-600 text-white",
-    ready_for_sale: "bg-orange-500 text-white",
-    reserved: "bg-blue-600 text-white",
-    sold: "bg-red-600 text-white",
-    inactive: "bg-gray-600 text-white",
-}
-
-const statusLabels: Record<string, string> = {
-    purchased: "Purchased",
-    ready_for_sale: "Ready",
-    reserved: "Reserved",
-    sold: "Sold",
-    inactive: "Inactive",
 }
 
 /**
@@ -239,10 +221,15 @@ export function VehicleCard({
 
                 {/* Actions Column */}
                 <div className="pointer-events-none relative z-20 col-span-12 sm:col-span-2 flex flex-col items-end gap-2">
-                    {/* Status Badge */}
-                    <Badge className={statusColors[status] || "bg-gray-500"}>
-                        {statusLabels[status] || status}
-                    </Badge>
+                    {/* Vehicle Pipeline Component */}
+                    <div className="pointer-events-auto w-full">
+                        <VehiclePipeline
+                            currentStatus={(status as VehicleStatus)}
+                            canMoveTo={vehicle.can_move_to || []}
+                            onStatusChange={(newStatus) => onStatusChange?.(vehicle, newStatus)}
+                            orientation="vertical"
+                        />
+                    </div>
 
                     {/* Single Contract Button - always enabled to show modal */}
                     <Button
@@ -290,51 +277,7 @@ export function VehicleCard({
                         )}
                     </div>
 
-                    {/* Status Change Buttons */}
-                    <div className="w-full mt-2 flex flex-col items-end gap-2">
-                        {status === "purchased" && (
-                            <>
-                                <Button
-                                    size="sm"
-                                    className="bg-orange-600 hover:bg-orange-700 text-white pointer-events-auto"
-                                    onClick={(e) => {
-                                        e.stopPropagation()
-                                        onStatusChange?.(vehicle, "ready_for_sale")
-                                    }}
-                                >
-                                    Ready
-                                </Button>
-                                <Button
-                                    size="sm"
-                                    className="bg-blue-600 hover:bg-blue-700 text-white pointer-events-auto"
-                                    onClick={(e) => {
-                                        e.stopPropagation()
-                                        onStatusChange?.(vehicle, "reserved")
-                                    }}
-                                >
-                                    Reserve
-                                </Button>
-                            </>
-                        )}
-                        {(status === "ready_for_sale" || status === "reserved") && (
-                            <Button
-                                size="sm"
-                                className="bg-red-600 hover:bg-red-700 text-white pointer-events-auto"
-                                disabled={!vehicle.can_generate_sale_contract}
-                                onClick={(e) => {
-                                    e.stopPropagation()
-                                    onStatusChange?.(vehicle, "sold")
-                                }}
-                                title={
-                                    !vehicle.can_generate_sale_contract
-                                        ? "Complete sale details first"
-                                        : "Mark as sold"
-                                }
-                            >
-                                Sold
-                            </Button>
-                        )}
-                    </div>
+
                 </div>
             </div>
         </article>

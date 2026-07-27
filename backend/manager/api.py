@@ -153,6 +153,17 @@ def serialize_vehicle_list(vehicle: Vehicle) -> dict:
         vehicle.buyer,
     ])
     
+    # Pipeline transition rules
+    ALLOWED_TRANSITIONS = {
+        'purchased': ['ready_for_sale', 'reserved'],
+        'ready_for_sale': ['purchased', 'reserved', 'sold'],
+        'reserved': ['purchased', 'ready_for_sale', 'sold'],
+        'sold': ['ready_for_sale', 'reserved'],
+        'inactive': ['purchased', 'ready_for_sale', 'reserved', 'sold'],
+    }
+    
+    can_move_to = ALLOWED_TRANSITIONS.get(vehicle.status, [])
+    
     return {
         "id": vehicle.id,
         "internal_id": vehicle.internal_id,
@@ -187,6 +198,8 @@ def serialize_vehicle_list(vehicle: Vehicle) -> dict:
         # Contract availability flags
         "can_generate_buy_contract": can_generate_buy,
         "can_generate_sale_contract": can_generate_sale,
+        # Pipeline availability
+        "can_move_to": can_move_to,
     }
 
 
@@ -835,6 +848,34 @@ def change_vehicle_status(request, internal_id: int, status: str = Form(...)):
     
     vehicle = get_object_or_404(Vehicle, business=business, internal_id=internal_id)
     old_status = vehicle.status
+
+    if old_status == status:
+        vehicle = Vehicle.objects.select_related(*VEHICLE_DETAIL_RELATIONS).get(id=vehicle.id)
+        return build_vehicle_detail_response(business, vehicle)
+
+    # Pipeline transition rules
+    ALLOWED_TRANSITIONS = {
+        'purchased': ['ready_for_sale', 'reserved'],
+        'ready_for_sale': ['purchased', 'reserved', 'sold'],
+        'reserved': ['purchased', 'ready_for_sale', 'sold'],
+        'sold': ['ready_for_sale', 'reserved'],
+        'inactive': ['purchased', 'ready_for_sale', 'reserved', 'sold'], # Allowed to move back to active statuses
+    }
+
+    if status not in ALLOWED_TRANSITIONS.get(old_status, []):
+        return 400, {"detail": f"Cannot transition from {old_status} to {status}."}
+
+    # Sold gate
+    if status == 'sold':
+        can_generate_sale = all([
+            vehicle.sale_price,
+            vehicle.sale_date,
+            vehicle.sale_payment_method,
+            vehicle.buyer
+        ])
+        if not can_generate_sale:
+            return 400, {"detail": "Cannot mark as sold. All sale fields must be completed."}
+
     vehicle.status = status
     vehicle.save()
     

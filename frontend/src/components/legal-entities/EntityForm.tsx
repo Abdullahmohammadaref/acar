@@ -40,20 +40,20 @@ export function EntityForm({ data, onChange, errors }: EntityFormProps) {
             {/* Basic Info */}
             <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
-                    <Label htmlFor="le-name">{t("legalEntities.name", "Name")} <span className="text-red-500">*</span></Label>
+                    <Label htmlFor="le-name">{t("legalEntities.name", "Name")} <span className="text-destructive">*</span></Label>
                     <Input
                         id="le-name"
                         value={data.name || ""}
                         onChange={(e) => handleChange("name", e.target.value)}
-                        className={cn(errors?.name && "border-red-500 focus-visible:ring-red-500")}
+                        className={cn(errors?.name && "border-destructive focus-visible:ring-destructive")}
                         required
                     />
-                    {errors?.name && <p className="text-xs text-red-500">{errors.name}</p>}
+                    {errors?.name && <p className="text-xs font-medium text-destructive">{errors.name}</p>}
                 </div>
                 <div className="space-y-2">
-                    <Label htmlFor="le-type">{t("legalEntities.type", "Type")} <span className="text-red-500">*</span></Label>
+                    <Label htmlFor="le-type">{t("legalEntities.type", "Type")} <span className="text-destructive">*</span></Label>
                     <Select value={data.type || "individual"} onValueChange={(v) => handleChange("type", v)}>
-                        <SelectTrigger id="le-type" className={cn(errors?.type && "border-red-500 focus:ring-red-500")}>
+                        <SelectTrigger id="le-type" className={cn(errors?.type && "border-destructive focus:ring-destructive")}>
                             <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -61,22 +61,22 @@ export function EntityForm({ data, onChange, errors }: EntityFormProps) {
                             <SelectItem value="company">{t("legalEntities.company", "Company")}</SelectItem>
                         </SelectContent>
                     </Select>
-                    {errors?.type && <p className="text-xs text-red-500">{errors.type}</p>}
+                    {errors?.type && <p className="text-xs font-medium text-destructive">{errors.type}</p>}
                 </div>
             </div>
 
             {/* Tax ID (only for companies) */}
             {data.type === "company" && (
                 <div className="space-y-2">
-                    <Label htmlFor="le-tax_id">{t("legalEntities.taxId", "Tax Identification Number")} <span className="text-red-500">*</span></Label>
+                    <Label htmlFor="le-tax_id">{t("legalEntities.taxId", "Tax Identification Number")} <span className="text-destructive">*</span></Label>
                     <Input
                         id="le-tax_id"
                         value={data.tax_identification_number || ""}
                         onChange={(e) => handleChange("tax_identification_number", e.target.value)}
-                        className={cn(errors?.tax_identification_number && "border-red-500 focus-visible:ring-red-500")}
+                        className={cn(errors?.tax_identification_number && "border-destructive focus-visible:ring-destructive")}
                         required
                     />
-                    {errors?.tax_identification_number && <p className="text-xs text-red-500">{errors.tax_identification_number}</p>}
+                    {errors?.tax_identification_number && <p className="text-xs font-medium text-destructive">{errors.tax_identification_number}</p>}
                 </div>
             )}
 
@@ -90,10 +90,10 @@ export function EntityForm({ data, onChange, errors }: EntityFormProps) {
                             id="le-street"
                             value={data.address_street || ""}
                             onChange={(e) => handleChange("address_street", e.target.value)}
-                            className={cn(errors?.address_street && "border-red-500 focus-visible:ring-red-500")}
+                            className={cn(errors?.address_street && "border-destructive focus-visible:ring-destructive")}
                             required
                         />
-                        {errors?.address_street && <p className="text-xs text-red-500">{errors.address_street}</p>}
+                        {errors?.address_street && <p className="text-xs font-medium text-destructive">{errors.address_street}</p>}
                     </div>
                     <div className="space-y-2">
                         <Label htmlFor="le-street_number">{t("legalEntities.streetNumber", "Street Number")} <span className="text-red-500">*</span></Label>
@@ -101,10 +101,10 @@ export function EntityForm({ data, onChange, errors }: EntityFormProps) {
                             id="le-street_number"
                             value={data.address_street_number || ""}
                             onChange={(e) => handleChange("address_street_number", e.target.value)}
-                            className={cn(errors?.address_street_number && "border-red-500 focus-visible:ring-red-500")}
+                            className={cn(errors?.address_street_number && "border-destructive focus-visible:ring-destructive")}
                             required
                         />
-                        {errors?.address_street_number && <p className="text-xs text-red-500">{errors.address_street_number}</p>}
+                        {errors?.address_street_number && <p className="text-xs font-medium text-destructive">{errors.address_street_number}</p>}
                     </div>
                     <div className="space-y-2">
                         <Label htmlFor="le-postal_code">{t("legalEntities.postalCode", "Postal Code")} <span className="text-red-500">*</span></Label>
@@ -112,10 +112,10 @@ export function EntityForm({ data, onChange, errors }: EntityFormProps) {
                             id="le-postal_code"
                             value={data.address_postal_code || ""}
                             onChange={(e) => handleChange("address_postal_code", e.target.value)}
-                            className={cn(errors?.address_postal_code && "border-red-500 focus-visible:ring-red-500")}
+                            className={cn(errors?.address_postal_code && "border-destructive focus-visible:ring-destructive")}
                             required
                         />
-                        {errors?.address_postal_code && <p className="text-xs text-red-500">{errors.address_postal_code}</p>}
+                        {errors?.address_postal_code && <p className="text-xs font-medium text-destructive">{errors.address_postal_code}</p>}
                     </div>
                     <div className="space-y-2 sm:col-span-2">
                         <Label htmlFor="le-country">{t("legalEntities.country", "Country")} <span className="text-red-500">*</span></Label>
@@ -132,8 +132,10 @@ export function EntityForm({ data, onChange, errors }: EntityFormProps) {
                             }}
                             placeholder={t("legalEntities.selectCountry", "Select Country")}
                             hasError={!!errors?.address_country_id}
+                            allowCreate={true}
+                            createLabel="Country"
                         />
-                        {errors?.address_country_id && <p className="text-xs text-red-500">{errors.address_country_id}</p>}
+                        {errors?.address_country_id && <p className="text-xs font-medium text-destructive">{errors.address_country_id}</p>}
                     </div>
                     <div className="space-y-2">
                         <Label htmlFor="le-city">{t("legalEntities.city", "City")} <span className="text-red-500">*</span></Label>
@@ -146,8 +148,10 @@ export function EntityForm({ data, onChange, errors }: EntityFormProps) {
                             disabled={!data.address_country_id}
                             parentId={data.address_country_id || undefined}
                             hasError={!!errors?.address_city_id}
+                            allowCreate={!!data.address_country_id}
+                            createLabel="City"
                         />
-                        {errors?.address_city_id && <p className="text-xs text-red-500">{errors.address_city_id}</p>}
+                        {errors?.address_city_id && <p className="text-xs font-medium text-destructive">{errors.address_city_id}</p>}
                     </div>
                 </div>
             </div>

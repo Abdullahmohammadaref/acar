@@ -2,12 +2,12 @@ import { useCallback, useEffect, useRef, useState } from "react"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import api from "@/lib/api"
 
-export type AutoSaveStatus = "idle" | "saving" | "saved" | "error"
+export type AutoSaveStatus = "idle" | "saving" | "saved" | "error" | "failed_mandatory"
 
 // Type for query keys - accepts both mutable and readonly arrays
 type QueryKey = readonly unknown[] | unknown[]
 
-interface UseAutoSaveOptions {
+interface UseAutoSaveOptions<T> {
     /** API endpoint to update (e.g., "/vehicles/123") */
     endpoint: string
     /** HTTP method to use (default: 'PATCH') */
@@ -26,6 +26,8 @@ interface UseAutoSaveOptions {
      * Example: ['transaction', 74]
      */
     updateQueryKey?: QueryKey
+    /** Optional validation function before save. If it returns false, save is aborted and status becomes 'failed_mandatory'. */
+    validate?: (data: Partial<T>) => boolean
     /** Callback on successful save */
     onSuccess?: () => void
     /** Callback on error */
@@ -43,6 +45,8 @@ interface AutoSaveResult<T> {
     saveDebounced: (data: Partial<T>) => void
     /** Reset status to idle */
     resetStatus: () => void
+    /** Set status to failed_mandatory manually */
+    setFailedMandatory: () => void
 }
 
 /**
@@ -84,9 +88,10 @@ export function useAutoSave<T>({
     debounceMs = 800,
     invalidateQueryKeys = [],
     updateQueryKey,
+    validate,
     onSuccess,
     onError,
-}: UseAutoSaveOptions): AutoSaveResult<T> {
+}: UseAutoSaveOptions<T>): AutoSaveResult<T> {
     const [status, setStatus] = useState<AutoSaveStatus>("idle")
     const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
@@ -172,8 +177,13 @@ export function useAutoSave<T>({
         }
         pendingDataRef.current = null
 
+        if (validate && !validate(data)) {
+            setStatus("failed_mandatory")
+            return
+        }
+
         saveMutation.mutate(data)
-    }, [saveMutation])
+    }, [saveMutation, validate])
 
     // Debounced save (for text inputs)
     const saveDebounced = useCallback((data: Partial<T>) => {
@@ -191,15 +201,26 @@ export function useAutoSave<T>({
         // Set new timer
         debounceTimerRef.current = setTimeout(() => {
             if (pendingDataRef.current) {
-                saveMutation.mutate(pendingDataRef.current)
+                const dataToSave = pendingDataRef.current
                 pendingDataRef.current = null
+
+                if (validate && !validate(dataToSave)) {
+                    setStatus("failed_mandatory")
+                    return
+                }
+
+                saveMutation.mutate(dataToSave)
             }
         }, debounceMs)
-    }, [debounceMs, saveMutation])
+    }, [debounceMs, saveMutation, validate])
 
     const resetStatus = useCallback(() => {
         setStatus("idle")
         setErrorMessage(null)
+    }, [])
+
+    const setFailedMandatory = useCallback(() => {
+        setStatus("failed_mandatory")
     }, [])
 
     return {
@@ -208,6 +229,7 @@ export function useAutoSave<T>({
         saveNow,
         saveDebounced,
         resetStatus,
+        setFailedMandatory,
     }
 }
 

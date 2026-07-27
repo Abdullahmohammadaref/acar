@@ -217,7 +217,7 @@ export default function ChoicesManagementPage() {
     const normalizedSearch = searchValue.trim().toLowerCase()
 
     const sortItems = <T extends { name: string; is_active?: boolean; percentage?: number }>(items: T[]) =>
-        [...items].sort((a, b) => {
+        [...(items || [])].sort((a, b) => {
             if (sortBy === "status") {
                 const statusA = a.is_active === false ? 0 : 1
                 const statusB = b.is_active === false ? 0 : 1
@@ -245,9 +245,9 @@ export default function ChoicesManagementPage() {
 
     const filterItems = <T extends { name: string }>(items: T[]) => {
         if (!normalizedSearch) {
-            return items
+            return items || []
         }
-        return items.filter((item) => matchesSearch(item.name, normalizedSearch))
+        return (items || []).filter((item) => matchesSearch(item.name, normalizedSearch))
     }
 
     const getTabDisplayName = (key: string) => {

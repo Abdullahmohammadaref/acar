@@ -7,7 +7,7 @@ import { Loader2, Save, ArrowLeft, AlertTriangle, X, FileText } from "lucide-rea
 import { ContractModal } from "./ContractModal"
 import { VehicleImageUpload } from "./VehicleImageUpload"
 import { FinancialMetricsStrip } from "./FinancialMetricsStrip"
-import { VehicleStatusFooterActions } from "./StatusBanner"
+import { VehiclePipeline } from "./VehiclePipeline"
 import { AutoSaveIndicator } from "@/components/AutoSaveIndicator"
 import { StickyFooter } from "@/components/StickyFooter"
 import { RecordNavigation } from "@/components/RecordNavigation"
@@ -526,6 +526,7 @@ export function VehicleForm({
         transactions: txnsForCalc,
         annualTargetRate: businessSettings?.target_annual_return,
         targetDaysOnStock: businessSettings?.target_days_on_stock,
+        status: vehicle?.status ?? null,
     })
 
     // --- Validation & Mutation ---
@@ -1289,10 +1290,11 @@ export function VehicleForm({
                                     <span className="hidden sm:inline text-sm font-medium text-foreground mr-2">
                                         {vehicleTitle} <span className="text-muted-foreground">#{vehicle?.internal_id}</span>
                                     </span>
-                                    <VehicleStatusFooterActions
-                                        status={watchedStatus as "purchased" | "ready_for_sale" | "reserved" | "sold" | "inactive"}
+                                    <VehiclePipeline
+                                        currentStatus={watchedStatus as VehicleStatus}
+                                        canMoveTo={vehicle?.can_move_to || []}
                                         onStatusChange={handleStatusChange}
-                                        vehicleTitle={vehicleTitle}
+                                        orientation="horizontal"
                                     />
                                     {vehicleFinancials.daysOnStock !== null && (
                                         <div className={`hidden sm:flex items-center gap-2 rounded-lg border px-3 py-1.5 text-sm font-medium ${getDaysOnStockColor(vehicleFinancials.daysOnStock, businessSettings?.target_days_on_stock)} bg-card shadow-sm`}>

@@ -73,6 +73,9 @@ class VehicleListSchema(Schema):
     can_generate_buy_contract: bool = False
     can_generate_sale_contract: bool = False
     
+    # Pipeline availability
+    can_move_to: List[str] = []
+    
     @staticmethod
     def resolve_make_name(obj):
         return obj.make.name if obj.make else None
@@ -492,10 +495,15 @@ def calculate_summary(queryset) -> dict:
     
     total_days = 0
     vehicles_with_days = 0
+    CALCULATION_ELIGIBLE_STATUSES = ["ready_for_sale", "reserved", "sold"]
     
     for vehicle in queryset:
-        # Calculate revenue (from sales)
-        if vehicle.sale_price:
+        # Skip inactive vehicles entirely for calculations
+        if vehicle.status == 'inactive':
+            continue
+
+        # Calculate revenue (from sales) - only if in eligible status
+        if vehicle.sale_price and vehicle.status in CALCULATION_ELIGIBLE_STATUSES:
             sale_net = vehicle.sale_price
             net_revenue += sale_net
             if vehicle.sale_tax and vehicle.sale_tax.percentage:
