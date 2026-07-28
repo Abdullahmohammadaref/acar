@@ -41,6 +41,7 @@ interface BusinessData {
     eori_number: string | null
     ust_id_nr: string | null
     headquarters_city: string | null
+    court_district: string | null
     court_registration_number: string | null
     target_annual_return: number
     target_days_on_stock: number
@@ -488,7 +489,10 @@ export default function BusinessSettingsPage() {
                                 <label className="block text-sm font-medium text-foreground mb-1.5">Headquarters City</label>
                                 <input type="text" value={formData.headquarters_city || ""} onChange={(e) => handleFieldChange("headquarters_city", e.target.value)} className={inputClass} />
                             </div>
-
+                            <div>
+                                <label className="block text-sm font-medium text-foreground mb-1.5">Court District</label>
+                                <input type="text" value={formData.court_district || ""} onChange={(e) => handleFieldChange("court_district", e.target.value)} className={inputClass} />
+                            </div>
                             <div>
                                 <label className="block text-sm font-medium text-foreground mb-1.5">Court Reg Number</label>
                                 <input type="text" value={formData.court_registration_number || ""} onChange={(e) => handleFieldChange("court_registration_number", e.target.value)} className={inputClass} />
