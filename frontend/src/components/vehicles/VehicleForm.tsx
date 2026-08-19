@@ -8,6 +8,7 @@ import { ContractModal } from "./ContractModal"
 import { VehicleImageUpload } from "./VehicleImageUpload"
 import { FinancialMetricsStrip } from "./FinancialMetricsStrip"
 import { VehiclePipeline } from "./VehiclePipeline"
+import { VehicleExpensesEarningsCard } from "./VehicleExpensesEarningsCard"
 import { AutoSaveIndicator } from "@/components/AutoSaveIndicator"
 import { StickyFooter } from "@/components/StickyFooter"
 import { RecordNavigation } from "@/components/RecordNavigation"
@@ -50,6 +51,8 @@ interface VehicleFormProps {
     autoSaveErrorMessage?: string | null
     /** Optional split-view toggle button rendered in footer */
     splitViewToggle?: React.ReactNode
+    /** Compact transactions table rendered inline in the edit-mode grid (normal/stacked view only) */
+    inlineTransactions?: React.ReactNode
 }
 
 // Status values that unlock the Sale tab
@@ -168,6 +171,7 @@ export function VehicleForm({
     autoSaveStatus = "idle",
     autoSaveErrorMessage = null,
     splitViewToggle,
+    inlineTransactions,
 }: VehicleFormProps) {
     const navigate = useNavigate()
     const { business_slug } = useParams<{ business_slug: string }>()
@@ -235,7 +239,6 @@ export function VehicleForm({
             sale_delivery_collection_date: vehicle?.sale_delivery_collection_date ?? "",
             sale_payment_method_id: vehicle?.sale_payment_method_id ?? undefined,
             buyer_id: vehicle?.buyer_id ?? undefined,
-            sale_commission: toNum(vehicle?.sale_commission),
             sale_invoice_number: vehicle?.sale_invoice_number ?? "",
             description: vehicle?.description ?? "",
             internal_comments: vehicle?.internal_comments ?? "",
@@ -451,7 +454,6 @@ export function VehicleForm({
                 sale_delivery_collection_date: vehicle.sale_delivery_collection_date ?? "",
                 sale_payment_method_id: vehicle.sale_payment_method_id ?? undefined,
                 buyer_id: vehicle.buyer_id ?? undefined,
-                sale_commission: toNum(vehicle.sale_commission),
                 sale_invoice_number: vehicle.sale_invoice_number ?? "",
                 description: vehicle.description ?? "",
                 internal_comments: vehicle.internal_comments ?? "",
@@ -524,6 +526,7 @@ export function VehicleForm({
         buyDate: watchedBuyDate || null,
         saleDate: isSaleTabVisible ? (watchedSaleDate || null) : null,
         transactions: txnsForCalc,
+        entries: vehicle?.expenses_earnings?.map((e) => ({ type: e.type, amount: e.amount })) ?? null,
         annualTargetRate: businessSettings?.target_annual_return,
         targetDaysOnStock: businessSettings?.target_days_on_stock,
         status: vehicle?.status ?? null,
@@ -975,8 +978,13 @@ export function VehicleForm({
                                 )}
                             </div>
 
-                            {/* Vehicle Image */}
-                            <div className="max-w-md md:col-span-2 lg:col-span-2 lg:row-span-2">
+                            {/* Rest of the layout handled by IIFE */}
+                        </div>
+                    </div>
+
+                    {(() => {
+                        const vehiclePhotoField = (
+                            <div className={isEditing ? "flex flex-col h-full rounded-xl border border-border bg-card shadow-sm p-3" : "max-w-md md:col-span-2 lg:col-span-2 lg:row-span-2"}>
                                 <VehicleImageUpload
                                     imageUrl={vehicle?.image_url}
                                     selectedFile={selectedImageFile}
@@ -986,153 +994,162 @@ export function VehicleForm({
                                     disabled={mutation.isPending || isUploadingImage}
                                 />
                             </div>
+                        )
 
-                            {/* Description */}
-                            <div className="space-y-2 md:col-span-2 lg:col-span-2">
+                        const descriptionField = (
+                            <div className={isEditing ? "flex flex-col h-full space-y-2 rounded-xl border border-border bg-card shadow-sm p-3" : "space-y-2 md:col-span-2 lg:col-span-2"}>
                                 <Label className="text-foreground">Description</Label>
                                 <textarea
                                     value={watch("description") ?? ""}
                                     onChange={(e) => handleTextChange("description", e.target.value)}
                                     placeholder="Public description of the vehicle"
-                                    className="flex min-h-20 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                                    className="flex-1 min-h-[4rem] w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                                 />
                             </div>
+                        )
 
-                            {/* Internal Comments */}
-                            <div className="space-y-2 md:col-span-2 lg:col-span-2">
+                        const internalCommentsField = (
+                            <div className={isEditing ? "flex flex-col h-full space-y-2 rounded-xl border border-border bg-card shadow-sm p-3" : "space-y-2 md:col-span-2 lg:col-span-2"}>
                                 <Label className="text-foreground">Internal Comments</Label>
                                 <textarea
                                     value={watch("internal_comments") ?? ""}
                                     onChange={(e) => handleTextChange("internal_comments", e.target.value)}
                                     placeholder="Private notes (not visible to customers)"
-                                    className="flex min-h-20 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                                    className="flex-1 min-h-[4rem] w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                                 />
                             </div>
-                        </div>
-                    </div>
+                        )
 
-                    {/* Two Column Layout for Buy and Sale */}
-                    <div className="grid grid-cols-1 xl:grid-cols-2 gap-2 items-start">
-                        {/* Buy Details Section */}
-                        <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
-                            <div className="bg-muted/50 px-6 py-4 border-b border-border">
-                                <h2 className="text-lg font-semibold text-foreground">Buy Details</h2>
+                        const expensesEarningsBlock = isEditing && vehicle ? (
+                            <div className="h-full">
+                                <VehicleExpensesEarningsCard
+                                    vehicleInternalId={vehicle.internal_id!}
+                                    entries={vehicle.expenses_earnings ?? []}
+                                    choices={choices}
+                                />
                             </div>
-                            <div className="p-2 grid gap-2 sm:grid-cols-3">
-                                <div className="col-span-1 sm:col-span-3 px-3 pt-3 pb-3 mb-2 border-b border-border/30">
-                                    <div className="flex flex-row flex-wrap items-center gap-x-4 gap-y-1 min-w-0 rounded-md border p-2 shadow-sm transition-colors bg-background border-border/40 hover:border-border/80 w-full">
-                                        <div className="flex items-center gap-1.5">
-                                            <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold whitespace-nowrap">Net:</span>
-                                            <span className={`text-sm font-bold ${getNumberColor(buyBreakdown.net)} whitespace-nowrap`}>
-                                                {formatMoneyOrDash(buyBreakdown.net)}
-                                            </span>
-                                        </div>
-                                        <div className="text-[10px] text-muted-foreground/50 font-medium whitespace-nowrap">
-                                            Gross ({formatMoneyOrDash(buyBreakdown.gross)}) − Tax {buyBreakdown.taxRate}% ({formatMoneyOrDash(buyBreakdown.taxAmount)})
+                        ) : null
+
+                        const buyDetailsCard = (
+                            <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden h-full flex flex-col">
+                                <div className="bg-muted/50 px-6 py-4 border-b border-border">
+                                    <h2 className="text-lg font-semibold text-foreground">Buy Details</h2>
+                                </div>
+                                <div className="p-2 grid gap-2 sm:grid-cols-3 flex-1">
+                                    <div className="col-span-1 sm:col-span-3 px-3 pt-3 pb-3 mb-2 border-b border-border/30">
+                                        <div className="flex flex-row flex-wrap items-center gap-x-4 gap-y-1 min-w-0 rounded-md border p-2 shadow-sm transition-colors bg-background border-border/40 hover:border-border/80 w-full">
+                                            <div className="flex items-center gap-1.5">
+                                                <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold whitespace-nowrap">Net:</span>
+                                                <span className={`text-sm font-bold ${getNumberColor(buyBreakdown.net)} whitespace-nowrap`}>
+                                                    {formatMoneyOrDash(buyBreakdown.net)}
+                                                </span>
+                                            </div>
+                                            <div className="text-[10px] text-muted-foreground/50 font-medium whitespace-nowrap">
+                                                Gross ({formatMoneyOrDash(buyBreakdown.gross)}) − Tax {buyBreakdown.taxRate}% ({formatMoneyOrDash(buyBreakdown.taxAmount)})
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
 
-                                {/* Buy Price */}
-                                <div className="space-y-2">
-                                    <Label className="text-foreground">Buy Price (Gross) <span className="text-red-500">*</span></Label>
-                                    <Input
-                                        type="number"
-                                        step="0.01"
-                                        value={watch("buy_price") ?? ""}
-                                        onChange={(e) => handleNumberChange("buy_price", e.target.value, (v) => v ? parseFloat(v) : undefined)}
-                                        placeholder="0.00"
-                                        className="text-foreground"
-                                    />
-                                    {errors.buy_price && (
-                                        <p className="text-sm text-red-500">{errors.buy_price.message}</p>
-                                    )}
-                                </div>
+                                    {/* Buy Price */}
+                                    <div className="space-y-2">
+                                        <Label className="text-foreground">Buy Price (Gross) <span className="text-red-500">*</span></Label>
+                                        <Input
+                                            type="number"
+                                            step="0.01"
+                                            value={watch("buy_price") ?? ""}
+                                            onChange={(e) => handleNumberChange("buy_price", e.target.value, (v) => v ? parseFloat(v) : undefined)}
+                                            placeholder="0.00"
+                                            className="text-foreground"
+                                        />
+                                        {errors.buy_price && (
+                                            <p className="text-sm text-red-500">{errors.buy_price.message}</p>
+                                        )}
+                                    </div>
 
-                                {/* Buy Tax */}
-                                <div className="space-y-2">
-                                    <Label className="text-foreground">Tax</Label>
-                                    <DynamicSelect
-                                        choiceType="tax_percentage"
-                                        options={taxToOptions(choices?.tax_percentages)}
-                                        value={watch("buy_tax_id") ?? null}
-                                        onChange={(val) => handleDropdownChange("buy_tax_id", val)}
-                                        placeholder="Select tax"
-                                        createLabel="Tax Rate"
-                                        showPercentage
-                                    />
-                                </div>
+                                    {/* Buy Tax */}
+                                    <div className="space-y-2">
+                                        <Label className="text-foreground">Tax</Label>
+                                        <DynamicSelect
+                                            choiceType="tax_percentage"
+                                            options={taxToOptions(choices?.tax_percentages)}
+                                            value={watch("buy_tax_id") ?? null}
+                                            onChange={(val) => handleDropdownChange("buy_tax_id", val)}
+                                            placeholder="Select tax"
+                                            createLabel="Tax Rate"
+                                            showPercentage
+                                        />
+                                    </div>
 
-                                {/* Buy Date */}
-                                <div className="space-y-2">
-                                    <Label className="text-foreground">Buy Date <span className="text-red-500">*</span></Label>
-                                    <Input
-                                        type="date"
-                                        value={watch("buy_date") ?? ""}
-                                        onChange={(e) => handleDateChange("buy_date", e.target.value)}
-                                        onClick={(e) => { try { e.currentTarget.showPicker(); } catch (err) { } }}
-                                        className="text-foreground"
-                                    />
-                                    {errors.buy_date && (
-                                        <p className="text-sm text-red-500">{errors.buy_date.message}</p>
-                                    )}
-                                </div>
+                                    {/* Buy Date */}
+                                    <div className="space-y-2">
+                                        <Label className="text-foreground">Buy Date <span className="text-red-500">*</span></Label>
+                                        <Input
+                                            type="date"
+                                            value={watch("buy_date") ?? ""}
+                                            onChange={(e) => handleDateChange("buy_date", e.target.value)}
+                                            onClick={(e) => { try { e.currentTarget.showPicker(); } catch (err) { } }}
+                                            className="text-foreground"
+                                        />
+                                        {errors.buy_date && (
+                                            <p className="text-sm text-red-500">{errors.buy_date.message}</p>
+                                        )}
+                                    </div>
 
-                                {/* Delivery Date */}
-                                <div className="space-y-2">
-                                    <Label className="text-foreground">Delivery/Collection Date</Label>
-                                    <Input
-                                        type="date"
-                                        value={watch("buy_delivery_collection_date") ?? ""}
-                                        onChange={(e) => handleDateChange("buy_delivery_collection_date", e.target.value)}
-                                        onClick={(e) => { try { e.currentTarget.showPicker(); } catch (err) { } }}
-                                        className="text-foreground"
-                                    />
-                                </div>
+                                    {/* Delivery Date */}
+                                    <div className="space-y-2">
+                                        <Label className="text-foreground">Delivery/Collection Date</Label>
+                                        <Input
+                                            type="date"
+                                            value={watch("buy_delivery_collection_date") ?? ""}
+                                            onChange={(e) => handleDateChange("buy_delivery_collection_date", e.target.value)}
+                                            onClick={(e) => { try { e.currentTarget.showPicker(); } catch (err) { } }}
+                                            className="text-foreground"
+                                        />
+                                    </div>
 
-                                {/* Payment Method */}
-                                <div className="space-y-2">
-                                    <Label className="text-foreground">Payment Method <span className="text-red-500">*</span></Label>
-                                    <DynamicSelect
-                                        choiceType="payment_method"
-                                        options={toOptions(choices?.payment_methods)}
-                                        value={watch("buy_payment_method_id") ?? null}
-                                        onChange={(val) => handleDropdownChange("buy_payment_method_id", val ?? 0)}
-                                        placeholder="Select payment method"
-                                        createLabel="Payment Method"
-                                    />
-                                    {errors.buy_payment_method_id && (
-                                        <p className="text-sm text-red-500">{errors.buy_payment_method_id.message}</p>
-                                    )}
-                                </div>
+                                    {/* Payment Method */}
+                                    <div className="space-y-2">
+                                        <Label className="text-foreground">Payment Method <span className="text-red-500">*</span></Label>
+                                        <DynamicSelect
+                                            choiceType="payment_method"
+                                            options={toOptions(choices?.payment_methods)}
+                                            value={watch("buy_payment_method_id") ?? null}
+                                            onChange={(val) => handleDropdownChange("buy_payment_method_id", val ?? 0)}
+                                            placeholder="Select payment method"
+                                            createLabel="Payment Method"
+                                        />
+                                        {errors.buy_payment_method_id && (
+                                            <p className="text-sm text-red-500">{errors.buy_payment_method_id.message}</p>
+                                        )}
+                                    </div>
 
-                                {/* Seller */}
-                                <div className="space-y-2">
-                                    <Label className="text-foreground">Seller <span className="text-red-500">*</span></Label>
-                                    <DynamicSelect
-                                        choiceType="legal_entity"
-                                        options={choices?.legal_entities?.map((e) => ({ id: e.id, name: `#${e.internal_id} - ${e.name}` })) ?? []}
-                                        value={watch("seller_id") ?? null}
-                                        onChange={(val) => handleDropdownChange("seller_id", val ?? 0)}
-                                        placeholder="Select seller"
-                                        allowCreate={true}
-                                        createLabel="Seller / Legal Entity"
-                                        onAddClick={() => handleOpenEntityModal("seller_id")}
-                                    />
-                                    {errors.seller_id && (
-                                        <p className="text-sm text-red-500">{errors.seller_id.message}</p>
-                                    )}
+                                    {/* Seller */}
+                                    <div className="space-y-2">
+                                        <Label className="text-foreground">Seller <span className="text-red-500">*</span></Label>
+                                        <DynamicSelect
+                                            choiceType="legal_entity"
+                                            options={choices?.legal_entities?.map((e) => ({ id: e.id, name: `#${e.internal_id} - ${e.name}` })) ?? []}
+                                            value={watch("seller_id") ?? null}
+                                            onChange={(val) => handleDropdownChange("seller_id", val ?? 0)}
+                                            placeholder="Select seller"
+                                            allowCreate={true}
+                                            createLabel="Seller / Legal Entity"
+                                            onAddClick={() => handleOpenEntityModal("seller_id")}
+                                        />
+                                        {errors.seller_id && (
+                                            <p className="text-sm text-red-500">{errors.seller_id.message}</p>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
-                        </div>
+                        )
 
-                        {/* Sale Details Section (only visible in edit mode when status allows) */}
-                        {isSaleTabVisible && (
-                            <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
+                        const saleDetailsCard = isSaleTabVisible ? (
+                            <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden h-full flex flex-col">
                                 <div className="bg-muted/50 px-6 py-4 border-b border-border">
                                     <h2 className="text-lg font-semibold text-foreground">Sale Details</h2>
                                 </div>
-                                <div className="p-2 grid gap-2 sm:grid-cols-3">
+                                <div className="p-2 grid gap-2 sm:grid-cols-3 flex-1">
                                     <div className="col-span-1 sm:col-span-3 px-3 pt-3 pb-3 mb-2 border-b border-border/30">
                                         <div className="flex flex-row flex-wrap items-center gap-x-4 gap-y-1 min-w-0 rounded-md border p-2 shadow-sm transition-colors bg-background border-border/40 hover:border-border/80 w-full">
                                             <div className="flex items-center gap-1.5">
@@ -1237,19 +1254,6 @@ export function VehicleForm({
                                         )}
                                     </div>
 
-                                    {/* Commission */}
-                                    <div className="space-y-2">
-                                        <Label className="text-foreground">Commission (€)</Label>
-                                        <Input
-                                            type="number"
-                                            step="0.01"
-                                            value={watch("sale_commission") ?? ""}
-                                            onChange={(e) => handleNumberChange("sale_commission", e.target.value, (v) => v ? parseFloat(v) : undefined)}
-                                            placeholder="0.00"
-                                            className="text-foreground"
-                                        />
-                                    </div>
-
                                     {/* Invoice Number */}
                                     <div className="space-y-2">
                                         <Label className="text-foreground">Invoice Number</Label>
@@ -1262,17 +1266,53 @@ export function VehicleForm({
                                     </div>
                                 </div>
                             </div>
-                        )}
-                    </div>
+                        ) : null
 
-                    {/* Financial Metrics Strip — compact live summary */}
-                    {buyBreakdown.hasValue && (
-                        <FinancialMetricsStrip
-                            financials={vehicleFinancials}
-                            hideTransactions={!isEditing}
-                            annualTargetRate={businessSettings?.target_annual_return}
-                        />
-                    )}
+                        const financialMetricsBlock = buyBreakdown.hasValue ? (
+                            <FinancialMetricsStrip
+                                financials={vehicleFinancials}
+                                hideTransactions={!isEditing}
+                                annualTargetRate={businessSettings?.target_annual_return}
+                            />
+                        ) : null
+
+                        const transactionsBlock = inlineTransactions ?? null
+
+                        if (isEditing) {
+                            return (
+                                <div className="grid grid-cols-6 gap-4">
+                                    {/* Row 1: Photo, Desc, Internal Comments, Expenses */}
+                                    <div className="col-span-6 lg:col-span-1">{vehiclePhotoField}</div>
+                                    <div className="col-span-6 lg:col-span-1">{descriptionField}</div>
+                                    <div className="col-span-6 lg:col-span-1">{internalCommentsField}</div>
+                                    <div className="col-span-6 lg:col-span-3">{expensesEarningsBlock}</div>
+
+                                    {/* Row 2: Buy & Sale */}
+                                    <div className="col-span-6 lg:col-span-3">{buyDetailsCard}</div>
+                                    <div className="col-span-6 lg:col-span-3">{saleDetailsCard}</div>
+
+                                    {/* Row 3: Financials & Transactions */}
+                                    <div className="col-span-6 lg:col-span-3">{financialMetricsBlock}</div>
+                                    <div className="col-span-6 lg:col-span-3">{transactionsBlock}</div>
+                                </div>
+                            )
+                        }
+
+                        return (
+                            <div className="space-y-5 mt-4">
+                                <div className="grid gap-2 md:grid-cols-2 lg:grid-cols-6">
+                                    {vehiclePhotoField}
+                                    {descriptionField}
+                                    {internalCommentsField}
+                                </div>
+                                <div className="grid grid-cols-1 xl:grid-cols-2 gap-2 items-start">
+                                    {buyDetailsCard}
+                                    {saleDetailsCard}
+                                </div>
+                                {financialMetricsBlock}
+                            </div>
+                        )
+                    })()}
                 </div>
 
 

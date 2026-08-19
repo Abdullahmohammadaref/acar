@@ -186,18 +186,18 @@ export function VehicleFormPage() {
                     </Button>
                     </div>
                 ) : undefined}
+                inlineTransactions={
+                    showTransactions && !splitView ? (
+                        <div className="mt-8">
+                            <RelatedTransactionsTable
+                                vehicleId={vehicle!.internal_id!}
+                                vehicleName={`${vehicle!.make_name || ''} ${vehicle!.model_name || ''}`}
+                                hideNavigationLink={true}
+                            />
+                        </div>
+                    ) : undefined
+                }
             />
-
-            {/* Transactions below form (non-split mode) */}
-            {showTransactions && !splitView && (
-                <div className="mt-8">
-                    <RelatedTransactionsTable
-                        vehicleId={vehicle!.internal_id!}
-                        vehicleName={`${vehicle!.make_name || ''} ${vehicle!.model_name || ''}`}
-                        hideNavigationLink={true}
-                    />
-                </div>
-            )}
 
             {/* Spacer for Sticky Footer */}
             <div className={isEditing ? "pb-32 md:pb-24" : "pb-24"} />
@@ -308,16 +308,16 @@ export function VehicleFormPage() {
                     </Button>
                     </div>
                 ) : undefined}
+                inlineTransactions={
+                    showTransactions && !splitView ? (
+                        <RelatedTransactionsTable
+                            vehicleId={vehicle!.internal_id!}
+                            vehicleName={`${vehicle!.make_name || ''} ${vehicle!.model_name || ''}`}
+                            hideNavigationLink={true}
+                        />
+                    ) : undefined
+                }
             />
-
-            {/* Related Transactions Table - below form in stack mode */}
-            {showTransactions && !splitView && (
-                <RelatedTransactionsTable
-                    vehicleId={vehicle!.internal_id!}
-                    vehicleName={`${vehicle!.make_name || ''} ${vehicle!.model_name || ''}`}
-                    hideNavigationLink={true}
-                />
-            )}
 
             {/* Spacer for Sticky Footer */}
             <div className={isEditing ? "pb-32 md:pb-24" : "pb-24"} />

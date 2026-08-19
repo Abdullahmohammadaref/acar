@@ -1,6 +1,6 @@
 # 🗺️ ACAR — Project Map
 
-> **Last updated:** 2026-08-13
+> **Last updated:** 2026-08-19
 > This file maps every module and file in the codebase. Read this before making changes.
 > For data model details, see [`schema.prisma`](./schema.prisma).
 > For project overview, see [`README.md`](./README.md).
@@ -20,6 +20,7 @@ acar/
 ├── docs-fixes-and-new-field.md  # Documentation for Key Number management and Choices stability fixes
 ├── docs-ui-changes.md       # Documentation for UI stability, choices management hierarchy, and dashboard refinements
 ├── docs-ui-tweaks.md        # Documentation for legacy UI improvements
+├── docs-ui-tweak-fix-2.md   # COGS + Total Profit formula fix (netExpensesEarnings replaces totalTxnCost)
 ├── docs-deployment.md       # Documentation for deployment infrastructure
 ├── .gitignore
 ├── Dockerfile               # Production Django container (Python 3.11-slim + Gunicorn)
@@ -228,6 +229,8 @@ This is the **only Django app**. All models, APIs, and views live here.
 | `ContractModal.tsx` | PDF contract generation dialog |
 | `FinancialSummary.tsx` | Vehicle-level financial summary card |
 | `FinancialMetricsStrip.tsx` | Compact inline financial KPI grid (COGS, margin, ROI, etc.) |
+| `VehicleExpensesEarningsCard.tsx` | Inline expense/earning entry card with add dialog and pill list |
+| `VehicleImageUpload.tsx` | Vehicle photo upload with drag-and-drop support |
 | `StatusBanner.tsx` | Vehicle lifecycle status banner |
 
 ##### Transactions (`src/components/transactions/`)
@@ -281,7 +284,7 @@ This is the **only Django app**. All models, APIs, and views live here.
 | `i18n.ts` | i18next configuration — locale detection, namespace setup |
 | `utils.ts` | General utilities — `cn()` classname merger, date formatters |
 | `paginationPrefs.ts` | Shared utilities to persist and retrieve user pagination settings using cookies |
-| `vehicleFinancials.ts` | Financial calculation utilities (COGS, margin, ROI, break-even, holding cost) |
+| `vehicleFinancials.ts` | Financial calculation utilities (COGS, margin, ROI, break-even, netExpensesEarnings, taxLiability) |
 | `validations.ts` | Zod validation schemas for forms |
 
 #### Types (`src/types/`)
@@ -353,6 +356,7 @@ This is the **only Django app**. All models, APIs, and views live here.
 | `LegalEntity` | `manager_legalentity` | Buyers/sellers — individuals or companies |
 | `Vehicle` | `manager_vehicle` | Vehicle inventory with full lifecycle |
 | `Transaction` | `manager_transaction` | Financial records linked to vehicles |
+| `VehicleExpenseEarning` | `manager_vehicleexpenseearning` | Lightweight vehicle-scoped expense/earning entries |
 
 ### Auth & Audit
 
@@ -410,4 +414,6 @@ Legacy fields are used by PDF generation views. FK fields are used by the modern
 - All money fields use `Decimal` (never `float`)
 - Tax: `gross = net × (1 + rate)` / `net = gross / (1 + rate)`
 - Vehicle has computed properties: `buy_price_net`, `sale_price_net`, `net_profit`
+- COGS = buyNet + netExpensesEarnings (from vehicle expense/earning entries)
+- Total Profit = saleNet − COGS − taxLiability
 - Transaction has class methods for gross/net/tax aggregations across querysets

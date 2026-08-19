@@ -818,7 +818,7 @@ class Vehicle(models.Model):
         blank=True,
         verbose_name=_('sale tax')
     )
-    sale_commission = models.DecimalField(_('sale commission'), blank=True, null=True, max_digits=12, decimal_places=2)
+
 
     sale_date = models.DateField(_('sale date'), blank=True, null=True)
     sale_delivery_collection_date = models.DateField(_('sale delivery/collection date'), blank=True, null=True)
@@ -1741,6 +1741,57 @@ class Transaction(models.Model):
             return self.get_method_display()
         else:
             return _("Transaction #{}").format(self.internal_id)
+
+
+class VehicleExpenseEarning(models.Model):
+    """
+    Lightweight, vehicle-scoped expense/earning entry (MVP).
+    Distinct from Transaction — NOT linked to bank transactions yet.
+    Reuses the same Category/Subcategory models as Transaction.
+    """
+    TYPE_CHOICES = [
+        ('expense', _('Expense')),
+        ('earning', _('Earning')),
+    ]
+
+    business = models.ForeignKey(
+        Business,
+        on_delete=models.CASCADE,
+        related_name='vehicle_expenses_earnings',
+        verbose_name=_('business'),
+    )
+    vehicle = models.ForeignKey(
+        'Vehicle',
+        on_delete=models.CASCADE,
+        related_name='expenses_earnings',
+        verbose_name=_('vehicle'),
+    )
+    category = models.ForeignKey(
+        'Category',
+        on_delete=models.PROTECT,
+        related_name='vehicle_expenses_earnings',
+        verbose_name=_('category'),
+    )
+    subcategory = models.ForeignKey(
+        'Subcategory',
+        on_delete=models.PROTECT,
+        related_name='vehicle_expenses_earnings',
+        verbose_name=_('subcategory'),
+    )
+    type = models.CharField(_('type'), max_length=10, choices=TYPE_CHOICES)
+    amount = models.DecimalField(_('amount'), max_digits=12, decimal_places=2)
+    is_active = models.BooleanField(_('is active'), default=True)
+    created_at = models.DateTimeField(_('created at'), auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    @property
+    def signed_amount(self):
+        return self.amount if self.type == 'earning' else -self.amount
+
+    def __str__(self):
+        return f"{self.get_type_display()}: {self.amount} ({self.vehicle_id})"
 
 
 class AuthActionRequest(models.Model):

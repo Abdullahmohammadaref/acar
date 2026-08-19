@@ -13,6 +13,30 @@ from pydantic import field_validator, model_validator
 
 
 # =============================================================================
+# Vehicle Expense/Earning Schemas
+# =============================================================================
+
+class VehicleExpenseEarningOut(Schema):
+    """Output schema for a single vehicle expense/earning entry."""
+    id: int
+    type: str  # 'expense' | 'earning'
+    amount: Decimal
+    category_id: int
+    category_name: Optional[str] = None
+    subcategory_id: int
+    subcategory_name: Optional[str] = None
+    created_at: Optional[datetime] = None
+
+
+class VehicleExpenseEarningCreate(Schema):
+    """Schema for creating a new vehicle expense/earning entry."""
+    type: str = Field(..., pattern="^(expense|earning)$")
+    amount: Decimal = Field(..., gt=0)
+    category_id: int
+    subcategory_id: int
+
+
+# =============================================================================
 # Choice Update Schema (for PATCH /choices/{type}/{id})
 # =============================================================================
 
@@ -353,7 +377,6 @@ class VehicleDetailOut(Schema):
     sale_tax_id: Optional[int] = None
     sale_tax_name: Optional[str] = None
     sale_tax_percentage: Optional[Decimal] = None
-    sale_commission: Optional[Decimal] = None
     sale_date: Optional[date] = None
     sale_delivery_collection_date: Optional[date] = None
     sale_payment_method_id: Optional[int] = None
@@ -394,6 +417,9 @@ class VehicleDetailOut(Schema):
     
     # Pipeline availability
     can_move_to: List[str] = Field(default_factory=list)
+
+    # Expenses/Earnings entries
+    expenses_earnings: List[VehicleExpenseEarningOut] = Field(default_factory=list)
 
 
 class VehicleCreate(Schema):
@@ -501,7 +527,6 @@ class VehicleUpdate(Schema):
     # Sale details
     sale_price: Optional[Decimal] = Field(default=None, ge=0)
     sale_tax_id: Optional[int] = None
-    sale_commission: Optional[Decimal] = Field(default=None, ge=0)
     sale_date: Optional[date] = None
     sale_delivery_collection_date: Optional[date] = None
     sale_payment_method_id: Optional[int] = None

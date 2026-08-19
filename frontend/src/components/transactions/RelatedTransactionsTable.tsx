@@ -122,16 +122,18 @@ export function RelatedTransactionsTable({
                 </div>
             ) : (
                 <>
-                    <TransactionTable
-                        transactions={paginatedTransactions}
-                        isLoading={false}
-                        onDelete={handleDelete}
-                        onActivate={handleActivate}
-                        highlightedRowId={highlightedTransactionId}
-                        showEmptyTable={true}
-                        maxHeight="400px"
-                        compactBadges={true}
-                    />
+                    <div className="overflow-x-auto">
+                        <TransactionTable
+                            transactions={paginatedTransactions}
+                            isLoading={false}
+                            onDelete={handleDelete}
+                            onActivate={handleActivate}
+                            highlightedRowId={highlightedTransactionId}
+                            showEmptyTable={true}
+                            maxHeight="400px"
+                            compactBadges={true}
+                        />
+                    </div>
 
                     {/* Pagination Controls */}
                     {transactions.length > 0 && (

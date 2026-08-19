@@ -118,7 +118,6 @@ export const vehicleUpdateSchema = z.object({
     sale_delivery_collection_date: z.string().optional().nullable(),
     sale_payment_method_id: optionalNumber.nullable(),
     buyer_id: optionalNumber.nullable(),
-    sale_commission: optionalNumberWithMin(0).nullable(),
     sale_invoice_number: z.string().optional().nullable(),
 
     // Optional fields

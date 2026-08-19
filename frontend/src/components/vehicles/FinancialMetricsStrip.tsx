@@ -62,8 +62,8 @@ function MetricCell({
     return (
         <div
             className={`flex flex-col min-w-0 rounded-lg border px-3 py-2 transition-colors ${highlight
-                    ? "bg-primary/5 border-primary/20 ring-1 ring-primary/10"
-                    : "bg-background border-border/40 hover:border-border/70"
+                ? "bg-primary/5 border-primary/20 ring-1 ring-primary/10"
+                : "bg-background border-border/40 hover:border-border/70"
                 }`}
         >
             <div className="flex items-center justify-between gap-1 mb-1">
@@ -125,16 +125,14 @@ export function FinancialMetricsStrip({
     const fc = (v: number | null) => (v !== null ? formatCurrency(v) : "—")
 
     return (
-        <div className="rounded-xl border border-border/30 bg-muted/10 p-3 space-y-2">
+        <div className="rounded-xl border border-border/30 bg-muted/10 p-3 space-y-3">
             {/* Row 1: Cost basis metrics */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
+            <div className="grid grid-cols-3 gap-3">
                 {/* COGS */}
                 <MetricCell
                     label="COGS"
                     value={fc(f.cogs)}
-                    equation={!hideTransactions
-                        ? `${fc(f.buyNet)} + ${fc(f.totalTxnCost || 0)}`
-                        : `buyNet ${fc(f.buyNet)}`}
+                    equation={`${fc(f.buyNet)} ${(f.netExpensesEarnings || 0) < 0 ? '−' : '+'} ${fc(Math.abs(f.netExpensesEarnings || 0))}`}
                     colorClass={getFinancialColor("cogs")}
                     icon={<PackageSearch className="h-3 w-3" />}
                 />
@@ -190,7 +188,7 @@ export function FinancialMetricsStrip({
 
             {/* Row 2: Profit metrics (only when sold) */}
             {hasSale && (
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
+                <div className="grid grid-cols-3 gap-3">
                     {/* Gross Profit */}
                     <MetricCell
                         label="Gross Profit"
@@ -213,7 +211,7 @@ export function FinancialMetricsStrip({
                     <MetricCell
                         label="Total Profit"
                         value={fc(f.totalProfit)}
-                        equation={`${fc(f.saleNet)} − ${fc(f.buyNet)} − ${fc(f.totalTxnCost || 0)}`}
+                        equation={`${fc(f.saleNet)} − ${fc(f.cogs)} − ${fc(f.taxLiability || 0)}`}
                         colorClass={getTotalProfitColor(f.totalProfit)}
                         icon={<Banknote className="h-3.5 w-3.5 text-primary/50" />}
                         highlight

@@ -190,3 +190,97 @@ export function useChangeVehicleStatus() {
         },
     })
 }
+
+
+// =============================================================================
+// Vehicle Expenses & Earnings Hooks
+// =============================================================================
+
+export const expenseEarningKeys = {
+    all: (vehicleInternalId: number) =>
+        [...vehicleKeys.detail(vehicleInternalId), "expenses-earnings"] as const,
+}
+
+/**
+ * Fetch active expense/earning entries for a vehicle
+ */
+export function useVehicleExpensesEarnings(vehicleInternalId: number | undefined) {
+    return useQuery({
+        queryKey: expenseEarningKeys.all(vehicleInternalId!),
+        queryFn: async () => {
+            const response = await api.get(
+                `/vehicles/${vehicleInternalId}/expenses-earnings`
+            )
+            return response.data as Array<{
+                id: number
+                type: "expense" | "earning"
+                amount: number
+                category_id: number
+                category_name: string | null
+                subcategory_id: number
+                subcategory_name: string | null
+                created_at: string | null
+            }>
+        },
+        enabled: !!vehicleInternalId,
+    })
+}
+
+/**
+ * Create a new expense/earning for a vehicle
+ */
+export function useCreateExpenseEarning() {
+    const queryClient = useQueryClient()
+
+    return useMutation({
+        mutationFn: async ({
+            vehicleInternalId,
+            payload,
+        }: {
+            vehicleInternalId: number
+            payload: {
+                type: "expense" | "earning"
+                amount: number
+                category_id: number
+                subcategory_id: number
+            }
+        }) => {
+            const response = await api.post(
+                `/vehicles/${vehicleInternalId}/expenses-earnings`,
+                payload
+            )
+            return response.data
+        },
+        onSuccess: (_data, variables) => {
+            queryClient.invalidateQueries({
+                queryKey: vehicleKeys.detail(variables.vehicleInternalId),
+            })
+        },
+    })
+}
+
+/**
+ * Soft-delete an expense/earning entry
+ */
+export function useDeleteExpenseEarning() {
+    const queryClient = useQueryClient()
+
+    return useMutation({
+        mutationFn: async ({
+            vehicleInternalId,
+            entryId,
+        }: {
+            vehicleInternalId: number
+            entryId: number
+        }) => {
+            await api.delete(
+                `/vehicles/${vehicleInternalId}/expenses-earnings/${entryId}`
+            )
+        },
+        onSuccess: (_data, variables) => {
+            queryClient.invalidateQueries({
+                queryKey: vehicleKeys.detail(variables.vehicleInternalId),
+            })
+        },
+    })
+}

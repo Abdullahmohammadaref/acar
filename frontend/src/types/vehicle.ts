@@ -4,6 +4,21 @@
  */
 
 // =============================================================================
+// Vehicle Expense/Earning Types
+// =============================================================================
+
+export interface VehicleExpenseEarning {
+    id: number
+    type: 'expense' | 'earning'
+    amount: number
+    category_id: number
+    category_name: string | null
+    subcategory_id: number
+    subcategory_name: string | null
+    created_at: string | null
+}
+
+// =============================================================================
 // Vehicle Types
 // =============================================================================
 
@@ -79,7 +94,6 @@ export interface VehicleDetail extends VehicleListItem {
     sale_tax_id: number | null
     sale_tax_name: string | null
     sale_tax_percentage: number | null
-    sale_commission: number | null
     sale_delivery_collection_date: string | null
     sale_payment_method_id: number | null
     sale_payment_method_name: string | null
@@ -95,6 +109,9 @@ export interface VehicleDetail extends VehicleListItem {
     // Navigation
     prev_vehicle_internal_id: number | null
     next_vehicle_internal_id: number | null
+
+    // Expenses/Earnings
+    expenses_earnings: VehicleExpenseEarning[]
 }
 
 // =============================================================================

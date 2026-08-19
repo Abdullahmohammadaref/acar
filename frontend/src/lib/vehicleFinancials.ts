@@ -124,6 +124,11 @@ export interface TransactionForCalc {
     tax: number | string | null
 }
 
+export interface ExpenseEarningForCalc {
+    type: "expense" | "earning"
+    amount: number | string | null
+}
+
 /** txnNet = txnGross − (txnGross × taxPct / (100 + taxPct)) */
 export function calcTxnNet(
     txnGross: number | string | null | undefined,
@@ -157,18 +162,31 @@ export function countLinkedTransactions(
     return transactions?.length ?? 0
 }
 
+/** netExpensesEarnings = Σ expense amounts − Σ earning amounts (expenses add to cost, earnings reduce it) */
+export function calcNetExpensesEarnings(
+    entries: ExpenseEarningForCalc[] | null | undefined,
+): number {
+    if (!entries || entries.length === 0) return 0
+    return roundMoney(
+        entries.reduce((sum, e) => {
+            const amt = safeNum(e.amount) ?? 0
+            return sum + (e.type === "expense" ? amt : -amt)
+        }, 0),
+    )
+}
+
 // =============================================================================
 // Derived Metrics
 // =============================================================================
 
-/** COGS = buyNet + totalTxnCost */
+/** COGS = buyNet + netExpensesEarnings */
 export function calcCOGS(
     buyNet: number | null | undefined,
-    totalTxnCost: number | null | undefined,
+    netExpensesEarnings: number | null | undefined = 0,
 ): number | null {
     const bn = safeNum(buyNet)
     if (bn === null) return null
-    return roundMoney(bn + (safeNum(totalTxnCost) ?? 0))
+    return roundMoney(bn + (safeNum(netExpensesEarnings) ?? 0))
 }
 
 /** grossProfit = saleGross − buyGross */
@@ -193,16 +211,16 @@ export function calcNetProfit(
     return roundMoney(sn - bn)
 }
 
-/** totalProfit = saleNet − buyNet − totalTxnCost  (the real bottom line) */
+/** totalProfit = saleNet − COGS − taxLiability  (the real bottom line) */
 export function calcTotalProfit(
     saleNet: number | null | undefined,
-    buyNet: number | null | undefined,
-    totalTxnCost: number | null | undefined,
+    cogs: number | null | undefined,
+    taxLiability: number | null | undefined,
 ): number | null {
     const sn = safeNum(saleNet)
-    const bn = safeNum(buyNet)
-    if (sn === null || bn === null) return null
-    return roundMoney(sn - bn - (safeNum(totalTxnCost) ?? 0))
+    const c = safeNum(cogs)
+    if (sn === null || c === null) return null
+    return roundMoney(sn - c - (safeNum(taxLiability) ?? 0))
 }
 
 /** revenue = saleNet */
@@ -313,9 +331,8 @@ export interface VehicleFinancials {
     saleGross: number | null
     saleTax: number | null
     saleNet: number | null
-    // Transaction side
-    totalTxnCost: number
-    txnCount: number
+    // Expenses & Earnings
+    netExpensesEarnings: number
     // Derived
     cogs: number | null
     grossProfit: number | null
@@ -341,6 +358,7 @@ export interface CalcVehicleFinancialsInput {
     buyDate: string | null | undefined
     saleDate: string | null | undefined
     transactions?: TransactionForCalc[] | null
+    entries?: ExpenseEarningForCalc[] | null
     annualTargetRate?: number
     targetDaysOnStock?: number
     status?: string | null
@@ -366,18 +384,17 @@ export function calcVehicleFinancials(input: CalcVehicleFinancialsInput): Vehicl
     const saleTax = calcSaleTaxAmount(saleGross, rawSaleTaxPct)
     const saleNet = calcSaleNetFromPercentage(saleGross, rawSaleTaxPct)
 
-    const totalTxnCost = calcTotalTxnCost(input.transactions)
-    const txnCount = countLinkedTransactions(input.transactions)
+    const netExpensesEarnings = calcNetExpensesEarnings(input.entries)
 
-    const cogs = calcCOGS(buyNet, totalTxnCost)
+    const cogs = calcCOGS(buyNet, netExpensesEarnings)
     const grossProfit = calcGrossProfit(saleGross, buyGross)
     const netProfit = calcNetProfit(saleNet, buyNet)
-    const totalProfit = calcTotalProfit(saleNet, buyNet, totalTxnCost)
+    const taxLiability = calcTaxLiability(buyTax, saleTax)
+    const totalProfit = calcTotalProfit(saleNet, cogs, taxLiability)
     const revenue = calcRevenue(saleNet)
     const profitMargin = calcProfitMargin(totalProfit, revenue)
     const roi = calcROI(totalProfit, cogs)
     const daysOnStock = calcDaysOnStock(input.buyDate, rawSaleDate)
-    const taxLiability = calcTaxLiability(buyTax, saleTax)
     // COMMENTED OUT — re-enable when holding cost logic is re-implemented correctly
     // const holdingCost = calcHoldingCost(cogs, daysOnStock, input.annualTargetRate)
     // const adjustedProfit = calcAdjustedProfit(totalProfit, holdingCost)
@@ -393,8 +410,7 @@ export function calcVehicleFinancials(input: CalcVehicleFinancialsInput): Vehicl
         saleGross,
         saleTax,
         saleNet,
-        totalTxnCost,
-        txnCount,
+        netExpensesEarnings,
         cogs,
         grossProfit,
         netProfit,
@@ -430,6 +446,7 @@ export function getFinancialColor(variable: string): string {
         txnTax: "text-orange-600 dark:text-orange-400",
         txnNet: "text-yellow-700 dark:text-amber-300",
         totalTxnCost: "text-pink-600 dark:text-pink-400",
+        netExpensesEarnings: "text-amber-600 dark:text-amber-400",
         cogs: "text-slate-600 dark:text-slate-400",
         grossProfit: "text-purple-600 dark:text-purple-400",
         netProfit: "text-violet-700 dark:text-violet-400",

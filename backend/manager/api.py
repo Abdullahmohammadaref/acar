@@ -29,7 +29,8 @@ from .models import (
     VehicleType, BodyType, Make, VehicleModel,
     Color, FuelType, DamageType, DoorsChoice,
     PaymentMethod, TaxPercentage, Currency, Category, Subcategory,
-    ActivityLog, KeyNumber, Country, City
+    ActivityLog, KeyNumber, Country, City,
+    VehicleExpenseEarning
 )
 from .schemas import (
     VehicleListOut, VehicleDetailOut, VehicleCreate, VehicleUpdate,
@@ -39,7 +40,8 @@ from .schemas import (
     VehicleModelCreate, LegalEntityOut, LegalEntityCreate,
     LegalEntityListOut, LegalEntityUpdate, LegalEntityFilters, LegalEntitiesListResponse,
     BranchOut, ErrorResponse, SuccessResponse,
-    ChoiceUpdatePayload, KeyNumberOut
+    ChoiceUpdatePayload, KeyNumberOut,
+    VehicleExpenseEarningOut, VehicleExpenseEarningCreate
 )
 from .image_processing import process_vehicle_image
 
@@ -251,7 +253,6 @@ def serialize_vehicle_detail(vehicle: Vehicle) -> dict:
         "sale_tax_id": vehicle.sale_tax_id,
         "sale_tax_name": vehicle.sale_tax.name if vehicle.sale_tax else None,
         "sale_tax_percentage": vehicle.sale_tax.percentage if vehicle.sale_tax else None,
-        "sale_commission": vehicle.sale_commission,
         "sale_delivery_collection_date": vehicle.sale_delivery_collection_date,
         "sale_payment_method_id": vehicle.sale_payment_method_id,
         "sale_payment_method_name": vehicle.sale_payment_method.name if vehicle.sale_payment_method else None,
@@ -288,6 +289,22 @@ def serialize_vehicle_detail(vehicle: Vehicle) -> dict:
         # Key Number (reverse OneToOne)
         "key_number_id": vehicle.key_number.id if hasattr(vehicle, 'key_number') and vehicle.key_number else None,
         "key_number_value": vehicle.key_number.number if hasattr(vehicle, 'key_number') and vehicle.key_number else None,
+
+        # Expenses/Earnings (lightweight, no FK to Transaction)
+        "expenses_earnings": [
+            {
+                "id": ee.id,
+                "type": ee.type,
+                "amount": ee.amount,
+                "category_id": ee.category_id,
+                "category_name": ee.category.name if ee.category else None,
+                "subcategory_id": ee.subcategory_id,
+                "subcategory_name": ee.subcategory.name if ee.subcategory else None,
+                "created_at": ee.created_at,
+            }
+            for ee in vehicle.expenses_earnings.filter(is_active=True)
+                .select_related('category', 'subcategory')
+        ],
     })
     
     return data
@@ -928,6 +945,115 @@ def upload_vehicle_image(request, internal_id: int, image: UploadedFile = File(.
     )
 
     return build_vehicle_detail_response(business, vehicle)
+
+
+# =============================================================================
+# Vehicle Expenses & Earnings Endpoints
+# =============================================================================
+
+@router.get(
+    "/vehicles/{internal_id}/expenses-earnings",
+    response=List[VehicleExpenseEarningOut],
+)
+def list_vehicle_expenses_earnings(request, internal_id: int):
+    """List active expense/earning entries for a vehicle."""
+    business = get_user_business(request)
+    vehicle = get_object_or_404(Vehicle, business=business, internal_id=internal_id)
+
+    qs = (
+        VehicleExpenseEarning.objects
+        .filter(vehicle=vehicle, is_active=True)
+        .select_related('category', 'subcategory')
+    )
+
+    return [
+        {
+            "id": ee.id,
+            "type": ee.type,
+            "amount": ee.amount,
+            "category_id": ee.category_id,
+            "category_name": ee.category.name if ee.category else None,
+            "subcategory_id": ee.subcategory_id,
+            "subcategory_name": ee.subcategory.name if ee.subcategory else None,
+            "created_at": ee.created_at,
+        }
+        for ee in qs
+    ]
+
+
+@router.post(
+    "/vehicles/{internal_id}/expenses-earnings",
+    response={201: VehicleExpenseEarningOut, 400: ErrorResponse, 404: ErrorResponse},
+)
+def create_vehicle_expense_earning(
+    request,
+    internal_id: int,
+    payload: VehicleExpenseEarningCreate,
+):
+    """Create a new expense/earning for a vehicle."""
+    business = get_user_business(request)
+    vehicle = get_object_or_404(Vehicle, business=business, internal_id=internal_id)
+
+    category = get_object_or_404(Category, id=payload.category_id, business=business, is_active=True)
+    subcategory = get_object_or_404(
+        Subcategory, id=payload.subcategory_id, category=category, business=business, is_active=True
+    )
+
+    ee = VehicleExpenseEarning.objects.create(
+        business=business,
+        vehicle=vehicle,
+        category=category,
+        subcategory=subcategory,
+        type=payload.type,
+        amount=payload.amount,
+    )
+
+    log_activity(
+        request,
+        action='create',
+        entity_type='vehicle',
+        entity_id=vehicle.internal_id,
+        entity_name=str(vehicle),
+        details=f"{payload.type.title()} of {payload.amount} added ({category.name} / {subcategory.name})"
+    )
+
+    return 201, {
+        "id": ee.id,
+        "type": ee.type,
+        "amount": ee.amount,
+        "category_id": ee.category_id,
+        "category_name": category.name,
+        "subcategory_id": ee.subcategory_id,
+        "subcategory_name": subcategory.name,
+        "created_at": ee.created_at,
+    }
+
+
+@router.delete(
+    "/vehicles/{internal_id}/expenses-earnings/{ee_id}",
+    response={200: SuccessResponse, 404: ErrorResponse},
+)
+def delete_vehicle_expense_earning(request, internal_id: int, ee_id: int):
+    """Soft-delete an expense/earning entry (set is_active=False)."""
+    business = get_user_business(request)
+    vehicle = get_object_or_404(Vehicle, business=business, internal_id=internal_id)
+
+    ee = get_object_or_404(
+        VehicleExpenseEarning, id=ee_id, vehicle=vehicle, is_active=True
+    )
+    ee.is_active = False
+    ee.save(update_fields=['is_active'])
+
+    log_activity(
+        request,
+        action='delete',
+        entity_type='vehicle',
+        entity_id=vehicle.internal_id,
+        entity_name=str(vehicle),
+        details=f"{ee.type.title()} of {ee.amount} removed"
+    )
+
+    return {"success": True, "message": "Entry deleted"}
 
 
 # =============================================================================
