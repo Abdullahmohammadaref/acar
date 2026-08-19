@@ -403,7 +403,7 @@ export default function BusinessSettingsPage() {
                         <h3 className="text-sm font-medium text-muted-foreground mb-4">Financial Preferences</h3>
                         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
                             <div>
-                                <label className="block text-sm font-medium text-foreground mb-1.5">Target Annual Return (%)</label>
+                                <label className="block text-sm font-medium text-foreground mb-1.5">Target Profit Margin (%)</label>
                                 <input
                                     type="number"
                                     step="0.01"
@@ -411,7 +411,7 @@ export default function BusinessSettingsPage() {
                                     onChange={(e) => handleFieldChange("target_annual_return", e.target.value)}
                                     className={inputClass}
                                 />
-                                <p className="mt-1 text-xs text-muted-foreground">Used to calculate holding costs</p>
+                                <p className="mt-1 text-xs text-muted-foreground">Target profit margin used to calculate break-even sale price for each vehicle</p>
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-foreground mb-1.5">Target Days on Stock</label>

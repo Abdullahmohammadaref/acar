@@ -18,9 +18,9 @@ import {
     PieChart,
     Receipt,
     Target,
-    Timer,
+    // Timer,       // COMMENTED OUT — was used for Holding Cost cell
     TrendingUp,
-    TrendingDown,
+    // TrendingDown, // COMMENTED OUT — was used for Adj. Profit cell
 } from "lucide-react"
 import { formatCurrency } from "@/lib/utils"
 import {
@@ -139,13 +139,17 @@ export function FinancialMetricsStrip({
                     icon={<PackageSearch className="h-3 w-3" />}
                 />
 
-                {/* Txn Expenses */}
+                {/* VAT Liability — net VAT owed to government (Umsatzsteuerzahllast) */}
                 {!hideTransactions && (
                     <MetricCell
-                        label="Txn Expenses"
-                        value={f.txnCount > 0 ? formatCurrency(f.totalTxnCost) : "€0.00"}
-                        equation={f.txnCount > 0 ? `${f.txnCount} transactions` : "none"}
-                        colorClass={getFinancialColor("totalTxnCost")}
+                        label="VAT Liability"
+                        value={f.taxLiability !== null ? formatCurrency(f.taxLiability) : "—"}
+                        equation={
+                            f.taxLiability !== null
+                                ? `|${f.saleTax !== null ? formatCurrency(f.saleTax) : "—"} − ${f.buyTax !== null ? formatCurrency(f.buyTax) : "—"}|`
+                                : "sale tax not set"
+                        }
+                        colorClass={getFinancialColor("taxLiability")}
                         icon={<Receipt className="h-3 w-3" />}
                     />
                 )}
@@ -155,14 +159,14 @@ export function FinancialMetricsStrip({
                     <MetricCell
                         label="Break-Even"
                         value={formatCurrency(f.breakEvenPrice)}
-                        equation={`${fc(f.cogs)} × 1.10`}
+                        equation={`${fc(f.cogs)} × ${(1 + (annualTargetRate ?? 10) / 100).toFixed(2)}`}
                         colorClass={getFinancialColor("breakEvenPrice")}
                         icon={<Target className="h-3 w-3" />}
                     />
                 )}
 
-                {/* Holding Cost */}
-                {f.holdingCost !== null && (
+                {/* HOLDING COST — COMMENTED OUT: to be re-implemented correctly later */}
+                {/* {f.holdingCost !== null && (
                     <MetricCell
                         label="Holding Cost"
                         value={formatCurrency(f.holdingCost)}
@@ -170,10 +174,10 @@ export function FinancialMetricsStrip({
                         colorClass={getFinancialColor("holdingCost")}
                         icon={<Timer className="h-3 w-3" />}
                     />
-                )}
+                )} */}
 
-                {/* Adjusted Profit */}
-                {f.adjustedProfit !== null && (
+                {/* ADJ. PROFIT — COMMENTED OUT: to be re-implemented correctly later */}
+                {/* {f.adjustedProfit !== null && (
                     <MetricCell
                         label="Adj. Profit"
                         value={fc(f.adjustedProfit)}
@@ -181,7 +185,7 @@ export function FinancialMetricsStrip({
                         colorClass={getFinancialColor("adjustedProfit")}
                         icon={<TrendingDown className="h-3 w-3" />}
                     />
-                )}
+                )} */}
             </div>
 
             {/* Row 2: Profit metrics (only when sold) */}

@@ -1,6 +1,6 @@
 # 🗺️ ACAR — Project Map
 
-> **Last updated:** 2026-05-18
+> **Last updated:** 2026-08-13
 > This file maps every module and file in the codebase. Read this before making changes.
 > For data model details, see [`schema.prisma`](./schema.prisma).
 > For project overview, see [`README.md`](./README.md).
@@ -16,6 +16,7 @@ acar/
 ├── README.md                # Project overview, setup, API docs
 ├── schema.prisma            # Prisma data model (mirrors Django models 1:1)
 ├── PROJECT_MAP.md           # ← You are here
+├── docs-plan_tax_liability_breakeven_cleanup.md # Tax Liability, Dynamic Break-Even, Holding Cost Cleanup docs
 ├── docs-fixes-and-new-field.md  # Documentation for Key Number management and Choices stability fixes
 ├── docs-ui-changes.md       # Documentation for UI stability, choices management hierarchy, and dashboard refinements
 ├── docs-ui-tweaks.md        # Documentation for legacy UI improvements

@@ -93,8 +93,9 @@ contentStyle={{
 
 ## 7. FinancialMetricsStrip
 Two-row layout for vehicle financial KPIs:
-- **Row 1 (Cost Basis)**: COGS, Txn Expenses, Break-Even, Holding Cost
+- **Row 1 (Cost Basis)**: COGS, VAT Liability (`|saleTax − buyTax|`), Break-Even (dynamic target margin multiplier e.g. `× 1.10`)
 - **Row 2 (Profit — only when sold)**: Gross Profit, Net Profit, Total Profit (highlighted), Margin, ROI
+- Note: Holding Cost and Adj. Profit cells are preserved commented-out in code.
 - Equations use compact format: `€12,000 − €10,000` (not `saleNet(€12,000) − buyNet(€10,000)`)
 
 ## 8. Split-View Toggle

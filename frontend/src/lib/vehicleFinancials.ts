@@ -271,6 +271,25 @@ export function calcAdjustedProfit(
     return roundMoney(tp - (hc ?? 0))
 }
 
+/**
+ * taxLiability = |saleTaxAmount − buyTaxAmount|
+ *
+ * Represents the net VAT the business owes the government (Umsatzsteuerzahllast).
+ * Both amounts are treated as positive (absolute values) before subtracting,
+ * then the result is made absolute to handle the loss case (negative VAT → refund).
+ *
+ * Returns null if saleTaxAmount is null (sale not set yet, cannot compute liability).
+ */
+export function calcTaxLiability(
+    buyTaxAmount: number | null | undefined,
+    saleTaxAmount: number | null | undefined,
+): number | null {
+    const b = safeNum(buyTaxAmount)
+    const s = safeNum(saleTaxAmount)
+    if (s === null) return null
+    return roundMoney(Math.abs(Math.abs(s) - Math.abs(b ?? 0)))
+}
+
 /** breakEvenPrice = COGS × (1 + targetMargin) */
 export function calcBreakEvenPrice(
     cogs: number | null | undefined,
@@ -306,8 +325,11 @@ export interface VehicleFinancials {
     profitMargin: number | null
     roi: number | null
     daysOnStock: number | null
-    holdingCost: number | null
-    adjustedProfit: number | null
+    // VAT Liability — replaces Txn Expenses display; the net VAT owed to government
+    taxLiability: number | null
+    // COMMENTED OUT — recoverable: uncomment calc call in calcVehicleFinancials + MetricCell in FinancialMetricsStrip
+    // holdingCost: number | null
+    // adjustedProfit: number | null
     breakEvenPrice: number | null
 }
 
@@ -355,9 +377,14 @@ export function calcVehicleFinancials(input: CalcVehicleFinancialsInput): Vehicl
     const profitMargin = calcProfitMargin(totalProfit, revenue)
     const roi = calcROI(totalProfit, cogs)
     const daysOnStock = calcDaysOnStock(input.buyDate, rawSaleDate)
-    const holdingCost = calcHoldingCost(cogs, daysOnStock, input.annualTargetRate)
-    const adjustedProfit = calcAdjustedProfit(totalProfit, holdingCost)
-    const breakEvenPrice = calcBreakEvenPrice(cogs)
+    const taxLiability = calcTaxLiability(buyTax, saleTax)
+    // COMMENTED OUT — re-enable when holding cost logic is re-implemented correctly
+    // const holdingCost = calcHoldingCost(cogs, daysOnStock, input.annualTargetRate)
+    // const adjustedProfit = calcAdjustedProfit(totalProfit, holdingCost)
+    const breakEvenPrice = calcBreakEvenPrice(
+        cogs,
+        input.annualTargetRate != null ? input.annualTargetRate / 100 : TARGET_MARGIN
+    )
 
     return {
         buyGross,
@@ -376,8 +403,9 @@ export function calcVehicleFinancials(input: CalcVehicleFinancialsInput): Vehicl
         profitMargin,
         roi,
         daysOnStock,
-        holdingCost,
-        adjustedProfit,
+        taxLiability,
+        // holdingCost,     // COMMENTED OUT
+        // adjustedProfit,  // COMMENTED OUT
         breakEvenPrice,
     }
 }
@@ -410,6 +438,7 @@ export function getFinancialColor(variable: string): string {
         profitMargin: "text-purple-500 dark:text-purple-300",
         roi: "text-fuchsia-600 dark:text-fuchsia-400",
         daysOnStock: "text-slate-600 dark:text-slate-400",
+        taxLiability: "text-orange-600 dark:text-orange-400",
         holdingCost: "text-red-600 dark:text-red-400",
         adjustedProfit: "text-red-700 dark:text-red-300",
         breakEvenPrice: "text-amber-700 dark:text-amber-500",
