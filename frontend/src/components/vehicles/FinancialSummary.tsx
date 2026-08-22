@@ -1,4 +1,4 @@
-import { TrendingUp, TrendingDown, DollarSign, BarChart3, Target, Clock } from "lucide-react"
+import { TrendingUp, TrendingDown, DollarSign, BarChart3, Target, Clock, Scale } from "lucide-react"
 import { formatCurrency } from "@/lib/utils"
 import {
     getProfitColor,
@@ -17,8 +17,8 @@ export function FinancialSummaryCard({
 }: FinancialSummaryCardProps) {
     if (isLoading || !summary) {
         return (
-            <div className="grid gap-4 md:grid-cols-3">
-                {[1, 2, 3].map((i) => (
+            <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
+                {[1, 2, 3, 4, 5].map((i) => (
                     <div
                         key={i}
                         className="animate-pulse rounded-xl border border-border bg-card p-4"
@@ -40,9 +40,12 @@ export function FinancialSummaryCard({
         ? Math.round((summary.net_difference / summary.net_total_expenses) * 100 * 10) / 10
         : null
 
+    const vatLiability = Math.abs(summary.tax_total_revenue - summary.tax_total_expenses)
+    const totalProfit = summary.net_difference - vatLiability
+
     const cards = [
         {
-            label: "Total Revenue",
+            label: "Gross Revenue",
             value: summary.gross_total_revenue,
             subLabel: "Net",
             subValue: summary.net_total_revenue,
@@ -51,7 +54,7 @@ export function FinancialSummaryCard({
             bgColor: "bg-green-500/10",
         },
         {
-            label: "Total Expenses",
+            label: "Gross Expenses",
             value: summary.gross_total_expenses,
             subLabel: "Net",
             subValue: summary.net_total_expenses,
@@ -60,7 +63,7 @@ export function FinancialSummaryCard({
             bgColor: "bg-red-500/10",
         },
         {
-            label: "Total Profit",
+            label: "Gross Profit",
             value: summary.gross_difference,
             subLabel: "Net",
             subValue: summary.net_difference,
@@ -68,12 +71,28 @@ export function FinancialSummaryCard({
             color: summary.gross_difference >= 0 ? "text-green-500" : "text-red-500",
             bgColor: summary.gross_difference >= 0 ? "bg-green-500/10" : "bg-red-500/10",
         },
+        {
+            label: "Total Profit",
+            value: totalProfit,
+            subText: "Net Profit − VAT Liability",
+            icon: DollarSign,
+            color: totalProfit >= 0 ? "text-green-500" : "text-red-500",
+            bgColor: totalProfit >= 0 ? "bg-green-500/10" : "bg-red-500/10",
+        },
+        {
+            label: "VAT Liability",
+            value: vatLiability,
+            subText: "|Sale VAT − Buy VAT|",
+            icon: Scale,
+            color: "text-orange-500",
+            bgColor: "bg-orange-500/10",
+        },
     ]
 
     return (
         <div className="space-y-3">
-            {/* Primary financial cards — existing layout */}
-            <div className="grid gap-4 md:grid-cols-3">
+            {/* Primary financial cards — 5 card grid */}
+            <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
                 {cards.map((card) => {
                     const Icon = card.icon
                     return (
@@ -83,18 +102,24 @@ export function FinancialSummaryCard({
                         >
                             <div className="flex items-center gap-3">
                                 <div
-                                    className={`flex h-10 w-10 items-center justify-center rounded-lg ${card.bgColor}`}
+                                    className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${card.bgColor}`}
                                 >
                                     <Icon className={`h-5 w-5 ${card.color}`} />
                                 </div>
-                                <div>
-                                    <p className="text-sm text-muted-foreground">{card.label}</p>
-                                    <p className={`text-xl font-bold ${card.color}`}>
+                                <div className="min-w-0">
+                                    <p className="text-sm text-muted-foreground truncate">{card.label}</p>
+                                    <p className={`text-xl font-bold ${card.color} truncate`}>
                                         {formatCurrency(card.value)}
                                     </p>
-                                    <p className="text-xs text-muted-foreground">
-                                        {card.subLabel}: {formatCurrency(card.subValue)}
-                                    </p>
+                                    {card.subLabel !== undefined ? (
+                                        <p className="text-xs text-muted-foreground truncate">
+                                            {card.subLabel}: {formatCurrency(card.subValue ?? 0)}
+                                        </p>
+                                    ) : (
+                                        <p className="text-xs text-muted-foreground truncate font-mono">
+                                            {card.subText}
+                                        </p>
+                                    )}
                                 </div>
                             </div>
                         </div>
@@ -113,7 +138,7 @@ export function FinancialSummaryCard({
                                 {formatPercent(profitMargin)}
                             </span>
                             <span className="text-[10px] text-muted-foreground/60">
-                                (Total Profit ÷ Total Revenue)
+                                (Gross Profit ÷ Gross Revenue)
                             </span>
                         </div>
                     )}
@@ -125,7 +150,7 @@ export function FinancialSummaryCard({
                                 {formatPercent(roi)}
                             </span>
                             <span className="text-[10px] text-muted-foreground/60">
-                                (Total Profit ÷ Total Expenses)
+                                (Gross Profit ÷ Gross Expenses)
                             </span>
                         </div>
                     )}
