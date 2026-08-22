@@ -137,6 +137,7 @@ export interface FinancialSummary {
     gross_total_revenue: number
     gross_total_expenses: number
     gross_difference: number
+    total_profit?: number
 }
 
 // Response from vehicle API (matches Django API format)

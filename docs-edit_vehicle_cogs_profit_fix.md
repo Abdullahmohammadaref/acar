@@ -42,10 +42,28 @@ Updated equation text under each metric cell in `FinancialMetricsStrip.tsx`:
 
 ---
 
+### 5. Vehicles Page Header Financial Summary Alignment
+Aligned `calculate_financial_summary` in `backend/manager/api.py` and `calculate_summary` in `backend/manager/vehicle_api.py` with the vehicle financial calculations:
+- **Gross Revenue**: `sum(vehicle.sale_price)`
+- **Net Revenue**: `sum(vehicle.sale_price_net)`
+- **Gross Expenses**: `sum(Gross COGS)` = `sum(buy_gross + net_exp_earn)`
+- **Net Expenses**: `sum(COGS)` = `sum(buy_net + net_exp_earn)`
+- **Gross Profit**: `sum(sale_gross + Gross COGS)`
+- **Net Profit**: `sum(sale_net + COGS)`
+- **VAT Liability**: `sum(|sale_tax_amount − buy_tax_amount|)`
+- **Total Profit**: `sum(Net Profit − VAT Liability)`
+
+---
+
 ## 📁 Modified Files
 
 | File | Changes |
 |------|---------|
+| `backend/manager/api.py` | Updated `calculate_financial_summary` to aggregate vehicle-scoped COGS, Gross COGS, VAT liability, and profits. |
+| `backend/manager/vehicle_api.py` | Updated `calculate_summary` and `VehicleSummarySchema` with matching financial calculations. |
+| `backend/manager/schemas.py` | Updated `FinancialSummary` schema with `total_profit` and margin fields. |
+| `frontend/src/types/vehicle.ts` | Added `total_profit` to `FinancialSummary` interface. |
+| `frontend/src/components/vehicles/FinancialSummary.tsx` | Updated 5-card summary layout and aligned VAT Liability and Total Profit displays. |
 | `frontend/src/lib/vehicleFinancials.ts` | Fixed `calcNetExpensesEarnings` sign calculation, added `calcGrossCOGS`, updated `calcGrossProfit(saleGross, grossCogs)`, `calcNetProfit(saleNet, cogs)`, `calcTotalProfit(netProfit, taxLiability)`, `calcProfitMargin(grossProfit, saleNet)`, `calcROI(grossProfit, cogs)`, added `grossCogs` to `VehicleFinancials` and `getFinancialColor`. |
 | `frontend/src/components/vehicles/FinancialMetricsStrip.tsx` | Updated `MetricCell` equation props for COGS, Gross Profit, Net Profit, Total Profit, Margin, and ROI. |
 | `.agents/design-system/components.md` | Updated Section 7 (FinancialMetricsStrip) formula specifications. |

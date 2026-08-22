@@ -33,15 +33,19 @@ export function FinancialSummaryCard({
 
     // Calculate derived aggregate metrics
     const profitMargin = summary.net_total_revenue !== 0
-        ? Math.round((summary.net_difference / summary.net_total_revenue) * 100 * 10) / 10
+        ? Math.round((summary.gross_difference / summary.net_total_revenue) * 100 * 10) / 10
         : null
 
     const roi = summary.net_total_expenses !== 0
-        ? Math.round((summary.net_difference / summary.net_total_expenses) * 100 * 10) / 10
+        ? Math.round((summary.gross_difference / summary.net_total_expenses) * 100 * 10) / 10
         : null
 
-    const vatLiability = Math.abs(summary.tax_total_revenue - summary.tax_total_expenses)
-    const totalProfit = summary.net_difference - vatLiability
+    const vatLiability = summary.tax_difference !== undefined && summary.tax_difference !== 0
+        ? Math.abs(summary.tax_difference)
+        : Math.abs(summary.tax_total_revenue - summary.tax_total_expenses)
+    const totalProfit = summary.total_profit !== undefined && summary.total_profit !== null
+        ? summary.total_profit
+        : summary.net_difference - vatLiability
 
     const cards = [
         {
@@ -138,7 +142,7 @@ export function FinancialSummaryCard({
                                 {formatPercent(profitMargin)}
                             </span>
                             <span className="text-[10px] text-muted-foreground/60">
-                                (Gross Profit ÷ Gross Revenue)
+                                (Gross Profit ÷ Net Revenue)
                             </span>
                         </div>
                     )}
@@ -150,7 +154,7 @@ export function FinancialSummaryCard({
                                 {formatPercent(roi)}
                             </span>
                             <span className="text-[10px] text-muted-foreground/60">
-                                (Gross Profit ÷ Gross Expenses)
+                                (Gross Profit ÷ COGS)
                             </span>
                         </div>
                     )}

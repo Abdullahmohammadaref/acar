@@ -641,6 +641,12 @@ class FinancialSummary(Schema):
     gross_total_expenses: Decimal = Decimal("0")
     gross_difference: Decimal = Decimal("0")
 
+    # Additional fields
+    avg_days_on_stock: Optional[Decimal] = None
+    avg_roi: Optional[Decimal] = None
+    avg_profit_margin: Optional[Decimal] = None
+    total_profit: Optional[Decimal] = None
+
 
 class AllChoices(Schema):
     """

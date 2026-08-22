@@ -185,6 +185,7 @@ class VehicleSummarySchema(Schema):
     gross_total_revenue: float
     gross_total_expenses: float
     gross_difference: float
+    total_profit: Optional[float] = None
 
 
 class PaginatedVehiclesSchema(Schema):
@@ -479,53 +480,74 @@ def get_models_for_make(request: HttpRequest, make_id: int):
 # ============================================================================
 
 def calculate_summary(queryset) -> dict:
-    """Calculate financial summary for a vehicle queryset"""
-    from .models import Transaction
-    
-    transaction_net_revenue = Transaction.get_net_total_revenue_for_vehicle_queryset(queryset)
-    transaction_net_expenses = Transaction.get_net_total_expenses_for_vehicle_queryset(queryset)
-    transaction_tax_revenue = Transaction.get_tax_total_revenue_for_vehicle_queryset(queryset)
-    transaction_tax_expenses = Transaction.get_tax_total_expenses_for_vehicle_queryset(queryset)
+    """Calculate financial summary for a vehicle queryset based on vehicle financial rules"""
+    gross_revenue = Decimal("0")
+    net_revenue = Decimal("0")
+    gross_expenses = Decimal("0")
+    net_expenses = Decimal("0")
+    gross_profit = Decimal("0")
+    net_profit = Decimal("0")
+    total_vat_liability = Decimal("0")
+    total_profit = Decimal("0")
 
-    # Initialize totals with transaction totals
-    net_revenue = transaction_net_revenue
-    net_expenses = transaction_net_expenses
-    tax_revenue = transaction_tax_revenue
-    tax_expenses = transaction_tax_expenses
-    
     total_days = 0
     vehicles_with_days = 0
-    CALCULATION_ELIGIBLE_STATUSES = ["ready_for_sale", "reserved", "sold"]
-    
-    for vehicle in queryset:
-        # Skip inactive vehicles entirely for calculations
+
+    vehicles = queryset.prefetch_related('expenses_earnings', 'buy_tax', 'sale_tax')
+
+    for vehicle in vehicles:
         if vehicle.status == 'inactive':
             continue
 
-        # Calculate revenue (from sales) - only if in eligible status
-        if vehicle.sale_price and vehicle.status in CALCULATION_ELIGIBLE_STATUSES:
-            sale_net = vehicle.sale_price
-            net_revenue += sale_net
-            if vehicle.sale_tax and vehicle.sale_tax.percentage:
-                tax_revenue += sale_net * (vehicle.sale_tax.percentage / Decimal('100'))
-        
-        # Calculate expenses (from purchases)
-        if vehicle.buy_price:
-            buy_net = vehicle.buy_price
-            net_expenses += buy_net
-            if vehicle.buy_tax and vehicle.buy_tax.percentage:
-                tax_expenses += buy_net * (vehicle.buy_tax.percentage / Decimal('100'))
+        # 1. Buy Details & Tax
+        buy_gross = Decimal(str(vehicle.buy_price)) if vehicle.buy_price is not None else Decimal("0")
+        buy_net = Decimal(str(vehicle.buy_price_net)) if vehicle.buy_price_net is not None else buy_gross
+        buy_tax_amount = buy_gross - buy_net
 
-        # Calculate days on stock
+        # 2. Net Expenses & Earnings (signed: earnings - expenses)
+        net_exp_earn = Decimal("0")
+        for ee in vehicle.expenses_earnings.all():
+            amt = Decimal(str(ee.amount)) if ee.amount is not None else Decimal("0")
+            if ee.type == 'earning':
+                net_exp_earn += amt
+            elif ee.type == 'expense':
+                net_exp_earn -= amt
+
+        # 3. COGS & Gross COGS
+        cogs = buy_net + net_exp_earn
+        gross_cogs = buy_gross + net_exp_earn
+
+        net_expenses += cogs
+        gross_expenses += gross_cogs
+
+        # Days on stock
         if vehicle.buy_date:
             end_date = vehicle.sale_date if vehicle.sale_date else date.today()
             days = (end_date - vehicle.buy_date).days
             if days >= 0:
                 total_days += days
                 vehicles_with_days += 1
-    
-    gross_revenue = net_revenue + tax_revenue
-    gross_expenses = net_expenses + tax_expenses
+
+        # 4. Sale Details & Tax
+        if vehicle.sale_price is not None:
+            sale_gross = Decimal(str(vehicle.sale_price))
+            sale_net = Decimal(str(vehicle.sale_price_net)) if vehicle.sale_price_net is not None else sale_gross
+            sale_tax_amount = sale_gross - sale_net
+
+            gross_revenue += sale_gross
+            net_revenue += sale_net
+
+            v_vat_liability = abs(sale_tax_amount - buy_tax_amount)
+            total_vat_liability += v_vat_liability
+
+            v_gross_profit = sale_gross + gross_cogs
+            v_net_profit = sale_net + cogs
+            v_total_profit = v_net_profit - v_vat_liability
+
+            gross_profit += v_gross_profit
+            net_profit += v_net_profit
+            total_profit += v_total_profit
+
     avg_days_on_stock = int(round(total_days / vehicles_with_days)) if vehicles_with_days > 0 else 0
 
     return {
@@ -533,13 +555,14 @@ def calculate_summary(queryset) -> dict:
         "avg_days_on_stock": avg_days_on_stock,
         "net_total_revenue": float(net_revenue),
         "net_total_expenses": float(net_expenses),
-        "net_difference": float(net_revenue - net_expenses),
-        "tax_total_revenue": float(tax_revenue),
-        "tax_total_expenses": float(tax_expenses),
-        "tax_difference": float(tax_revenue - tax_expenses),
+        "net_difference": float(net_profit),
+        "tax_total_revenue": 0.0,
+        "tax_total_expenses": 0.0,
+        "tax_difference": float(total_vat_liability),
         "gross_total_revenue": float(gross_revenue),
         "gross_total_expenses": float(gross_expenses),
-        "gross_difference": float(gross_revenue - gross_expenses),
+        "gross_difference": float(gross_profit),
+        "total_profit": float(total_profit),
     }
 
 

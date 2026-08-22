@@ -509,50 +509,89 @@ def apply_vehicle_sorting(qs, filters: VehicleFilters):
 
 
 def calculate_financial_summary(vehicles_qs) -> dict:
-    """Calculate financial summary for a vehicle queryset"""
-    # Initialize totals
+    """Calculate financial summary for a vehicle queryset based on vehicle financial rules"""
+    gross_revenue = Decimal("0")
     net_revenue = Decimal("0")
+    gross_expenses = Decimal("0")
     net_expenses = Decimal("0")
-    tax_revenue = Decimal("0")
-    tax_expenses = Decimal("0")
-    
+    gross_profit = Decimal("0")
+    net_profit = Decimal("0")
+    total_vat_liability = Decimal("0")
+    total_profit = Decimal("0")
+
     total_active_days = 0
-    vehicle_count = vehicles_qs.count()
-    
-    for vehicle in vehicles_qs:
-        total_active_days += vehicle.active_for
-        # Revenue from sales
-        if vehicle.sale_price:
-            sale_net = vehicle.sale_price_net or vehicle.sale_price
+    vehicle_count = 0
+
+    # Prefetch relations for performance
+    vehicles = vehicles_qs.prefetch_related('expenses_earnings', 'buy_tax', 'sale_tax')
+
+    for vehicle in vehicles:
+        if vehicle.status == 'inactive':
+            continue
+
+        vehicle_count += 1
+        total_active_days += (vehicle.active_for or 0)
+
+        # 1. Buy Details & Tax
+        buy_gross = Decimal(str(vehicle.buy_price)) if vehicle.buy_price is not None else Decimal("0")
+        buy_net = Decimal(str(vehicle.buy_price_net)) if vehicle.buy_price_net is not None else buy_gross
+        buy_tax_amount = buy_gross - buy_net
+
+        # 2. Net Expenses & Earnings (signed: earnings - expenses)
+        net_exp_earn = Decimal("0")
+        for ee in vehicle.expenses_earnings.all():
+            amt = Decimal(str(ee.amount)) if ee.amount is not None else Decimal("0")
+            if ee.type == 'earning':
+                net_exp_earn += amt
+            elif ee.type == 'expense':
+                net_exp_earn -= amt
+
+        # 3. COGS & Gross COGS
+        # COGS = buy_net + net_exp_earn
+        # Gross COGS = buy_gross + net_exp_earn
+        cogs = buy_net + net_exp_earn
+        gross_cogs = buy_gross + net_exp_earn
+
+        net_expenses += cogs
+        gross_expenses += gross_cogs
+
+        # 4. Sale Details & Tax
+        if vehicle.sale_price is not None:
+            sale_gross = Decimal(str(vehicle.sale_price))
+            sale_net = Decimal(str(vehicle.sale_price_net)) if vehicle.sale_price_net is not None else sale_gross
+            sale_tax_amount = sale_gross - sale_net
+
+            gross_revenue += sale_gross
             net_revenue += sale_net
-            if vehicle.sale_price_after_tax and vehicle.sale_price_net:
-                tax_revenue += vehicle.sale_price_after_tax - vehicle.sale_price_net
-        
-        # Expenses from purchases
-        if vehicle.buy_price:
-            buy_net = vehicle.buy_price_net or vehicle.buy_price
-            net_expenses += buy_net
-            if vehicle.buy_price_after_tax and vehicle.buy_price_net:
-                tax_expenses += vehicle.buy_price_after_tax - vehicle.buy_price_net
-    
-    gross_revenue = net_revenue + tax_revenue
-    gross_expenses = net_expenses + tax_expenses
-    total_profit = net_revenue - net_expenses
-    
+
+            v_vat_liability = abs(sale_tax_amount - buy_tax_amount)
+            total_vat_liability += v_vat_liability
+
+            # Gross Profit = sale_gross + gross_cogs
+            # Net Profit = sale_net + cogs
+            # Total Profit = net_profit - v_vat_liability
+            v_gross_profit = sale_gross + gross_cogs
+            v_net_profit = sale_net + cogs
+            v_total_profit = v_net_profit - v_vat_liability
+
+            gross_profit += v_gross_profit
+            net_profit += v_net_profit
+            total_profit += v_total_profit
+
     avg_days = Decimal(total_active_days) / Decimal(vehicle_count) if vehicle_count > 0 else Decimal("0")
-    avg_roi = (total_profit / net_expenses * Decimal("100")) if net_expenses > 0 else Decimal("0")
-    avg_margin = (total_profit / net_revenue * Decimal("100")) if net_revenue > 0 else Decimal("0")
-    
+    avg_roi = (gross_profit / net_expenses * Decimal("100")) if net_expenses > 0 else Decimal("0")
+    avg_margin = (gross_profit / net_revenue * Decimal("100")) if net_revenue > 0 else Decimal("0")
+
     return {
         "net_total_revenue": net_revenue,
         "net_total_expenses": net_expenses,
-        "net_difference": total_profit,
-        "tax_total_revenue": tax_revenue,
-        "tax_total_expenses": tax_expenses,
-        "tax_difference": tax_revenue - tax_expenses,
+        "net_difference": net_profit,
+        "tax_total_revenue": Decimal("0"),
+        "tax_total_expenses": Decimal("0"),
+        "tax_difference": total_vat_liability,
         "gross_total_revenue": gross_revenue,
         "gross_total_expenses": gross_expenses,
-        "gross_difference": gross_revenue - gross_expenses,
+        "gross_difference": gross_profit,
         "avg_days_on_stock": avg_days.quantize(Decimal("0.1")),
         "avg_roi": avg_roi.quantize(Decimal("0.01")),
         "avg_profit_margin": avg_margin.quantize(Decimal("0.01")),
