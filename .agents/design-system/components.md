@@ -93,10 +93,10 @@ contentStyle={{
 
 ## 7. FinancialMetricsStrip
 Two-row layout for vehicle financial KPIs:
-- **Row 1 (Cost Basis)**: COGS, VAT Liability (`|saleTax − buyTax|`), Break-Even (dynamic target margin multiplier e.g. `× 1.10`)
-- **Row 2 (Profit — only when sold)**: Gross Profit, Net Profit, Total Profit (highlighted), Margin, ROI
+- **Row 1 (Cost Basis)**: COGS (`buyNet + netExpEarn`), VAT Liability (`|saleTax − buyTax|`), Break-Even (dynamic target margin multiplier e.g. `× 1.10`)
+- **Row 2 (Profit — only when sold)**: Gross Profit (`saleGross + Gross COGS`), Net Profit (`saleNet + COGS`), Total Profit (`Net Profit − VAT Liability`, highlighted), Margin (`Gross Profit ÷ saleNet`), ROI (`Gross Profit ÷ COGS`)
 - Note: Holding Cost and Adj. Profit cells are preserved commented-out in code.
-- Equations use compact format: `€12,000 − €10,000` (not `saleNet(€12,000) − buyNet(€10,000)`)
+- Equations use compact format: `€19,990 + €15,550` or `€14,409.09 + (−€300.00)`
 
 ## 8. Split-View Toggle
 The VehicleFormPage supports a toggleable split view:

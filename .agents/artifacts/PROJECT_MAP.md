@@ -21,6 +21,7 @@ acar/
 ├── docs-ui-changes.md       # Documentation for UI stability, choices management hierarchy, and dashboard refinements
 ├── docs-ui-tweaks.md        # Documentation for legacy UI improvements
 ├── docs-ui-tweak-fix-2.md   # COGS + Total Profit formula fix (netExpensesEarnings replaces totalTxnCost)
+├── docs-edit_vehicle_cogs_profit_fix.md # Edit vehicle COGS sign fix + Gross/Net/Total Profit formula restructuring
 ├── docs-deployment.md       # Documentation for deployment infrastructure
 ├── .gitignore
 ├── Dockerfile               # Production Django container (Python 3.11-slim + Gunicorn)
@@ -414,6 +415,12 @@ Legacy fields are used by PDF generation views. FK fields are used by the modern
 - All money fields use `Decimal` (never `float`)
 - Tax: `gross = net × (1 + rate)` / `net = gross / (1 + rate)`
 - Vehicle has computed properties: `buy_price_net`, `sale_price_net`, `net_profit`
-- COGS = buyNet + netExpensesEarnings (from vehicle expense/earning entries)
-- Total Profit = saleNet − COGS − taxLiability
+- COGS = buyNet + netExpensesEarnings (from vehicle expense/earning entries, signed: earnings − expenses)
+- Gross COGS = buyGross + netExpensesEarnings
+- Gross Profit = saleGross + Gross COGS
+- Net Profit = saleNet + COGS
+- VAT Liability = |saleTaxAmount − buyTaxAmount|
+- Total Profit = Net Profit − VAT Liability
+- Margin = (Gross Profit ÷ saleNet) × 100
+- ROI = (Gross Profit ÷ COGS) × 100
 - Transaction has class methods for gross/net/tax aggregations across querysets

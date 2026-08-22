@@ -162,7 +162,7 @@ export function countLinkedTransactions(
     return transactions?.length ?? 0
 }
 
-/** netExpensesEarnings = Σ expense amounts − Σ earning amounts (expenses add to cost, earnings reduce it) */
+/** netExpensesEarnings = Σ earning amounts − Σ expense amounts (matching the card's signed NET value) */
 export function calcNetExpensesEarnings(
     entries: ExpenseEarningForCalc[] | null | undefined,
 ): number {
@@ -170,7 +170,7 @@ export function calcNetExpensesEarnings(
     return roundMoney(
         entries.reduce((sum, e) => {
             const amt = safeNum(e.amount) ?? 0
-            return sum + (e.type === "expense" ? amt : -amt)
+            return sum + (e.type === "earning" ? amt : -amt)
         }, 0),
     )
 }
@@ -189,38 +189,46 @@ export function calcCOGS(
     return roundMoney(bn + (safeNum(netExpensesEarnings) ?? 0))
 }
 
-/** grossProfit = saleGross − buyGross */
+/** Gross COGS = buyGross + netExpensesEarnings */
+export function calcGrossCOGS(
+    buyGross: number | null | undefined,
+    netExpensesEarnings: number | null | undefined = 0,
+): number | null {
+    const bg = safeNum(buyGross)
+    if (bg === null) return null
+    return roundMoney(bg + (safeNum(netExpensesEarnings) ?? 0))
+}
+
+/** grossProfit = saleGross + grossCOGS */
 export function calcGrossProfit(
     saleGross: number | null | undefined,
-    buyGross: number | null | undefined,
+    grossCOGS: number | null | undefined,
 ): number | null {
     const sg = safeNum(saleGross)
-    const bg = safeNum(buyGross)
-    if (sg === null || bg === null) return null
-    return roundMoney(sg - bg)
+    const gc = safeNum(grossCOGS)
+    if (sg === null || gc === null) return null
+    return roundMoney(sg + gc)
 }
 
-/** netProfit = saleNet − buyNet */
+/** netProfit = saleNet + COGS */
 export function calcNetProfit(
     saleNet: number | null | undefined,
-    buyNet: number | null | undefined,
-): number | null {
-    const sn = safeNum(saleNet)
-    const bn = safeNum(buyNet)
-    if (sn === null || bn === null) return null
-    return roundMoney(sn - bn)
-}
-
-/** totalProfit = saleNet − COGS − taxLiability  (the real bottom line) */
-export function calcTotalProfit(
-    saleNet: number | null | undefined,
     cogs: number | null | undefined,
-    taxLiability: number | null | undefined,
 ): number | null {
     const sn = safeNum(saleNet)
     const c = safeNum(cogs)
     if (sn === null || c === null) return null
-    return roundMoney(sn - c - (safeNum(taxLiability) ?? 0))
+    return roundMoney(sn + c)
+}
+
+/** totalProfit = netProfit − taxLiability  (the real bottom line) */
+export function calcTotalProfit(
+    netProfit: number | null | undefined,
+    taxLiability: number | null | undefined,
+): number | null {
+    const np = safeNum(netProfit)
+    if (np === null) return null
+    return roundMoney(np - (safeNum(taxLiability) ?? 0))
 }
 
 /** revenue = saleNet */
@@ -230,26 +238,26 @@ export function calcRevenue(
     return safeNum(saleNet)
 }
 
-/** profitMargin = (totalProfit ÷ revenue) × 100, displayed as % */
+/** profitMargin = (grossProfit ÷ saleNet) × 100, displayed as % */
 export function calcProfitMargin(
-    totalProfit: number | null | undefined,
-    revenue: number | null | undefined,
+    grossProfit: number | null | undefined,
+    saleNet: number | null | undefined,
 ): number | null {
-    const tp = safeNum(totalProfit)
-    const r = safeNum(revenue)
-    if (tp === null || r === null || r === 0) return null
-    return roundMoney((tp / r) * 100)
+    const gp = safeNum(grossProfit)
+    const sn = safeNum(saleNet)
+    if (gp === null || sn === null || sn === 0) return null
+    return roundMoney((gp / sn) * 100)
 }
 
-/** ROI = (totalProfit ÷ COGS) × 100, displayed as % */
+/** ROI = (grossProfit ÷ COGS) × 100, displayed as % */
 export function calcROI(
-    totalProfit: number | null | undefined,
+    grossProfit: number | null | undefined,
     cogs: number | null | undefined,
 ): number | null {
-    const tp = safeNum(totalProfit)
+    const gp = safeNum(grossProfit)
     const c = safeNum(cogs)
-    if (tp === null || c === null || c === 0) return null
-    return roundMoney((tp / c) * 100)
+    if (gp === null || c === null || c === 0) return null
+    return roundMoney((gp / c) * 100)
 }
 
 /** daysOnStock = saleDate − purchaseDate (or today − purchaseDate if unsold) */
@@ -335,6 +343,7 @@ export interface VehicleFinancials {
     netExpensesEarnings: number
     // Derived
     cogs: number | null
+    grossCogs: number | null
     grossProfit: number | null
     netProfit: number | null
     totalProfit: number | null
@@ -387,13 +396,14 @@ export function calcVehicleFinancials(input: CalcVehicleFinancialsInput): Vehicl
     const netExpensesEarnings = calcNetExpensesEarnings(input.entries)
 
     const cogs = calcCOGS(buyNet, netExpensesEarnings)
-    const grossProfit = calcGrossProfit(saleGross, buyGross)
-    const netProfit = calcNetProfit(saleNet, buyNet)
+    const grossCogs = calcGrossCOGS(buyGross, netExpensesEarnings)
+    const grossProfit = calcGrossProfit(saleGross, grossCogs)
+    const netProfit = calcNetProfit(saleNet, cogs)
     const taxLiability = calcTaxLiability(buyTax, saleTax)
-    const totalProfit = calcTotalProfit(saleNet, cogs, taxLiability)
+    const totalProfit = calcTotalProfit(netProfit, taxLiability)
     const revenue = calcRevenue(saleNet)
-    const profitMargin = calcProfitMargin(totalProfit, revenue)
-    const roi = calcROI(totalProfit, cogs)
+    const profitMargin = calcProfitMargin(grossProfit, saleNet)
+    const roi = calcROI(grossProfit, cogs)
     const daysOnStock = calcDaysOnStock(input.buyDate, rawSaleDate)
     // COMMENTED OUT — re-enable when holding cost logic is re-implemented correctly
     // const holdingCost = calcHoldingCost(cogs, daysOnStock, input.annualTargetRate)
@@ -412,6 +422,7 @@ export function calcVehicleFinancials(input: CalcVehicleFinancialsInput): Vehicl
         saleNet,
         netExpensesEarnings,
         cogs,
+        grossCogs,
         grossProfit,
         netProfit,
         totalProfit,
@@ -448,6 +459,7 @@ export function getFinancialColor(variable: string): string {
         totalTxnCost: "text-pink-600 dark:text-pink-400",
         netExpensesEarnings: "text-amber-600 dark:text-amber-400",
         cogs: "text-slate-600 dark:text-slate-400",
+        grossCogs: "text-slate-600 dark:text-slate-400",
         grossProfit: "text-purple-600 dark:text-purple-400",
         netProfit: "text-violet-700 dark:text-violet-400",
         totalProfit: "text-indigo-600 dark:text-indigo-400",

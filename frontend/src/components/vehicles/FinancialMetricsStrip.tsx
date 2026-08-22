@@ -132,7 +132,11 @@ export function FinancialMetricsStrip({
                 <MetricCell
                     label="COGS"
                     value={fc(f.cogs)}
-                    equation={`${fc(f.buyNet)} ${(f.netExpensesEarnings || 0) < 0 ? '−' : '+'} ${fc(Math.abs(f.netExpensesEarnings || 0))}`}
+                    equation={
+                        f.buyNet !== null
+                            ? `${fc(f.buyNet)} ${(f.netExpensesEarnings || 0) < 0 ? `+ (${fc(f.netExpensesEarnings)})` : `+ ${fc(f.netExpensesEarnings || 0)}`}`
+                            : undefined
+                    }
                     colorClass={getFinancialColor("cogs")}
                     icon={<PackageSearch className="h-3 w-3" />}
                 />
@@ -193,7 +197,11 @@ export function FinancialMetricsStrip({
                     <MetricCell
                         label="Gross Profit"
                         value={fc(f.grossProfit)}
-                        equation={`${fc(f.saleGross)} − ${fc(f.buyGross)}`}
+                        equation={
+                            f.saleGross !== null && f.grossCogs !== null
+                                ? `${fc(f.saleGross)} ${(f.grossCogs || 0) < 0 ? `+ (${fc(f.grossCogs)})` : `+ ${fc(f.grossCogs)}`}`
+                                : undefined
+                        }
                         colorClass={getProfitColor(f.grossProfit)}
                         icon={<PieChart className="h-3 w-3" />}
                     />
@@ -202,7 +210,11 @@ export function FinancialMetricsStrip({
                     <MetricCell
                         label="Net Profit"
                         value={fc(f.netProfit)}
-                        equation={`${fc(f.saleNet)} − ${fc(f.buyNet)}`}
+                        equation={
+                            f.saleNet !== null && f.cogs !== null
+                                ? `${fc(f.saleNet)} ${(f.cogs || 0) < 0 ? `+ (${fc(f.cogs)})` : `+ ${fc(f.cogs)}`}`
+                                : undefined
+                        }
                         colorClass={getProfitColor(f.netProfit)}
                         icon={<TrendingUp className="h-3 w-3" />}
                     />
@@ -211,7 +223,11 @@ export function FinancialMetricsStrip({
                     <MetricCell
                         label="Total Profit"
                         value={fc(f.totalProfit)}
-                        equation={`${fc(f.saleNet)} − ${fc(f.cogs)} − ${fc(f.taxLiability || 0)}`}
+                        equation={
+                            f.netProfit !== null
+                                ? `${fc(f.netProfit)} ${(f.taxLiability || 0) < 0 ? `+ (${fc(f.taxLiability)})` : `− ${fc(f.taxLiability || 0)}`}`
+                                : undefined
+                        }
                         colorClass={getTotalProfitColor(f.totalProfit)}
                         icon={<Banknote className="h-3.5 w-3.5 text-primary/50" />}
                         highlight
@@ -222,7 +238,7 @@ export function FinancialMetricsStrip({
                         <MetricCell
                             label="Margin"
                             value={formatPercent(f.profitMargin)}
-                            equation={`${fc(f.totalProfit)} ÷ ${fc(f.saleNet)} × 100`}
+                            equation={`${fc(f.grossProfit)} ÷ ${fc(f.saleNet)} × 100`}
                             colorClass={getProfitColor(f.profitMargin)}
                             icon={<Percent className="h-3 w-3" />}
                         />
@@ -232,7 +248,7 @@ export function FinancialMetricsStrip({
                         <MetricCell
                             label="ROI"
                             value={formatPercent(f.roi)}
-                            equation={`${fc(f.totalProfit)} ÷ ${fc(f.cogs)} × 100`}
+                            equation={`${fc(f.grossProfit)} ÷ ${fc(f.cogs)} × 100`}
                             colorClass={getProfitColor(f.roi)}
                             icon={<LineChart className="h-3 w-3" />}
                         />
