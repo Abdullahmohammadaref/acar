@@ -22,36 +22,41 @@ This update fixes the sign bug in the vehicle-scoped expense/earning calculation
   *Example*: `15,850.00 + (−300.00) = 15,550.00 €`
 
 ### 3. Restructured Profit Metrics (Gross, Net, Total Profit)
-- **Gross Profit**: `sale_gross + Gross COGS`.  
-- **Net Profit**: `sale_net + COGS`.  
+- **Gross Profit**: `(sale_gross − buy_gross) + net_exp_earn`.  
+  *Example*: `(19,990.00 − 15,850.00) + (−300.00) = 4,140.00 − 300.00 = 3,840.00 €`
+- **Net Profit**: `(sale_net − buy_net) + net_exp_earn`.  
+  *Example*: `(18,172.73 − 14,409.09) + (−300.00) = 3,763.64 − 300.00 = 3,463.64 €`
 - **VAT Liability**: `|sale_tax_amount − buy_tax_amount|` (unchanged).  
-- **Total Profit**: Simplified to `Net Profit − VAT Liability`.  
+  *Example*: `|1,817.27 − 1,440.91| = 376.36 €`
+- **Total Profit**: `Net Profit − VAT Liability`.  
+  *Example*: `3,463.64 − 376.36 = 3,087.28 €`
 - **Margin & ROI**:
-  - `Margin`: `(Gross Profit ÷ sale_net) × 100`
-  - `ROI`: `(Gross Profit ÷ COGS) × 100`
+  - `Margin`: `(Gross Profit ÷ sale_net) × 100` (`21.1%`)
+  - `ROI`: `(Gross Profit ÷ COGS) × 100` (`27.2%`)
 
 ### 4. Financial Metrics Strip Equations
 Updated equation text under each metric cell in `FinancialMetricsStrip.tsx`:
 - **COGS**: `${fc(buyNet)} + (${fc(netExpensesEarnings)})` (or `+ ${fc(netExpensesEarnings)}`)
-- **Gross Profit**: `${fc(saleGross)} + ${fc(grossCogs)}` (or `+ (${fc(grossCogs)})` if negative)
-- **Net Profit**: `${fc(saleNet)} + ${fc(cogs)}` (or `+ (${fc(cogs)})` if negative)
-- **Total Profit**: `${fc(netProfit)} − ${fc(taxLiability)}` (or `+ (${fc(taxLiability)})` if negative)
+- **Gross Profit**: `${fc(saleGross)} − ${fc(buyGross)} + (${fc(netExpensesEarnings)})` (e.g. `19.990,00 € − 15.850,00 € + (-300,00 €)`)
+- **Net Profit**: `${fc(saleNet)} − ${fc(buyNet)} + (${fc(netExpensesEarnings)})` (e.g. `18.172,73 € − 14.409,09 € + (-300,00 €)`)
+- **Total Profit**: `${fc(netProfit)} − ${fc(taxLiability)}` (e.g. `3.463,64 € − 376,36 €`)
+- **VAT Liability**: `|${fc(saleTax)} − ${fc(buyTax)}|` (e.g. `|1.817,27 € − 1.440,91 €|`)
 - **Margin**: `${fc(grossProfit)} ÷ ${fc(saleNet)} × 100`
 - **ROI**: `${fc(grossProfit)} ÷ ${fc(cogs)} × 100`
-- **VAT Liability** & **Break-Even**: Unchanged.
+- **Break-Even**: Unchanged.
 
 ---
 
 ### 5. Vehicles Page Header Financial Summary Alignment
 Aligned `calculate_financial_summary` in `backend/manager/api.py` and `calculate_summary` in `backend/manager/vehicle_api.py` with the vehicle financial calculations:
-- **Gross Revenue**: `sum(vehicle.sale_price)`
-- **Net Revenue**: `sum(vehicle.sale_price_net)`
-- **Gross Expenses**: `sum(Gross COGS)` = `sum(buy_gross + net_exp_earn)`
-- **Net Expenses**: `sum(COGS)` = `sum(buy_net + net_exp_earn)`
-- **Gross Profit**: `sum(sale_gross + Gross COGS)`
-- **Net Profit**: `sum(sale_net + COGS)`
-- **VAT Liability**: `sum(|sale_tax_amount − buy_tax_amount|)`
-- **Total Profit**: `sum(Net Profit − VAT Liability)`
+- **Gross Revenue**: `sum(vehicle.sale_price)` (`19.990,00 €`)
+- **Net Revenue**: `sum(vehicle.sale_price_net)` (`18.172,73 €`)
+- **Gross Expenses**: `sum(Gross COGS)` = `sum(buy_gross + net_exp_earn)` (`15.550,00 €`)
+- **Net Expenses**: `sum(COGS)` = `sum(buy_net + net_exp_earn)` (`14.109,09 €`)
+- **Gross Profit**: `sum((sale_gross − buy_gross) + net_exp_earn)` (`3.840,00 €`)
+- **Net Profit**: `sum((sale_net − buy_net) + net_exp_earn)` (`3.463,64 €`)
+- **VAT Liability**: `sum(|sale_tax_amount − buy_tax_amount|)` (`376,36 €`)
+- **Total Profit**: `sum(Net Profit − VAT Liability)` (`3.087,28 €`)
 
 ---
 

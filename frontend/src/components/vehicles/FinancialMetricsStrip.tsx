@@ -198,8 +198,8 @@ export function FinancialMetricsStrip({
                         label="Gross Profit"
                         value={fc(f.grossProfit)}
                         equation={
-                            f.saleGross !== null && f.grossCogs !== null
-                                ? `${fc(f.saleGross)} ${(f.grossCogs || 0) < 0 ? `+ (${fc(f.grossCogs)})` : `+ ${fc(f.grossCogs)}`}`
+                            f.saleGross !== null && f.buyGross !== null
+                                ? `${fc(f.saleGross)} − ${fc(f.buyGross)} ${(f.netExpensesEarnings || 0) < 0 ? `+ (${fc(f.netExpensesEarnings)})` : `+ ${fc(f.netExpensesEarnings || 0)}`}`
                                 : undefined
                         }
                         colorClass={getProfitColor(f.grossProfit)}
@@ -211,8 +211,8 @@ export function FinancialMetricsStrip({
                         label="Net Profit"
                         value={fc(f.netProfit)}
                         equation={
-                            f.saleNet !== null && f.cogs !== null
-                                ? `${fc(f.saleNet)} ${(f.cogs || 0) < 0 ? `+ (${fc(f.cogs)})` : `+ ${fc(f.cogs)}`}`
+                            f.saleNet !== null && f.buyNet !== null
+                                ? `${fc(f.saleNet)} − ${fc(f.buyNet)} ${(f.netExpensesEarnings || 0) < 0 ? `+ (${fc(f.netExpensesEarnings)})` : `+ ${fc(f.netExpensesEarnings || 0)}`}`
                                 : undefined
                         }
                         colorClass={getProfitColor(f.netProfit)}

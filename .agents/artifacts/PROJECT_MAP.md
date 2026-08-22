@@ -417,8 +417,8 @@ Legacy fields are used by PDF generation views. FK fields are used by the modern
 - Vehicle has computed properties: `buy_price_net`, `sale_price_net`, `net_profit`
 - COGS = buyNet + netExpensesEarnings (from vehicle expense/earning entries, signed: earnings − expenses)
 - Gross COGS = buyGross + netExpensesEarnings
-- Gross Profit = saleGross + Gross COGS
-- Net Profit = saleNet + COGS
+- Gross Profit = (saleGross − buyGross) + netExpensesEarnings
+- Net Profit = (saleNet − buyNet) + netExpensesEarnings
 - VAT Liability = |saleTaxAmount − buyTaxAmount|
 - Total Profit = Net Profit − VAT Liability
 - Margin = (Gross Profit ÷ saleNet) × 100

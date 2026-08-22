@@ -199,26 +199,30 @@ export function calcGrossCOGS(
     return roundMoney(bg + (safeNum(netExpensesEarnings) ?? 0))
 }
 
-/** grossProfit = saleGross + grossCOGS */
+/** grossProfit = (saleGross − buyGross) + netExpensesEarnings */
 export function calcGrossProfit(
     saleGross: number | null | undefined,
-    grossCOGS: number | null | undefined,
+    buyGross: number | null | undefined,
+    netExpensesEarnings: number | null | undefined = 0,
 ): number | null {
     const sg = safeNum(saleGross)
-    const gc = safeNum(grossCOGS)
-    if (sg === null || gc === null) return null
-    return roundMoney(sg + gc)
+    const bg = safeNum(buyGross)
+    if (sg === null || bg === null) return null
+    const netExp = safeNum(netExpensesEarnings) ?? 0
+    return roundMoney(sg - bg + netExp)
 }
 
-/** netProfit = saleNet + COGS */
+/** netProfit = (saleNet − buyNet) + netExpensesEarnings */
 export function calcNetProfit(
     saleNet: number | null | undefined,
-    cogs: number | null | undefined,
+    buyNet: number | null | undefined,
+    netExpensesEarnings: number | null | undefined = 0,
 ): number | null {
     const sn = safeNum(saleNet)
-    const c = safeNum(cogs)
-    if (sn === null || c === null) return null
-    return roundMoney(sn + c)
+    const bn = safeNum(buyNet)
+    if (sn === null || bn === null) return null
+    const netExp = safeNum(netExpensesEarnings) ?? 0
+    return roundMoney(sn - bn + netExp)
 }
 
 /** totalProfit = netProfit − taxLiability  (the real bottom line) */
@@ -397,8 +401,8 @@ export function calcVehicleFinancials(input: CalcVehicleFinancialsInput): Vehicl
 
     const cogs = calcCOGS(buyNet, netExpensesEarnings)
     const grossCogs = calcGrossCOGS(buyGross, netExpensesEarnings)
-    const grossProfit = calcGrossProfit(saleGross, grossCogs)
-    const netProfit = calcNetProfit(saleNet, cogs)
+    const grossProfit = calcGrossProfit(saleGross, buyGross, netExpensesEarnings)
+    const netProfit = calcNetProfit(saleNet, buyNet, netExpensesEarnings)
     const taxLiability = calcTaxLiability(buyTax, saleTax)
     const totalProfit = calcTotalProfit(netProfit, taxLiability)
     const revenue = calcRevenue(saleNet)

@@ -540,8 +540,11 @@ def calculate_summary(queryset) -> dict:
             v_vat_liability = abs(sale_tax_amount - buy_tax_amount)
             total_vat_liability += v_vat_liability
 
-            v_gross_profit = sale_gross + gross_cogs
-            v_net_profit = sale_net + cogs
+            # Gross Profit = (sale_gross - buy_gross) + net_exp_earn
+            # Net Profit = (sale_net - buy_net) + net_exp_earn
+            # Total Profit = net_profit - v_vat_liability
+            v_gross_profit = (sale_gross - buy_gross) + net_exp_earn
+            v_net_profit = (sale_net - buy_net) + net_exp_earn
             v_total_profit = v_net_profit - v_vat_liability
 
             gross_profit += v_gross_profit
