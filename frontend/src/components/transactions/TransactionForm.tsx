@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from "react"
+import { useState, useEffect, useCallback, useRef, useMemo } from "react"
 import { useNavigate, useParams } from "react-router-dom"
 import { Loader2, CalendarDays, FileText, CheckCircle, AlertCircle, XCircle, Download, RotateCcw, Trash2 } from "lucide-react"
 import { useTranslation } from "react-i18next"
@@ -14,7 +14,7 @@ import { SearchableSelect } from "@/components/ui/searchable-select"
 import { DynamicSelect } from "@/components/ui/dynamic-select"
 import { RelatedTransactionsTable } from "@/components/transactions/RelatedTransactionsTable"
 import { RecordNavigation, ReviewQueueNavigation } from "@/components/RecordNavigation"
-import { useTransactionChoices, useSubcategories, useDeleteTransaction, useActivateTransaction } from "@/hooks/useTransactions"
+import { useTransactionChoices, useSubcategories, useDeleteTransaction, useActivateTransaction, useUpdateTransactionStatus } from "@/hooks/useTransactions"
 import { useChoices } from "@/hooks/useVehicles"  // For tax_percentages
 import { SplitViewDivider } from "@/components/SplitViewDivider"
 import { SPLIT_MIN, SPLIT_MAX } from "@/lib/paginationPrefs"
@@ -31,7 +31,6 @@ interface TransactionFormProps {
     // Auto-save callbacks (only used in edit mode)
     onAutoSave?: (data: Partial<TransactionFormData>) => void
     onAutoSaveDebounced?: (data: Partial<TransactionFormData>) => void
-    onAutoSaveFailedMandatory?: () => void
     // Auto-save status (for footer indicator)
     autoSaveStatus?: AutoSaveStatus
     autoSaveErrorMessage?: string | null
@@ -78,6 +77,9 @@ function SubcategorySelect({ categoryId, value, onChange }: SubcategorySelectPro
                 options={options}
                 value={value}
                 onChange={handleChange}
+                onCreated={(item) => {
+                    onChange(item.id, item.name)
+                }}
                 placeholder={
                     !categoryId
                         ? "Select a category first"
@@ -111,7 +113,6 @@ export function TransactionForm({
     highlightedTransactionId,
     onAutoSave,
     onAutoSaveDebounced,
-    onAutoSaveFailedMandatory,
     autoSaveStatus = "idle",
     autoSaveErrorMessage,
     isSplitView,
@@ -130,6 +131,7 @@ export function TransactionForm({
     // Hooks for status toggle actions
     const deleteTransaction = useDeleteTransaction()
     const activateTransaction = useActivateTransaction()
+    const updateTransactionStatus = useUpdateTransactionStatus()
     const [statusToggleLoading, setStatusToggleLoading] = useState(false)
 
     // Form state
@@ -156,9 +158,7 @@ export function TransactionForm({
     const [currencyId, setCurrencyId] = useState<number | null>(null)
     const [taxId, setTaxId] = useState<number | null>(null)  // For tax percentage dropdown
 
-    // Flag to block auto-save during initial data population
-    // This prevents the "Failed to save" error on page load
-    const isInitializingRef = useRef(mode === "edit")
+
 
     // Validation error state
     const [validationErrors, setValidationErrors] = useState<Record<string, string>>({})
@@ -167,65 +167,66 @@ export function TransactionForm({
     const { data: choices, isLoading: choicesLoading } = useTransactionChoices()
 
     // Convert category choices to DynamicSelect format (id, name)
-    const categoryOptions = choices?.category_choices?.map((c) => ({
+    const categoryOptions = useMemo(() => choices?.category_choices?.map((c) => ({
         id: parseInt(c.value),
         name: c.label,
-    })) ?? []
+    })) ?? [], [choices?.category_choices])
 
     // Convert method choices to DynamicSelect format (id, name)
-    const methodOptions = choices?.method_choices?.map((m) => ({
+    const methodOptions = useMemo(() => choices?.method_choices?.map((m) => ({
         id: parseInt(m.value),
         name: m.label,
-    })) ?? []
+    })) ?? [], [choices?.method_choices])
 
     // Convert currency choices to DynamicSelect format (id, name)
-    const currencyOptions = choices?.currency_choices?.map((c) => ({
+    const currencyOptions = useMemo(() => choices?.currency_choices?.map((c) => ({
         id: parseInt(c.value),
         name: c.label,
-    })) ?? []
+    })) ?? [], [choices?.currency_choices])
 
     // Fetch vehicle choices for tax_percentages (shared with Vehicle forms)
     const { data: vehicleChoices } = useChoices()
 
     // Convert tax percentage choices to DynamicSelect format with "Name (Percentage%)" display
-    const taxOptions = vehicleChoices?.tax_percentages?.map((t) => ({
+    const taxOptions = useMemo(() => vehicleChoices?.tax_percentages?.map((t) => ({
         id: t.id,
         name: `${t.name} (${t.percentage}%)`,  // Format: "VAT (19%)"
         percentage: t.percentage,  // Keep for calculations
-    })) ?? []
+    })) ?? [], [vehicleChoices?.tax_percentages])
     const { data: subcategoriesData } = useSubcategories(categoryId ?? undefined)
 
     // Layout logic
     const showSplitView = mode === "edit" && isSplitView;
 
+    // Track last loaded transaction ID to prevent re-initializing on auto-save response
+    const lastLoadedIdRef = useRef<number | null>(null)
+    const lastDropdownsInitIdRef = useRef<number | null>(null)
+    const lastTaxInitIdRef = useRef<number | null>(null)
+    const lastSubcategoryInitIdRef = useRef<number | null>(null)
+
     // Populate form with initial data for edit mode
     useEffect(() => {
         if (mode === "edit" && initialData) {
-            // Block auto-save during initial population
-            isInitializingRef.current = true
+            if (initialData.internal_id !== lastLoadedIdRef.current) {
+                lastLoadedIdRef.current = initialData.internal_id ?? null
 
-            setFormData({
-                category: initialData.category || "",
-                subcategory: initialData.subcategory || "",
-                vehicle_id: initialData.vehicle_internal_id || undefined,  // Use internal_id for vehicle reference
-                amount: parseFloat(String(initialData.amount || 0)),
-                currency: initialData.currency || "EUR",
-                tax: initialData.tax ? parseFloat(String(initialData.tax)) : undefined,
-                date: initialData.date || new Date().toISOString().split("T")[0],
-                method: initialData.method || "",
-                from_or_to: initialData.from_or_to || "",
-                description: initialData.description || "",
-                internal_comments: initialData.internal_comments || "",
-                // NOTE: status is auto-computed by backend, not editable
-            })
-
-            // Allow auto-save after a short delay to ensure all initialization is complete
-            // Using setTimeout to defer this until after all effects have run
-            setTimeout(() => {
-                isInitializingRef.current = false
-            }, 500)
+                setFormData({
+                    category: initialData.category || "",
+                    subcategory: initialData.subcategory || "",
+                    vehicle_id: initialData.vehicle_internal_id || undefined,  // Use internal_id for vehicle reference
+                    amount: initialData.amount !== undefined && initialData.amount !== null ? parseFloat(String(initialData.amount)) : undefined,
+                    currency: initialData.currency || "EUR",
+                    tax: initialData.tax !== undefined && initialData.tax !== null ? parseFloat(String(initialData.tax)) : undefined,
+                    date: initialData.date || new Date().toISOString().split("T")[0],
+                    method: initialData.method || "",
+                    from_or_to: initialData.from_or_to || "",
+                    description: initialData.description || "",
+                    internal_comments: initialData.internal_comments || "",
+                    // NOTE: status is auto-computed by backend
+                })
+            }
         }
-    }, [mode, initialData])
+    }, [mode, initialData?.internal_id])
 
     // Pre-populate vehicle in create mode if initialVehicleId is provided (e.g. from vehicle details page)
     useEffect(() => {
@@ -238,47 +239,45 @@ export function TransactionForm({
     }, [mode, initialVehicleId])
 
     // Initialize dropdown IDs for edit mode (based on string values matching options)
-    // Separated from tax initialization to avoid dependency timing issues
     useEffect(() => {
         if (mode === "edit" && initialData && choices) {
-            // Match category by name
-            const matchedCategory = categoryOptions.find(c => c.name === initialData.category)
-            if (matchedCategory) {
-                setCategoryId(matchedCategory.id)
-            }
+            if (initialData.internal_id !== lastDropdownsInitIdRef.current) {
+                lastDropdownsInitIdRef.current = initialData.internal_id ?? null
 
-            // Match method by name  
-            const matchedMethod = methodOptions.find(m => m.name === initialData.method)
-            if (matchedMethod) {
-                setMethodId(matchedMethod.id)
-            }
+                // Match category by name
+                const matchedCategory = categoryOptions.find(c => c.name === initialData.category)
+                setCategoryId(matchedCategory ? matchedCategory.id : null)
 
-            // Match currency by name
-            const matchedCurrency = currencyOptions.find(c => c.name === initialData.currency)
-            if (matchedCurrency) {
-                setCurrencyId(matchedCurrency.id)
+                // Match method by name  
+                const matchedMethod = methodOptions.find(m => m.name === initialData.method)
+                setMethodId(matchedMethod ? matchedMethod.id : null)
+
+                // Match currency by name
+                const matchedCurrency = currencyOptions.find(c => c.name === initialData.currency)
+                setCurrencyId(matchedCurrency ? matchedCurrency.id : null)
             }
         }
-    }, [mode, initialData, choices, categoryOptions, methodOptions, currencyOptions])
+    }, [mode, initialData?.internal_id, choices, categoryOptions, methodOptions, currencyOptions])
 
     // Initialize tax - runs after vehicleChoices loads
-    // Sets to matched tax in edit mode, or defaults to the "No Tax" option if not set or in create mode
     useEffect(() => {
         if (vehicleChoices?.tax_percentages && vehicleChoices.tax_percentages.length > 0) {
             const noTax = vehicleChoices.tax_percentages.find(t => t.is_no_tax)
             if (mode === "edit" && initialData) {
-                if (initialData.tax !== undefined && initialData.tax !== null) {
-                    const taxPercent = parseFloat(String(initialData.tax))
-                    const matchedTax = vehicleChoices.tax_percentages.find(t => parseFloat(String(t.percentage)) === taxPercent)
-                    if (matchedTax) {
-                        setTaxId(matchedTax.id)
+                if (initialData.internal_id !== lastTaxInitIdRef.current) {
+                    lastTaxInitIdRef.current = initialData.internal_id ?? null
+
+                    if (initialData.tax !== undefined && initialData.tax !== null) {
+                        const taxPercent = parseFloat(String(initialData.tax))
+                        const matchedTax = vehicleChoices.tax_percentages.find(t => parseFloat(String(t.percentage)) === taxPercent)
+                        if (matchedTax) {
+                            setTaxId(matchedTax.id)
+                        } else {
+                            setTaxId(null)
+                        }
+                    } else {
+                        setTaxId(null)
                     }
-                } else if (noTax) {
-                    setTaxId(noTax.id)
-                    setFormData(prev => ({
-                        ...prev,
-                        tax: parseFloat(String(noTax.percentage)),
-                    }))
                 }
             } else if (mode === "create") {
                 if (taxId === null && noTax) {
@@ -290,51 +289,33 @@ export function TransactionForm({
                 }
             }
         }
-    }, [mode, initialData, vehicleChoices, taxId])
+    }, [mode, initialData?.internal_id, vehicleChoices, taxId])
 
     // Initialize subcategoryId for edit mode (after subcategories are loaded for the selected category)
     useEffect(() => {
-        if (mode === "edit" && initialData && subcategoriesData?.subcategories && categoryId && !subcategoryId) {
-            // Match subcategory by name
-            const matchedSubcategory = subcategoriesData.subcategories.find(s => s.name === initialData.subcategory)
-            if (matchedSubcategory) {
-                setSubcategoryId(matchedSubcategory.id)
-            }
-        }
-    }, [mode, initialData, subcategoriesData, categoryId, subcategoryId])
-
-
-    // Wrapper for auto-save that blocks if a mandatory field is emptied
-    const handleAutoSave = useCallback((dataToSave: Partial<TransactionFormData>, isDebounced = false) => {
-        if (mode !== "edit" || isInitializingRef.current) return
-
-        // Check if any mandatory field in the payload is empty
-        // Mandatory fields: category, subcategory, date, method, from_or_to, amount, tax, currency
-        const mandatoryFields = ["category", "subcategory", "date", "method", "from_or_to", "amount", "tax", "currency"]
-
-        let hasEmptyMandatory = false
-        for (const [key, value] of Object.entries(dataToSave)) {
-            if (mandatoryFields.includes(key)) {
-                if (value === undefined || value === null || String(value).trim() === "") {
-                    hasEmptyMandatory = true
-                    break
+        if (mode === "edit" && initialData && subcategoriesData?.subcategories && categoryId) {
+            if (initialData.internal_id !== lastSubcategoryInitIdRef.current) {
+                // Match subcategory by name
+                const matchedSubcategory = subcategoriesData.subcategories.find(s => s.name === initialData.subcategory)
+                if (matchedSubcategory) {
+                    setSubcategoryId(matchedSubcategory.id)
+                    lastSubcategoryInitIdRef.current = initialData.internal_id ?? null
                 }
             }
         }
+    }, [mode, initialData?.internal_id, subcategoriesData, categoryId])
 
-        if (hasEmptyMandatory) {
-            if (onAutoSaveFailedMandatory) {
-                onAutoSaveFailedMandatory()
-            }
-            return
-        }
+
+    // Auto-save handler: ALWAYS save whatever fields are passed (no blocking!)
+    const handleAutoSave = useCallback((dataToSave: Partial<TransactionFormData>, isDebounced = false) => {
+        if (mode !== "edit") return
 
         if (isDebounced && onAutoSaveDebounced) {
             onAutoSaveDebounced(dataToSave)
         } else if (!isDebounced && onAutoSave) {
             onAutoSave(dataToSave)
         }
-    }, [mode, onAutoSave, onAutoSaveDebounced, onAutoSaveFailedMandatory])
+    }, [mode, onAutoSave, onAutoSaveDebounced])
 
     // Handle field changes - with auto-save support for edit mode
     const handleChange = useCallback((field: keyof TransactionFormData, value: string | number | undefined) => {
@@ -560,6 +541,17 @@ export function TransactionForm({
                                             placeholder="Select category"
                                             allowCreate={true}
                                             createLabel="Category"
+                                            onCreated={(item) => {
+                                                setCategoryId(item.id)
+                                                clearError("category")
+                                                setSubcategoryId(null)
+                                                setFormData(prev => ({
+                                                    ...prev,
+                                                    category: item.name,
+                                                    subcategory: "",
+                                                }))
+                                                handleAutoSave({ category: item.name, subcategory: "" })
+                                            }}
                                         />
                                         {validationErrors.category && (
                                             <p className="text-sm text-red-500">{validationErrors.category}</p>
@@ -654,6 +646,15 @@ export function TransactionForm({
                                             placeholder="Select method"
                                             allowCreate={true}
                                             createLabel="Method"
+                                            onCreated={(item) => {
+                                                setMethodId(item.id)
+                                                clearError("method")
+                                                setFormData(prev => ({
+                                                    ...prev,
+                                                    method: item.name,
+                                                }))
+                                                handleAutoSave({ method: item.name })
+                                            }}
                                         />
                                         {validationErrors.method && (
                                             <p className="text-sm text-red-500">{validationErrors.method}</p>
@@ -834,6 +835,15 @@ export function TransactionForm({
                                             placeholder="Select currency"
                                             allowCreate={true}
                                             createLabel="Currency"
+                                            onCreated={(item) => {
+                                                setCurrencyId(item.id)
+                                                clearError("currency")
+                                                setFormData(prev => ({
+                                                    ...prev,
+                                                    currency: item.name,
+                                                }))
+                                                handleAutoSave({ currency: item.name })
+                                            }}
                                         />
                                         {validationErrors.currency && (
                                             <p className="text-sm text-red-500">{validationErrors.currency}</p>
@@ -915,64 +925,169 @@ export function TransactionForm({
                             {mode === "edit" ? "Back to List" : "Cancel"}
                         </Button>
 
-                        {/* Activate/Deactivate toggle (edit mode only) */}
-                        {mode === "edit" && initialData && (
-                            initialData.status === "inactive" ? (
-                                <Button
-                                    type="button"
-                                    variant="outline"
-                                    className="gap-2 text-green-600 border-green-300 hover:bg-green-50 hover:text-green-700 dark:text-green-400 dark:border-green-700 dark:hover:bg-green-900/30"
-                                    disabled={statusToggleLoading}
-                                    onClick={async () => {
-                                        if (!initialData.internal_id) return
-                                        setStatusToggleLoading(true)
-                                        try {
-                                            await activateTransaction.mutateAsync(initialData.internal_id)
-                                            // Reload the page to reflect updated status
-                                            window.location.reload()
-                                        } catch (err) {
-                                            console.error("Failed to activate transaction:", err)
-                                        } finally {
-                                            setStatusToggleLoading(false)
-                                        }
-                                    }}
-                                >
-                                    {statusToggleLoading ? (
-                                        <Loader2 className="h-4 w-4 animate-spin" />
-                                    ) : (
-                                        <RotateCcw className="h-4 w-4" />
-                                    )}
-                                    Activate
-                                </Button>
-                            ) : (
-                                <Button
-                                    type="button"
-                                    variant="outline"
-                                    className="gap-2 text-red-500 border-red-300 hover:bg-red-50 hover:text-red-700 dark:text-red-400 dark:border-red-700 dark:hover:bg-red-900/30"
-                                    disabled={statusToggleLoading}
-                                    onClick={async () => {
-                                        if (!initialData.internal_id) return
-                                        setStatusToggleLoading(true)
-                                        try {
-                                            await deleteTransaction.mutateAsync(initialData.internal_id)
-                                            // Reload the page to reflect updated status
-                                            window.location.reload()
-                                        } catch (err) {
-                                            console.error("Failed to deactivate transaction:", err)
-                                        } finally {
-                                            setStatusToggleLoading(false)
-                                        }
-                                    }}
-                                >
-                                    {statusToggleLoading ? (
-                                        <Loader2 className="h-4 w-4 animate-spin" />
-                                    ) : (
-                                        <Trash2 className="h-4 w-4" />
-                                    )}
-                                    Deactivate
-                                </Button>
+                        {/* Status action buttons (edit mode only) */}
+                        {mode === "edit" && initialData && (() => {
+                            const hasMandatoryFields = Boolean(
+                                formData.category?.trim() &&
+                                formData.subcategory?.trim() &&
+                                formData.tax !== undefined && formData.tax !== null &&
+                                formData.date?.trim() &&
+                                formData.method?.trim() &&
+                                formData.from_or_to?.trim() &&
+                                formData.amount !== undefined && formData.amount !== null &&
+                                formData.currency?.trim()
                             )
-                        )}
+
+                            const isConfirmedDisabled = !hasMandatoryFields || initialData.status === "confirmed" || statusToggleLoading
+                            const isReviewRequiredDisabled = !hasMandatoryFields || initialData.status === "review_required" || statusToggleLoading
+
+                            return (
+                                <div className="flex items-center gap-2">
+                                    {/* Confirmed Button */}
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        size="sm"
+                                        disabled={isConfirmedDisabled}
+                                        title={
+                                            !hasMandatoryFields
+                                                ? "All mandatory fields (*) must be filled to confirm"
+                                                : initialData.status === "confirmed"
+                                                    ? "Transaction is already confirmed"
+                                                    : "Mark status as Confirmed"
+                                        }
+                                        className={cn(
+                                            "gap-1.5 font-medium transition-colors",
+                                            initialData.status === "confirmed"
+                                                ? "text-emerald-700 dark:text-emerald-400 border-emerald-400/60 dark:border-emerald-700/60 bg-emerald-500/10 dark:bg-emerald-500/15 cursor-not-allowed opacity-80"
+                                                : hasMandatoryFields
+                                                    ? "text-emerald-600 dark:text-emerald-400 border-emerald-300 dark:border-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 hover:text-emerald-700"
+                                                    : "text-muted-foreground border-border/40 opacity-50 cursor-not-allowed"
+                                        )}
+                                        onClick={async () => {
+                                            if (!initialData.internal_id || isConfirmedDisabled) return
+                                            setStatusToggleLoading(true)
+                                            try {
+                                                await updateTransactionStatus.mutateAsync({
+                                                    internalId: initialData.internal_id,
+                                                    status: "confirmed",
+                                                })
+                                            } catch (err) {
+                                                console.error("Failed to set status to confirmed:", err)
+                                            } finally {
+                                                setStatusToggleLoading(false)
+                                            }
+                                        }}
+                                    >
+                                        {statusToggleLoading ? (
+                                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                        ) : (
+                                            <CheckCircle className="h-3.5 w-3.5" />
+                                        )}
+                                        Confirmed
+                                    </Button>
+
+                                    {/* Review Required Button */}
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        size="sm"
+                                        disabled={isReviewRequiredDisabled}
+                                        title={
+                                            !hasMandatoryFields
+                                                ? "All mandatory fields (*) must be filled"
+                                                : initialData.status === "review_required"
+                                                    ? "Transaction is already in Review Required status"
+                                                    : "Mark status as Review Required"
+                                        }
+                                        className={cn(
+                                            "gap-1.5 font-medium transition-colors",
+                                            initialData.status === "review_required"
+                                                ? "text-amber-700 dark:text-amber-400 border-amber-400/60 dark:border-amber-700/60 bg-amber-500/10 dark:bg-amber-500/15 cursor-not-allowed opacity-80"
+                                                : hasMandatoryFields
+                                                    ? "text-amber-600 dark:text-amber-400 border-amber-300 dark:border-amber-700 hover:bg-amber-50 dark:hover:bg-amber-950/40 hover:text-amber-700"
+                                                    : "text-muted-foreground border-border/40 opacity-50 cursor-not-allowed"
+                                        )}
+                                        onClick={async () => {
+                                            if (!initialData.internal_id || isReviewRequiredDisabled) return
+                                            setStatusToggleLoading(true)
+                                            try {
+                                                await updateTransactionStatus.mutateAsync({
+                                                    internalId: initialData.internal_id,
+                                                    status: "review_required",
+                                                })
+                                            } catch (err) {
+                                                console.error("Failed to set status to review required:", err)
+                                            } finally {
+                                                setStatusToggleLoading(false)
+                                            }
+                                        }}
+                                    >
+                                        {statusToggleLoading ? (
+                                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                        ) : (
+                                            <AlertCircle className="h-3.5 w-3.5" />
+                                        )}
+                                        Review Required
+                                    </Button>
+
+                                    {/* Activate/Deactivate Button */}
+                                    {initialData.status === "inactive" ? (
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            size="sm"
+                                            className="gap-1.5 text-green-600 border-green-300 hover:bg-green-50 hover:text-green-700 dark:text-green-400 dark:border-green-700 dark:hover:bg-green-900/30"
+                                            disabled={statusToggleLoading}
+                                            onClick={async () => {
+                                                if (!initialData.internal_id) return
+                                                setStatusToggleLoading(true)
+                                                try {
+                                                    await activateTransaction.mutateAsync(initialData.internal_id)
+                                                } catch (err) {
+                                                    console.error("Failed to activate transaction:", err)
+                                                } finally {
+                                                    setStatusToggleLoading(false)
+                                                }
+                                            }}
+                                        >
+                                            {statusToggleLoading ? (
+                                                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                            ) : (
+                                                <RotateCcw className="h-3.5 w-3.5" />
+                                            )}
+                                            Activate
+                                        </Button>
+                                    ) : (
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            size="sm"
+                                            className="gap-1.5 text-red-500 border-red-300 hover:bg-red-50 hover:text-red-700 dark:text-red-400 dark:border-red-700 dark:hover:bg-red-900/30"
+                                            disabled={statusToggleLoading}
+                                            onClick={async () => {
+                                                if (!initialData.internal_id) return
+                                                setStatusToggleLoading(true)
+                                                try {
+                                                    await deleteTransaction.mutateAsync(initialData.internal_id)
+                                                } catch (err) {
+                                                    console.error("Failed to deactivate transaction:", err)
+                                                } finally {
+                                                    setStatusToggleLoading(false)
+                                                }
+                                            }}
+                                        >
+                                            {statusToggleLoading ? (
+                                                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                            ) : (
+                                                <Trash2 className="h-3.5 w-3.5" />
+                                            )}
+                                            Deactivate
+                                        </Button>
+                                    )}
+                                </div>
+                            )
+                        })()}
                     </div>
 
                     {mode === "create" ? (

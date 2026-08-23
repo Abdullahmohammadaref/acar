@@ -1703,19 +1703,32 @@ class Transaction(models.Model):
                 self.internal_id = (last_transaction.internal_id + 1) if last_transaction else 1
 
         # =====================================================================
-        # Auto-compute status based on category, subcategory, and tax
-        # Rule: If all three are set → 'confirmed', else → 'review_required'
-        # Exception: 'inactive' status (soft-delete) is NEVER overridden
+        # Auto-compute status based on mandatory fields
+        # Rule:
+        # - If any mandatory field is missing/empty/null → 'review_required' (unless 'inactive')
+        # - If all mandatory fields are filled:
+        #     - If status is None/empty → 'confirmed'
+        #     - Otherwise preserve status (e.g. 'confirmed', 'review_required', 'inactive')
+        # - 'inactive' status is NEVER overridden
         # =====================================================================
         if self.status != 'inactive':
-            has_category = bool(self.category)
-            has_subcategory = bool(self.subcategory)
+            has_category = bool((self.category and str(self.category).strip()) or self.category_fk_id)
+            has_subcategory = bool((self.subcategory and str(self.subcategory).strip()) or self.subcategory_fk_id)
             has_tax = self.tax is not None
+            has_date = bool(self.date)
+            has_method = bool((self.method and str(self.method).strip()) or self.payment_method_fk_id)
+            has_from_or_to = bool(self.from_or_to and str(self.from_or_to).strip())
+            has_amount = self.amount is not None
+            has_currency = bool((self.currency and str(self.currency).strip()) or self.currency_fk_id)
 
-            if has_category and has_subcategory and has_tax:
-                self.status = 'confirmed'
-            else:
+            all_mandatory = (has_category and has_subcategory and has_tax and
+                             has_date and has_method and has_from_or_to and
+                             has_amount and has_currency)
+
+            if not all_mandatory:
                 self.status = 'review_required'
+            elif not self.status:
+                self.status = 'confirmed'
 
         super().save(*args, **kwargs)
 

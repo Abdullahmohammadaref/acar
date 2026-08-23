@@ -180,10 +180,14 @@ export function useDeleteTransaction() {
 
     return useMutation({
         mutationFn: async (internalId: number) => {
-            await api.delete(`/transactions/${internalId}`)
+            const response = await api.delete(`/transactions/${internalId}`)
+            return response.data
         },
-        onSuccess: () => {
-            // Invalidate transaction list to refetch
+        onSuccess: (_, internalId) => {
+            queryClient.setQueryData(
+                transactionKeys.detail(internalId),
+                (old: TransactionDetail | undefined) => old ? { ...old, status: 'inactive', status_display: 'Inactive' } : old
+            )
             queryClient.invalidateQueries({ queryKey: transactionKeys.lists() })
         },
     })
@@ -197,9 +201,38 @@ export function useActivateTransaction() {
 
     return useMutation({
         mutationFn: async (internalId: number) => {
-            await api.post(`/transactions/${internalId}/activate`)
+            const response = await api.post(`/transactions/${internalId}/activate`)
+            return response.data
         },
-        onSuccess: () => {
+        onSuccess: (_, internalId) => {
+            queryClient.invalidateQueries({ queryKey: transactionKeys.detail(internalId) })
+            queryClient.invalidateQueries({ queryKey: transactionKeys.lists() })
+        },
+    })
+}
+
+/**
+ * Update transaction status explicitly (confirmed | review_required | inactive)
+ */
+export function useUpdateTransactionStatus() {
+    const queryClient = useQueryClient()
+
+    return useMutation({
+        mutationFn: async ({
+            internalId,
+            status,
+        }: {
+            internalId: number
+            status: "confirmed" | "review_required" | "inactive"
+        }): Promise<TransactionDetail> => {
+            const response = await api.post<TransactionDetail>(
+                `/transactions/${internalId}/status`,
+                { status }
+            )
+            return response.data
+        },
+        onSuccess: (data, variables) => {
+            queryClient.setQueryData(transactionKeys.detail(variables.internalId), data)
             queryClient.invalidateQueries({ queryKey: transactionKeys.lists() })
         },
     })

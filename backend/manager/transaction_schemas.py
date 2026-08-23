@@ -141,6 +141,12 @@ class TransactionUpdate(Schema):
     
     description: Optional[str] = None
     internal_comments: Optional[str] = None
+    status: Optional[str] = Field(default=None, pattern="^(confirmed|review_required|inactive)$")
+
+
+class TransactionStatusUpdate(Schema):
+    """Schema for updating only transaction status"""
+    status: str = Field(pattern="^(confirmed|review_required|inactive)$")
 
 
 # =============================================================================

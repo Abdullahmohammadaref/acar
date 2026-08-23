@@ -25,7 +25,7 @@ import re
 from .models import Transaction, Vehicle, Business, Currency, ActivityLog, Category, Subcategory, PaymentMethod
 from .transaction_schemas import (
     TransactionListItem, TransactionDetail, TransactionCreate, TransactionUpdate,
-    TransactionFilters, PaginatedTransactions, TransactionFinancialSummary,
+    TransactionStatusUpdate, TransactionFilters, PaginatedTransactions, TransactionFinancialSummary,
     TransactionsResponse, TransactionChoices, SubcategoriesResponse, ImportTransactionsResponse
 )
 from .schemas import ErrorResponse, SuccessResponse
@@ -644,7 +644,7 @@ def update_transaction(request, internal_id: int, payload: TransactionUpdate):
     tx = get_object_or_404(Transaction, business=business, internal_id=internal_id)
     
     # Update only provided fields
-    update_data = payload.dict(exclude_unset=True, exclude_none=True)
+    update_data = payload.dict(exclude_unset=True)
     
     # Handle vehicle FK specially - NOTE: frontend sends internal_id as vehicle_id
     if 'vehicle_id' in update_data:
@@ -658,6 +658,25 @@ def update_transaction(request, internal_id: int, payload: TransactionUpdate):
     for field, value in update_data.items():
         setattr(tx, field, value)
     
+    # Auto-compute status on field edit if not explicitly set
+    if 'status' not in update_data and tx.status != 'inactive':
+        has_category = bool((tx.category and str(tx.category).strip()) or tx.category_fk_id)
+        has_subcategory = bool((tx.subcategory and str(tx.subcategory).strip()) or tx.subcategory_fk_id)
+        has_tax = tx.tax is not None
+        has_date = bool(tx.date)
+        has_method = bool((tx.method and str(tx.method).strip()) or tx.payment_method_fk_id)
+        has_from_or_to = bool(tx.from_or_to and str(tx.from_or_to).strip())
+        has_amount = tx.amount is not None
+        has_currency = bool((tx.currency and str(tx.currency).strip()) or tx.currency_fk_id)
+
+        all_mandatory = (has_category and has_subcategory and has_tax and
+                         has_date and has_method and has_from_or_to and
+                         has_amount and has_currency)
+        if all_mandatory:
+            tx.status = 'confirmed'
+        else:
+            tx.status = 'review_required'
+
     tx.save()
     
     # Log the update action
@@ -667,6 +686,50 @@ def update_transaction(request, internal_id: int, payload: TransactionUpdate):
         entity_type='transaction',
         entity_id=tx.internal_id,
         entity_name=f"Transaction #{tx.internal_id}"
+    )
+    
+    return 200, serialize_transaction_detail(tx, business)
+
+
+@router.post("/{internal_id}/status", response={200: TransactionDetail, 400: ErrorResponse, 404: ErrorResponse})
+def update_transaction_status(request, internal_id: int, payload: TransactionStatusUpdate):
+    """Explicitly change the status of a transaction (e.g. from footer buttons)"""
+    business = get_user_business(request)
+    tx = get_object_or_404(Transaction, business=business, internal_id=internal_id)
+    
+    new_status = payload.status
+    if new_status not in ['confirmed', 'review_required', 'inactive']:
+        return 400, ErrorResponse(message=f"Invalid status '{new_status}'")
+    
+    # Check mandatory fields if setting to confirmed
+    if new_status == 'confirmed':
+        has_category = bool((tx.category and str(tx.category).strip()) or tx.category_fk_id)
+        has_subcategory = bool((tx.subcategory and str(tx.subcategory).strip()) or tx.subcategory_fk_id)
+        has_tax = tx.tax is not None
+        has_date = bool(tx.date)
+        has_method = bool((tx.method and str(tx.method).strip()) or tx.payment_method_fk_id)
+        has_from_or_to = bool(tx.from_or_to and str(tx.from_or_to).strip())
+        has_amount = tx.amount is not None
+        has_currency = bool((tx.currency and str(tx.currency).strip()) or tx.currency_fk_id)
+        
+        all_mandatory = (has_category and has_subcategory and has_tax and
+                         has_date and has_method and has_from_or_to and
+                         has_amount and has_currency)
+        if not all_mandatory:
+            return 400, ErrorResponse(message="All mandatory fields must be filled to set status to confirmed")
+    
+    old_status = tx.status
+    tx.status = new_status
+    tx.save()
+    
+    # Log the status change
+    log_activity(
+        request,
+        action='status_change',
+        entity_type='transaction',
+        entity_id=tx.internal_id,
+        entity_name=f"Transaction #{tx.internal_id}",
+        details=f"Status changed from {old_status} to {new_status}"
     )
     
     return 200, serialize_transaction_detail(tx, business)

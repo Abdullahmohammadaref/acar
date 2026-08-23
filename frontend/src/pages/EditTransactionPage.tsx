@@ -73,7 +73,7 @@ export function EditTransactionPage() {
     // Auto-save hook with cache invalidation
     // - updateQueryKey: Instantly updates the detail cache with response data
     // - invalidateQueryKeys: Marks list queries as stale so navigation shows fresh data
-    const { status: autoSaveStatus, errorMessage, saveNow, saveDebounced, setFailedMandatory } = useAutoSave<TransactionUpdateData>({
+    const { status: autoSaveStatus, errorMessage, saveNow, saveDebounced } = useAutoSave<TransactionUpdateData>({
         endpoint: `/transactions/${transactionId}`,
         method: 'PUT',  // Transaction API uses PUT, not PATCH
         // Direct cache update for instant feedback (no visual flicker)
@@ -172,7 +172,6 @@ export function EditTransactionPage() {
                 highlightedTransactionId={transaction.internal_id ?? undefined}
                 onAutoSave={saveNow}
                 onAutoSaveDebounced={saveDebounced}
-                onAutoSaveFailedMandatory={setFailedMandatory}
                 autoSaveStatus={autoSaveStatus}
                 autoSaveErrorMessage={errorMessage}
                 isSplitView={isSplitView}
