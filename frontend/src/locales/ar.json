@@ -57,9 +57,21 @@
         "vehicleManagement": "إدارة المركبات",
         "comingSoon": "قريباً...",
         "pageNotFound": "الصفحة غير موجودة",
-        "goToLogin": "الذهاب إلى تسجيل الدخول"
+        "goToLogin": "الذهاب إلى تسجيل الدخول",
+        "cancel": "إلغاء",
+        "save": "حفظ",
+        "delete": "حذف",
+        "activate": "تفعيل",
+        "reactivate": "إعادة التفعيل",
+        "pdf": "إنشاء PDF",
+        "generatePdf": "إنشاء PDF",
+        "edit": "تعديل",
+        "add": "إضافة",
+        "actions": "الإجراءات",
+        "loading": "جار التحميل..."
     },
     "transactions": {
+        "addTransaction": "إضافة معاملة",
         "filterTitle": "تصفية المعاملات",
         "filterDescription": "تطبيق المرشحات لتضييق قائمة المعاملات",
         "quickSearch": "بحث سريع",

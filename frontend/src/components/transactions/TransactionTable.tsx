@@ -331,7 +331,7 @@ export function TransactionTable({
                                                     rel="noopener noreferrer"
                                                     onClick={(e) => e.stopPropagation()}
                                                     className="inline-flex items-center justify-center h-8 w-8 rounded-md hover:bg-muted transition-colors"
-                                                    title={t('common.pdf') || "PDF"}
+                                                    title={t('common.generatePdf', 'Generate PDF')}
                                                 >
                                                     <FileText className="h-4 w-4 text-muted-foreground" />
                                                 </a>
@@ -349,7 +349,7 @@ export function TransactionTable({
                                                         e.stopPropagation()
                                                         onActivate(tx)
                                                     }}
-                                                    title={t('common.activate') || "Activate"}
+                                                    title={t('common.activate', 'Activate')}
                                                 >
                                                     <RotateCcw className="h-4 w-4 text-success-600" />
                                                 </Button>
@@ -362,7 +362,7 @@ export function TransactionTable({
                                                         e.stopPropagation()
                                                         onDelete(tx)
                                                     }}
-                                                    title={t('common.delete') || "Delete"}
+                                                    title={t('common.delete', 'Delete')}
                                                 >
                                                     <Trash2 className="h-4 w-4" />
                                                 </Button>

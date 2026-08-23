@@ -57,9 +57,21 @@
         "vehicleManagement": "Araç Yönetimi",
         "comingSoon": "Yakında...",
         "pageNotFound": "Sayfa bulunamadı",
-        "goToLogin": "Giriş'e git"
+        "goToLogin": "Giriş'e git",
+        "cancel": "İptal",
+        "save": "Kaydet",
+        "delete": "Sil",
+        "activate": "Etkinleştir",
+        "reactivate": "Yeniden Etkinleştir",
+        "pdf": "PDF Oluştur",
+        "generatePdf": "PDF Oluştur",
+        "edit": "Düzenle",
+        "add": "Ekle",
+        "actions": "İşlemler",
+        "loading": "Yükleniyor..."
     },
     "transactions": {
+        "addTransaction": "İşlem Ekle",
         "filterTitle": "İşlemleri Filtrele",
         "filterDescription": "İşlem listesini daraltmak için filtreleri uygulayın",
         "quickSearch": "Hızlı Arama",

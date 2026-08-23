@@ -61,7 +61,17 @@
         "comingSoon": "Demnächst verfügbar...",
         "pageNotFound": "Seite nicht gefunden",
         "goToLogin": "Zur Anmeldung",
-        "cancel": "Abbrechen"
+        "cancel": "Abbrechen",
+        "save": "Speichern",
+        "delete": "Löschen",
+        "activate": "Aktivieren",
+        "reactivate": "Reaktivieren",
+        "pdf": "PDF generieren",
+        "generatePdf": "PDF generieren",
+        "edit": "Bearbeiten",
+        "add": "Hinzufügen",
+        "actions": "Aktionen",
+        "loading": "Wird geladen..."
     },
     "status": {
         "confirmed": "Bestätigt",
@@ -69,6 +79,7 @@
         "inactive": "Inaktiv"
     },
     "transactions": {
+        "addTransaction": "Transaktion hinzufügen",
         "filterTitle": "Transaktionen filtern",
         "filterDescription": "Filter anwenden, um die Transaktionsliste einzugrenzen",
         "quickSearch": "Schnellsuche",

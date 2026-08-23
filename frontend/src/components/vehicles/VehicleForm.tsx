@@ -513,10 +513,12 @@ export function VehicleForm({
             : []),
     ]
 
-    const txnsForCalc = txData?.transactions?.items?.map(t => ({
-        amount: typeof t.amount === 'string' ? parseFloat(t.amount) : t.amount,
-        tax: typeof t.tax === 'string' ? parseFloat(t.tax) : t.tax
-    })) ?? null
+    const txnsForCalc = txData?.transactions?.items
+        ?.filter(t => t.status !== 'inactive')
+        ?.map(t => ({
+            amount: typeof t.amount === 'string' ? parseFloat(t.amount) : t.amount,
+            tax: typeof t.tax === 'string' ? parseFloat(t.tax) : t.tax
+        })) ?? null
 
     const vehicleFinancials = calcVehicleFinancials({
         buyGross: watchedBuyPrice ?? null,

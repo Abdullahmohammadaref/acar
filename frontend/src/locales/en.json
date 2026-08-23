@@ -61,7 +61,17 @@
         "comingSoon": "Coming soon...",
         "pageNotFound": "Page not found",
         "goToLogin": "Go to Login",
-        "cancel": "Cancel"
+        "cancel": "Cancel",
+        "save": "Save",
+        "delete": "Delete",
+        "activate": "Activate",
+        "reactivate": "Reactivate",
+        "pdf": "Generate PDF",
+        "generatePdf": "Generate PDF",
+        "edit": "Edit",
+        "add": "Add",
+        "actions": "Actions",
+        "loading": "Loading..."
     },
     "status": {
         "confirmed": "Confirmed",
@@ -69,6 +79,7 @@
         "inactive": "Inactive"
     },
     "transactions": {
+        "addTransaction": "Add Transaction",
         "filterTitle": "Filter Transactions",
         "filterDescription": "Apply filters to narrow down the transaction list",
         "quickSearch": "Quick Search",

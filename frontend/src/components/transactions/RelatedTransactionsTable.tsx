@@ -41,7 +41,10 @@ export function RelatedTransactionsTable({
 
     const deleteMutation = useDeleteTransaction()
 
-    const transactions = data?.transactions?.items ?? []
+    // Filter out inactive transactions - inactive transactions should only be shown on the Transactions page when filtered
+    const transactions = (data?.transactions?.items ?? []).filter(
+        (tx) => tx.status !== "inactive"
+    )
 
     // Client-side pagination logic
     const totalPages = Math.ceil(transactions.length / PAGE_SIZE)
@@ -108,7 +111,7 @@ export function RelatedTransactionsTable({
                     <Link to={`${basePath}/transactions/new?vehicle_id=${vehicleId}`}>
                         <Button size="sm" className="h-8 gap-1.5 text-xs font-medium">
                             <Plus className="h-3.5 w-3.5" />
-                            <span>{t('transactions.addTransaction') || 'Add Transaction'}</span>
+                            <span>{t('transactions.addTransaction', 'Add Transaction')}</span>
                         </Button>
                     </Link>
 

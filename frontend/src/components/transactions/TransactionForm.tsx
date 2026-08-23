@@ -311,7 +311,7 @@ export function TransactionForm({
         // Check if any mandatory field in the payload is empty
         // Mandatory fields: category, subcategory, date, method, from_or_to, amount, tax, currency
         const mandatoryFields = ["category", "subcategory", "date", "method", "from_or_to", "amount", "tax", "currency"]
-        
+
         let hasEmptyMandatory = false
         for (const [key, value] of Object.entries(dataToSave)) {
             if (mandatoryFields.includes(key)) {
@@ -1055,7 +1055,7 @@ export function TransactionForm({
                                 pathSuffix="/edit"
                                 label="Transaction"
                             />
-                            
+
                             <ReviewQueueNavigation
                                 basePath={`/${business_slug}/transactions`}
                                 prevReviewId={initialData?.prev_review_required_internal_id}
