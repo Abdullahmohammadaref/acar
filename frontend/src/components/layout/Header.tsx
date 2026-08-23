@@ -51,7 +51,7 @@ export function Header({ sidebarCollapsed }: HeaderProps) {
     }, [])
 
     const handleZoomIn = () => {
-        const newScale = Math.min(uiScale + 0.1, 3.0)
+        const newScale = Math.min(Math.round((uiScale + 0.1) * 10) / 10, 3.0)
         setUiScale(newScale)
         ;(document.documentElement.style as any).zoom = ""
         document.documentElement.style.fontSize = `${16 * newScale}px`
@@ -59,7 +59,7 @@ export function Header({ sidebarCollapsed }: HeaderProps) {
     }
 
     const handleZoomOut = () => {
-        const newScale = Math.max(uiScale - 0.1, 0.2)
+        const newScale = Math.max(Math.round((uiScale - 0.1) * 10) / 10, 0.2)
         setUiScale(newScale)
         ;(document.documentElement.style as any).zoom = ""
         document.documentElement.style.fontSize = `${16 * newScale}px`
@@ -107,21 +107,28 @@ export function Header({ sidebarCollapsed }: HeaderProps) {
                 <NotificationsDropdown />
 
                 {/* UI Scale Controls */}
-                <div className="flex items-center mx-1 border border-border rounded-lg overflow-hidden">
+                <div className="flex items-center mx-1 border border-border rounded-lg overflow-hidden bg-background">
                     <button
                         onClick={handleZoomOut}
-                        className="flex h-9 w-9 items-center justify-center text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                        className="flex h-9 w-9 items-center justify-center text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
                         title="Zoom Out"
                     >
-                        <ZoomOut className="h-5 w-5" />
+                        <ZoomOut className="h-4 w-4" />
                     </button>
+                    <div className="h-4 w-[1px] bg-border" />
+                    <span
+                        className="px-2 text-xs font-semibold text-foreground select-none min-w-[42px] text-center"
+                        title={`Current Zoom: ${Math.round(uiScale * 100)}%`}
+                    >
+                        {Math.round(uiScale * 100)}%
+                    </span>
                     <div className="h-4 w-[1px] bg-border" />
                     <button
                         onClick={handleZoomIn}
-                        className="flex h-9 w-9 items-center justify-center text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                        className="flex h-9 w-9 items-center justify-center text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
                         title="Zoom In"
                     >
-                        <ZoomIn className="h-5 w-5" />
+                        <ZoomIn className="h-4 w-4" />
                     </button>
                 </div>
 
