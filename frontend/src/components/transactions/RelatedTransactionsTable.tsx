@@ -1,6 +1,6 @@
 import { useState } from "react"
 import { useParams, Link } from "react-router-dom"
-import { ExternalLink, Loader2, ChevronLeft, ChevronRight } from "lucide-react"
+import { Plus, ExternalLink, Loader2, ChevronLeft, ChevronRight } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { TransactionTable } from "./TransactionTable"
 import { Button } from "@/components/ui/button"
@@ -22,7 +22,8 @@ export function RelatedTransactionsTable({
     hideNavigationLink,
 }: RelatedTransactionsTableProps) {
     const { t } = useTranslation()
-    const { business_slug } = useParams()
+    const { business_slug, locale } = useParams<{ business_slug: string; locale?: string }>()
+    const basePath = locale ? `/${business_slug}/${locale}` : `/${business_slug}`
 
     // Pagination state
     const [page, setPage] = useState(1)
@@ -95,24 +96,33 @@ export function RelatedTransactionsTable({
     return (
         <div className="space-y-2 mt-0">
             {/* Section Header */}
-            <div className="flex items-center justify-between pb-2">
+            <div className="flex items-center justify-between pb-2 gap-2 flex-wrap">
                 <div>
                     <h2 className="text-lg font-semibold text-foreground">
                         {tableTitle}
                     </h2>
-                    {/* Subtext removed as requested */}
                 </div>
 
-                {/* Go to Vehicle Link */}
-                {!hideNavigationLink && (
-                    <Link
-                        to={`/${business_slug}/vehicles/${vehicleId}/edit`}
-                        className="inline-flex items-center gap-2 text-sm text-primary hover:underline"
-                    >
-                        <ExternalLink className="h-4 w-4" />
-                        {linkLabel}
+                <div className="flex items-center gap-2">
+                    {/* Add Transaction Button */}
+                    <Link to={`${basePath}/transactions/new?vehicle_id=${vehicleId}`}>
+                        <Button size="sm" className="h-8 gap-1.5 text-xs font-medium">
+                            <Plus className="h-3.5 w-3.5" />
+                            <span>{t('transactions.addTransaction') || 'Add Transaction'}</span>
+                        </Button>
                     </Link>
-                )}
+
+                    {/* Go to Vehicle Link */}
+                    {!hideNavigationLink && (
+                        <Link
+                            to={`${basePath}/vehicles/${vehicleId}/edit`}
+                            className="inline-flex items-center gap-2 text-sm text-primary hover:underline ml-1"
+                        >
+                            <ExternalLink className="h-4 w-4" />
+                            {linkLabel}
+                        </Link>
+                    )}
+                </div>
             </div>
 
             {/* Loading State */}

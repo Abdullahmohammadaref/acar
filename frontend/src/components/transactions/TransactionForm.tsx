@@ -24,6 +24,7 @@ import type { TransactionFormData, TransactionDetail } from "@/types/transaction
 interface TransactionFormProps {
     mode: "create" | "edit"
     initialData?: TransactionDetail | null
+    initialVehicleId?: number
     onSubmit: (data: TransactionFormData) => Promise<void>
     isLoading?: boolean
     highlightedTransactionId?: number  // For edit mode, to highlight the current row in related transactions
@@ -104,6 +105,7 @@ function SubcategorySelect({ categoryId, value, onChange }: SubcategorySelectPro
 export function TransactionForm({
     mode,
     initialData,
+    initialVehicleId,
     onSubmit,
     isLoading = false,
     highlightedTransactionId,
@@ -135,7 +137,7 @@ export function TransactionForm({
     const [formData, setFormData] = useState<TransactionFormData>({
         category: "",
         subcategory: "",
-        vehicle_id: undefined,
+        vehicle_id: initialVehicleId ?? undefined,
         amount: undefined,  // Start empty, not 0
         currency: "EUR",
         tax: undefined,
@@ -224,6 +226,16 @@ export function TransactionForm({
             }, 500)
         }
     }, [mode, initialData])
+
+    // Pre-populate vehicle in create mode if initialVehicleId is provided (e.g. from vehicle details page)
+    useEffect(() => {
+        if (mode === "create" && initialVehicleId !== undefined) {
+            setFormData(prev => ({
+                ...prev,
+                vehicle_id: initialVehicleId,
+            }))
+        }
+    }, [mode, initialVehicleId])
 
     // Initialize dropdown IDs for edit mode (based on string values matching options)
     // Separated from tax initialization to avoid dependency timing issues

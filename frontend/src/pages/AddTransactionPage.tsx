@@ -1,4 +1,4 @@
-import { useNavigate, useParams } from "react-router-dom"
+import { useNavigate, useParams, useSearchParams } from "react-router-dom"
 import { ArrowLeft, Plus, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { TransactionForm } from "@/components/transactions/TransactionForm"
@@ -11,17 +11,24 @@ import type { TransactionFormData } from "@/types/transaction"
  */
 export function AddTransactionPage() {
     const navigate = useNavigate()
-    const { business_slug } = useParams()
+    const { business_slug, locale } = useParams<{ business_slug: string; locale?: string }>()
+    const [searchParams] = useSearchParams()
+    const vehicleParam = searchParams.get("vehicle_id") || searchParams.get("vehicle")
+    const parsedVehicleId = vehicleParam ? parseInt(vehicleParam, 10) : undefined
+    const initialVehicleId = parsedVehicleId && !isNaN(parsedVehicleId) ? parsedVehicleId : undefined
+
     const createMutation = useCreateTransaction()
 
     // Fetch the projected next ID
     const { data: nextId, isLoading: nextIdLoading } = useNextTransactionId()
 
+    const basePath = locale ? `/${business_slug}/${locale}` : `/${business_slug}`
+
     const handleSubmit = async (data: TransactionFormData) => {
         try {
             await createMutation.mutateAsync(data)
             // Redirect with success message
-            navigate(`/${business_slug}/transactions?success=${encodeURIComponent("Transaction added successfully.")}`)
+            navigate(`${basePath}/transactions?success=${encodeURIComponent("Transaction added successfully.")}`)
         } catch (error) {
             console.error("Failed to create transaction:", error)
         }
@@ -32,7 +39,7 @@ export function AddTransactionPage() {
         if (window.history.state && window.history.state.idx > 0) {
             navigate(-1)
         } else {
-            navigate(`/${business_slug}/transactions`)
+            navigate(`${basePath}/transactions`)
         }
     }
 
@@ -66,6 +73,7 @@ export function AddTransactionPage() {
             {/* Transaction Form */}
             <TransactionForm
                 mode="create"
+                initialVehicleId={initialVehicleId}
                 onSubmit={handleSubmit}
                 isLoading={createMutation.isPending}
             />
