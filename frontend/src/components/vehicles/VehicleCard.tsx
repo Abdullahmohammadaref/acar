@@ -1,7 +1,11 @@
+import { useCallback } from "react"
 import { Link } from "react-router-dom"
 import { useTranslation } from "react-i18next"
 import { Car, FileText, Globe } from "lucide-react"
 
+import { useQueryClient } from "@tanstack/react-query"
+import api from "@/lib/api"
+import { vehicleKeys } from "@/hooks/useVehicles"
 import { Button } from "@/components/ui/button"
 import { withMediaCacheKey } from "@/lib/utils"
 import type { VehicleListItem } from "@/types/vehicle"
@@ -31,6 +35,18 @@ export function VehicleCard({
     isMobileDeConfigured = false,
 }: VehicleCardProps) {
     const { t } = useTranslation()
+    const queryClient = useQueryClient()
+    const handlePrefetch = useCallback(() => {
+        void queryClient.prefetchQuery({
+            queryKey: vehicleKeys.detail(vehicle.id),
+            queryFn: async () => {
+                const res = await api.get(`/vehicles/${vehicle.id}`)
+                return res.data
+            },
+            staleTime: 1000 * 60 * 5,
+        })
+    }, [queryClient, vehicle.id])
+
     const status = vehicle.status || "unknown"
     const vehicleImageUrl = withMediaCacheKey(vehicle.image_url, "vehicle-photo")
 
@@ -59,6 +75,8 @@ export function VehicleCard({
 
     return (
         <article
+            onMouseEnter={handlePrefetch}
+            onFocus={handlePrefetch}
             className="relative w-full bg-white dark:bg-card border border-gray-200 dark:border-border rounded-lg p-3 shadow-xs hover:shadow-md hover:border-gray-300 dark:hover:border-gray-600 transition-all cursor-pointer"
         >
             <Link

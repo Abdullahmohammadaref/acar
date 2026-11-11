@@ -52,6 +52,7 @@ jobs:
             
             echo "=== Pulling latest code ==="
             git fetch --all
+            git checkout origin/master -- nginx/nginx.conf 2>/dev/null || true
             git reset --hard origin/master
             
             echo "=== Extracting Pre-built Frontend ==="
@@ -82,5 +83,8 @@ jobs:
             
             echo "=== Collecting static ==="
             docker compose exec -T django python manage.py collectstatic --noinput --settings=drivebase.settings_prod
+            
+            echo "=== Reloading Nginx ==="
+            docker compose exec -T nginx nginx -s reload 2>/dev/null || true
             
             echo "=== Deploy complete ==="

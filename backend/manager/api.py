@@ -21,6 +21,7 @@ from django.conf import settings
 from django.core.paginator import Paginator
 from django.utils import timezone
 from typing import Optional, List, Dict
+from collections import defaultdict
 from decimal import Decimal
 from datetime import datetime
 import io
@@ -1991,11 +1992,32 @@ def get_choices_for_management(request):
         },
     }
     
-    # Get makes with their models for parent-child management
+    # Get makes with their models for parent-child management (batched in 1 query)
+    models_qs = (
+        VehicleModel.objects.filter(make__business=business)
+        .annotate(usage_count=Count('vehicles', filter=v_filter))
+        .values('id', 'make_id', 'name', 'mobile_de_mapping', 'is_protected', 'vehicle_classes', 'is_active', 'usage_count')
+        .order_by('name')
+    )
+    models_active_by_make = defaultdict(list)
+    models_inactive_by_make = defaultdict(list)
+    for m in models_qs:
+        mk_id = m['make_id']
+        item = {
+            'id': m['id'],
+            'name': m['name'],
+            'mobile_de_mapping': m['mobile_de_mapping'],
+            'is_protected': m['is_protected'],
+            'vehicle_classes': m['vehicle_classes'] or [],
+            'usage_count': m['usage_count'],
+        }
+        if m['is_active']:
+            models_active_by_make[mk_id].append(item)
+        else:
+            models_inactive_by_make[mk_id].append(item)
+
     makes_with_models = []
     for mk in Make.objects.filter(business=business, is_active=True).annotate(usage_count=Count('vehicles', filter=v_filter)).order_by('-usage_count', 'name'):
-        models_active = list(VehicleModel.objects.filter(make=mk, is_active=True).annotate(usage_count=Count('vehicles', filter=v_filter)).values('id', 'name', 'mobile_de_mapping', 'is_protected', 'vehicle_classes', 'usage_count'))
-        models_inactive = list(VehicleModel.objects.filter(make=mk, is_active=False).annotate(usage_count=Count('vehicles', filter=v_filter)).values('id', 'name', 'mobile_de_mapping', 'is_protected', 'vehicle_classes', 'usage_count'))
         makes_with_models.append({
             'id': mk.id,
             'name': mk.name,
@@ -2003,34 +2025,62 @@ def get_choices_for_management(request):
             'is_protected': mk.is_protected,
             'vehicle_classes': mk.vehicle_classes or [],
             'usage_count': mk.usage_count,
-            'models_active': models_active,
-            'models_inactive': models_inactive,
+            'models_active': models_active_by_make.get(mk.id, []),
+            'models_inactive': models_inactive_by_make.get(mk.id, []),
         })
     
-    # Get categories with their subcategories for parent-child management
+    # Get categories with their subcategories for parent-child management (batched in 1 query)
+    subs_qs = (
+        Subcategory.objects.filter(category__business=business)
+        .annotate(usage_count=Count('transactions', filter=t_filter))
+        .values('id', 'category_id', 'name', 'is_active', 'usage_count')
+        .order_by('name')
+    )
+    subs_active_by_cat = defaultdict(list)
+    subs_inactive_by_cat = defaultdict(list)
+    for s in subs_qs:
+        cat_id = s['category_id']
+        item = {'id': s['id'], 'name': s['name'], 'usage_count': s['usage_count']}
+        if s['is_active']:
+            subs_active_by_cat[cat_id].append(item)
+        else:
+            subs_inactive_by_cat[cat_id].append(item)
+
     categories_with_subcategories = []
     for cat in Category.objects.filter(business=business, is_active=True).annotate(usage_count=Count('transactions', filter=t_filter)).order_by('-usage_count', 'name'):
-        subs_active = list(Subcategory.objects.filter(category=cat, is_active=True).annotate(usage_count=Count('transactions', filter=t_filter)).values('id', 'name', 'usage_count'))
-        subs_inactive = list(Subcategory.objects.filter(category=cat, is_active=False).annotate(usage_count=Count('transactions', filter=t_filter)).values('id', 'name', 'usage_count'))
         categories_with_subcategories.append({
             'id': cat.id,
             'name': cat.name,
             'usage_count': cat.usage_count,
-            'subs_active': subs_active,
-            'subs_inactive': subs_inactive,
+            'subs_active': subs_active_by_cat.get(cat.id, []),
+            'subs_inactive': subs_inactive_by_cat.get(cat.id, []),
         })
     
-    # Get countries with their cities for parent-child management
+    # Get countries with their cities for parent-child management (batched in 1 query)
+    cities_qs = (
+        City.objects.filter(country__business=business)
+        .annotate(usage_count=Count('legal_entities', filter=le_filter))
+        .values('id', 'country_id', 'name', 'is_active', 'usage_count')
+        .order_by('name')
+    )
+    cities_active_by_country = defaultdict(list)
+    cities_inactive_by_country = defaultdict(list)
+    for c in cities_qs:
+        country_id = c['country_id']
+        item = {'id': c['id'], 'name': c['name'], 'usage_count': c['usage_count']}
+        if c['is_active']:
+            cities_active_by_country[country_id].append(item)
+        else:
+            cities_inactive_by_country[country_id].append(item)
+
     countries_with_cities = []
     for country in Country.objects.filter(business=business, is_active=True).annotate(usage_count=Count('legal_entities', filter=le_filter)).order_by('-usage_count', 'name'):
-        cities_active = list(City.objects.filter(country=country, is_active=True).annotate(usage_count=Count('legal_entities', filter=le_filter)).values('id', 'name', 'usage_count'))
-        cities_inactive = list(City.objects.filter(country=country, is_active=False).annotate(usage_count=Count('legal_entities', filter=le_filter)).values('id', 'name', 'usage_count'))
         countries_with_cities.append({
             'id': country.id,
             'name': country.name,
             'usage_count': country.usage_count,
-            'cities_active': cities_active,
-            'cities_inactive': cities_inactive,
+            'cities_active': cities_active_by_country.get(country.id, []),
+            'cities_inactive': cities_inactive_by_country.get(country.id, []),
         })
     
     # Annotate mapped_to_name for unprotected choices across all choice types

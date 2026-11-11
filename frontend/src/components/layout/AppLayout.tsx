@@ -1,6 +1,7 @@
 import { useState, useCallback } from "react"
 import { Outlet } from "react-router-dom"
 import { cn } from "@/lib/utils"
+import { useAppWarmup } from "@/hooks/useAppWarmup"
 import { Sidebar } from "./Sidebar"
 import { Header } from "./Header"
 import { SidebarLayoutContext } from "./SidebarLayoutContext"
@@ -9,6 +10,9 @@ import { SidebarLayoutContext } from "./SidebarLayoutContext"
  * Main application layout with compact sidebar, slim header, and soft neutral canvas background
  */
 export function AppLayout() {
+    // Eagerly warm up choices & reference data in background
+    useAppWarmup()
+
     const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
 
     const toggleSidebar = useCallback(() => {

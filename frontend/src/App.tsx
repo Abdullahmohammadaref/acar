@@ -1,5 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate, Link, useParams } from "react-router-dom"
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
+import { QueryClient } from "@tanstack/react-query"
+import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client"
+import { createIDBPersister } from "@/lib/queryPersister"
 import { useEffect } from "react"
 import { useTranslation } from "react-i18next"
 import { AuthProvider, useAuth } from "@/lib/auth"
@@ -36,11 +38,15 @@ import "@/lib/i18n"
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 1000 * 60, // 1 minute
+      staleTime: 1000 * 60 * 5, // 5 minutes
+      gcTime: 1000 * 60 * 60 * 24 * 7, // 7 days
       retry: 1,
+      refetchOnWindowFocus: false, // Prevent distracting reload flashes on alt-tab
     },
   },
 })
+
+const persister = createIDBPersister()
 
 // Wrapper component that sets the locale based on URL
 function LocaleWrapper({ children }: { children: React.ReactNode }) {
@@ -219,14 +225,14 @@ export default function App() {
   return (
     <DesktopErrorBoundary>
       <DesktopWindowGuard />
-      <QueryClientProvider client={queryClient}>
+      <PersistQueryClientProvider client={queryClient} persistOptions={{ persister, maxAge: 1000 * 60 * 60 * 24 * 7 }}>
         <BrowserRouter>
           <ScrollToTop />
           <AuthProvider>
             <AppRoutes />
           </AuthProvider>
         </BrowserRouter>
-      </QueryClientProvider>
+      </PersistQueryClientProvider>
     </DesktopErrorBoundary>
   )
 }

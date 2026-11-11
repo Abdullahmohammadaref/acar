@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react"
+import { useState, useMemo, useCallback } from "react"
 import { Link, useParams } from "react-router-dom"
 import {
     useReactTable,
@@ -41,6 +41,9 @@ import {
     ArrowDown,
     Car,
 } from "lucide-react"
+import { useQueryClient } from "@tanstack/react-query"
+import api from "@/lib/api"
+import { vehicleKeys } from "@/hooks/useVehicles"
 import { cn, formatCurrency, formatNumber, getStatusColor, withMediaCacheKey } from "@/lib/utils"
 import type { VehicleListItem, PaginatedVehicles } from "@/types/vehicle"
 
@@ -84,6 +87,18 @@ export function VehicleTable({
     onPageChange,
     onDeleteClick,
 }: VehicleTableProps) {
+    const queryClient = useQueryClient()
+    const handlePrefetch = useCallback((id: number) => {
+        void queryClient.prefetchQuery({
+            queryKey: vehicleKeys.detail(id),
+            queryFn: async () => {
+                const res = await api.get(`/vehicles/${id}`)
+                return res.data
+            },
+            staleTime: 1000 * 60 * 5,
+        })
+    }, [queryClient])
+
     const { business_slug, locale } = useParams<{ business_slug: string; locale?: string }>()
     const basePath = locale ? `/${business_slug}/${locale}` : `/${business_slug}`
 
@@ -432,6 +447,7 @@ export function VehicleTable({
                         {table.getRowModel().rows.map((row) => (
                             <TableRow
                                 key={row.id}
+                                onMouseEnter={() => handlePrefetch(row.original.id)}
                                 className="cursor-pointer hover:bg-muted/50"
                             >
                                 {row.getVisibleCells().map((cell) => (
